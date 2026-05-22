@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, RefreshCw, ChevronRight } from 'lucide-react'
+import { Sparkles, ChevronRight } from 'lucide-react'
 import type { DailyCoachData } from '@/lib/ai/types'
 import AIInsightCard from './AIInsightCard'
 import AILoadingState from './AILoadingState'
@@ -16,17 +16,14 @@ export default function AIInsightsSection({ onOpenWeeklyReport }: Props) {
   const [data, setData]         = useState<DailyCoachData | null>(null)
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
 
-  const load = useCallback(async (force = false) => {
-    if (force) setRefreshing(true)
-    else setLoading(true)
+  const load = useCallback(async () => {
+    setLoading(true)
     setError(false)
     try {
-      // Slight delay for "AI analyzing" feel
       const [res] = await Promise.all([
-        fetch(`/api/ai/insights${force ? '?force=1' : ''}`),
-        new Promise(r => setTimeout(r, force ? 1200 : 600)),
+        fetch('/api/ai/insights'),
+        new Promise(r => setTimeout(r, 600)),
       ])
       if (!res.ok) throw new Error()
       setData(await res.json())
@@ -34,7 +31,6 @@ export default function AIInsightsSection({ onOpenWeeklyReport }: Props) {
       setError(true)
     } finally {
       setLoading(false)
-      setRefreshing(false)
     }
   }, [])
 
@@ -60,19 +56,6 @@ export default function AIInsightsSection({ onOpenWeeklyReport }: Props) {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Refresh */}
-          <motion.button
-            onClick={() => load(true)}
-            disabled={loading || refreshing}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="w-7 h-7 rounded-lg bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.07] flex items-center justify-center transition-colors disabled:opacity-30"
-          >
-            <motion.div animate={refreshing ? { rotate: 360 } : {}} transition={{ duration: 0.7, repeat: refreshing ? Infinity : 0, ease: 'linear' }}>
-              <RefreshCw className="w-3 h-3 text-white/40" />
-            </motion.div>
-          </motion.button>
-
           {/* Weekly report button */}
           {onOpenWeeklyReport && (
             <button
@@ -102,7 +85,7 @@ export default function AIInsightsSection({ onOpenWeeklyReport }: Props) {
             >
               <p className="text-2xl">🤖</p>
               <p className="text-xs text-white/40">AI şu an yanıt veremiyor.</p>
-              <button onClick={() => load(true)} className="text-xs text-indigo-400 hover:text-indigo-300 underline">
+              <button onClick={() => load()} className="text-xs text-indigo-400 hover:text-indigo-300 underline">
                 Tekrar dene
               </button>
             </motion.div>
