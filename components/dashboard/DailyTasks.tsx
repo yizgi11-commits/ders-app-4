@@ -264,6 +264,18 @@ export default function DailyTasks() {
           </AnimatePresence>
         </motion.ul>
 
+        {tasks.length === 0 && !error && (
+          <div className="flex flex-col items-center gap-3 py-6 text-center">
+            <p className="text-3xl">📋</p>
+            <div>
+              <p className="text-sm font-semibold text-gray-700">Henüz görev atanmadı</p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-[220px] leading-relaxed">
+                İlk pomodoro&apos;nu tamamla — görevler otomatik olarak burada belirecek.
+              </p>
+            </div>
+          </div>
+        )}
+
         {tasks.length > 0 && (
           <p className="text-[11px] text-muted-foreground/50 text-center">
             Tüm görevleri tamamlarsan +50 XP bonus 🚀
