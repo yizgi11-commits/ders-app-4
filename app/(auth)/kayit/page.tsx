@@ -27,10 +27,11 @@ const perks = [
 
 export default function KayitPage() {
   const router = useRouter()
-  const [form, setForm]             = useState({ ad: '', email: '', password: '' })
-  const [hata, setHata]             = useState('')
-  const [yukleniyor, setYukleniyor] = useState(false)
-  const [showPass, setShowPass]     = useState(false)
+  const [form, setForm]                   = useState({ ad: '', email: '', password: '' })
+  const [hata, setHata]                   = useState('')
+  const [yukleniyor, setYukleniyor]       = useState(false)
+  const [showPass, setShowPass]           = useState(false)
+  const [emailSent, setEmailSent]         = useState(false)
 
   async function handleKayit(e: React.FormEvent) {
     e.preventDefault()
@@ -38,15 +39,22 @@ export default function KayitPage() {
     if (form.password.length < 6) { setHata('Şifre en az 6 karakter olmalı.'); return }
     setYukleniyor(true)
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: { data: { ad: form.ad } },
     })
     setYukleniyor(false)
     if (error) { setHata(error.message); return }
-    router.push('/onboarding')
-    router.refresh()
+
+    // If session exists → email confirmation disabled, go straight to onboarding
+    if (data.session) {
+      router.push('/onboarding')
+      router.refresh()
+    } else {
+      // Email confirmation required — show confirmation message
+      setEmailSent(true)
+    }
   }
 
   return (
@@ -66,7 +74,29 @@ export default function KayitPage() {
           <div className="absolute bottom-1/3 left-1/4 w-48 h-48 bg-indigo-600/10 rounded-full blur-[60px]" />
         </div>
 
-        <motion.div
+        {/* Email onay ekranı */}
+        {emailSent && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative w-full max-w-[380px] text-center"
+          >
+            <div className="glass-dark rounded-2xl p-10 shadow-2xl shadow-black/60 border border-white/[0.08]">
+              <div className="w-16 h-16 bg-indigo-500/20 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <Mail className="w-8 h-8 text-indigo-400" />
+              </div>
+              <h2 className="text-xl font-black text-white mb-2">E-postanı kontrol et</h2>
+              <p className="text-sm text-white/40 leading-relaxed mb-6">
+                <span className="text-white/70 font-medium">{form.email}</span> adresine doğrulama bağlantısı gönderdik. Bağlantıya tıkladıktan sonra giriş yapabilirsin.
+              </p>
+              <Link href="/giris" className="text-indigo-400 font-semibold hover:text-indigo-300 text-sm transition-colors">
+                Giriş sayfasına git →
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {!emailSent && <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
@@ -195,7 +225,7 @@ export default function KayitPage() {
               </Link>
             </p>
           </div>
-        </motion.div>
+        </motion.div>}
       </div>
     </div>
   )

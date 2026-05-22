@@ -116,11 +116,11 @@ export async function POST(req: NextRequest) {
   const today = new Date().toISOString().split('T')[0]
 
   await supabase.from('daily_goals').upsert({
-    user_id:           user.id,
-    date:              today,
-    focus_goal:        goals.focus,
-    pomodoro_goal:     goals.pomodoros,
-    task_goal:         goals.tasks,
+    user_id:             user.id,
+    date:                today,
+    focus_minutes_goal:  goals.focus,
+    pomodoro_goal:       goals.pomodoros,
+    tasks_goal:          goals.tasks,
   }, { onConflict: 'user_id,date' })
 
   return NextResponse.json({

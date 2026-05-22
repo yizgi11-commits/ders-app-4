@@ -36,9 +36,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/giris", request.url));
   }
 
-  // Giriş yapmış kullanıcıları auth sayfalarından dashboard'a yönlendir
+  // Giriş yapmış kullanıcıları auth sayfalarından yönlendir
   if (user && (pathname === "/giris" || pathname === "/kayit")) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    // Check onboarding status to decide where to redirect
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('onboarding_completed')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    const dest = profile?.onboarding_completed ? '/dashboard' : '/onboarding'
+    return NextResponse.redirect(new URL(dest, request.url))
   }
 
   return supabaseResponse;
