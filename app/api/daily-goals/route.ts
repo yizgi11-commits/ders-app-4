@@ -76,6 +76,6 @@ export async function POST(req: NextRequest) {
       tasks_goal:          Math.max(1, Number(body.tasks_goal)         || 3),
     }, { onConflict: 'user_id,date' })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Hedefler kaydedilemedi' }, { status: 500 })
   return NextResponse.json({ ok: true })
 }

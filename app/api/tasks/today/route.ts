@@ -66,7 +66,7 @@ export async function GET() {
     .eq("date", today)
     .order("created_at");
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: 'Görevler alınamadı' }, { status: 500 });
 
   // ── Fetch streak ──────────────────────
   const { data: userStreak } = await supabase

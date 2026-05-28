@@ -13,9 +13,14 @@ export async function POST(req: NextRequest) {
   const file = formData.get('file') as File | null
 
   if (!file) return NextResponse.json({ error: 'PDF dosyası gerekli' }, { status: 400 })
-  if (file.type !== 'application/pdf') {
+
+  // Check both MIME type AND file extension (defense in depth)
+  const hasValidMime = file.type === 'application/pdf'
+  const hasValidExt  = file.name.toLowerCase().endsWith('.pdf')
+  if (!hasValidMime || !hasValidExt) {
     return NextResponse.json({ error: 'Sadece PDF dosyaları kabul edilir' }, { status: 400 })
   }
+
   if (file.size > 10 * 1024 * 1024) {
     return NextResponse.json({ error: 'PDF 10 MB\'dan küçük olmalıdır' }, { status: 400 })
   }

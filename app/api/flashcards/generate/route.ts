@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getAnthropicClient } from '@/lib/ai/client'
 import { logUsage } from '@/lib/ai/usage'
+import { sanitizeString, safeError, MAX } from '@/lib/security'
+import { checkRateLimit } from '@/lib/security/rate-limit'
 
 // POST /api/flashcards/generate
 // Body: { text, subject_id?, source_pdf?, source_pdf_name? }
@@ -10,12 +12,27 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
+  // ── Rate limit: 10 generations per day ────────────────────────
+  const { allowed, remaining } = await checkRateLimit(
+    supabase, user.id, '/api/flashcards/generate', 10, 24
+  )
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Günlük kart üretme limitine ulaştınız (10/gün). Yarın tekrar deneyin.' },
+      { status: 429, headers: { 'X-RateLimit-Remaining': '0' } }
+    )
+  }
+
   const body = await req.json()
   const { text, subject_id, source_pdf, source_pdf_name } = body
 
   if (!text || text.length < 50) {
     return NextResponse.json({ error: 'Yeterli metin bulunamadı' }, { status: 400 })
   }
+
+  // Sanitize optional string fields
+  const safePdfPath = source_pdf      ? sanitizeString(source_pdf,      500)  : null
+  const safePdfName = source_pdf_name ? sanitizeString(source_pdf_name, 200)  : null
 
   // Limit text to control token usage
   const trimmedText = String(text).slice(0, 8000)
@@ -68,8 +85,8 @@ Format:
       })
       .slice(0, 20) // max 20 cards per generation
       .map((c: { front: string; back: string }) => ({
-        front: String(c.front).trim(),
-        back:  String(c.back).trim(),
+        front: sanitizeString(c.front, MAX.FLASHCARD_SIDE),
+        back:  sanitizeString(c.back,  MAX.FLASHCARD_SIDE),
       }))
       .filter(c => c.front.length > 0 && c.back.length > 0)
 
@@ -89,8 +106,8 @@ Format:
     subject_id:       subject_id || null,
     front:            c.front,
     back:             c.back,
-    source_pdf:       source_pdf || null,
-    source_pdf_name:  source_pdf_name || null,
+    source_pdf:       safePdfPath,
+    source_pdf_name:  safePdfName,
     next_review_date: today,
   }))
 
@@ -100,12 +117,12 @@ Format:
     .select()
 
   if (insertError) {
-    console.error('Flashcard insert error:', insertError)
-    return NextResponse.json({ error: 'Kartlar kaydedilemedi.' }, { status: 500 })
+    return safeError(insertError, 'Kartlar kaydedilemedi.')
   }
 
   return NextResponse.json({
     flashcards: inserted,
     count:      inserted?.length ?? 0,
+    remaining:  remaining - 1,
   })
 }

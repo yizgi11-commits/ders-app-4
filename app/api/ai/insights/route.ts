@@ -4,6 +4,7 @@ import { collectUserStats } from '@/lib/ai/collect-stats'
 import { getAnthropicClient, AI_MODEL } from '@/lib/ai/client'
 import { logUsage } from '@/lib/ai/usage'
 import { getCache, setCache, TTL, cacheKey } from '@/lib/cache'
+import { checkRateLimit } from '@/lib/security/rate-limit'
 import type { DailyCoachData, UserStatsForAI } from '@/lib/ai/types'
 
 export const runtime = 'nodejs'
@@ -51,6 +52,14 @@ export async function GET(req: NextRequest) {
   // ── 1. Return cached data if fresh ───────────────────────────
   const cached = await getCache<DailyCoachData>(supabase, user.id, insightKey)
   if (cached) return NextResponse.json(cached)
+
+  // ── Rate limit: 5 AI calls per day (only checked when not cached) ─
+  const { allowed } = await checkRateLimit(supabase, user.id, 'ai/insights', 5, 24)
+  if (!allowed) {
+    // Return fallback stats instead of erroring out completely
+    const stats = await collectUserStats(supabase, user.id)
+    return NextResponse.json({ ...buildFallback(stats), rate_limited: true })
+  }
 
   // ── 2. Prevent duplicate generation (is_generating lock) ─────
   const isGenerating = await getCache<boolean>(supabase, user.id, generatingKey)

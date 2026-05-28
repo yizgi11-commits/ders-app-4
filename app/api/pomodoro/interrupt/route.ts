@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     .eq('user_id', user.id)
     .eq('status', 'active')  // only interrupt if still active
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Oturum güncellenemedi' }, { status: 500 })
 
   // ── Reset session streak ──────────────
   const { data: stats } = await supabase

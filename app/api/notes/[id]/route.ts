@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { countWords, estimateReadingTime } from '@/lib/notes/ai-notes'
+import { sanitizeString, validateUUID, safeError, MAX } from '@/lib/security'
 
 // GET /api/notes/[id]
 export async function GET(
@@ -8,6 +9,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  if (!validateUUID(id)) return NextResponse.json({ error: 'Geçersiz id' }, { status: 400 })
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
@@ -23,7 +26,7 @@ export async function GET(
     .eq('user_id', user.id)
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 404 })
+  if (error) return NextResponse.json({ error: 'Not bulunamadı' }, { status: 404 })
 
   const subject = data.subject as { name?: string } | null
   return NextResponse.json({
@@ -39,6 +42,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  if (!validateUUID(id)) return NextResponse.json({ error: 'Geçersiz id' }, { status: 400 })
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
@@ -50,6 +55,10 @@ export async function PATCH(
   for (const key of allowed) {
     if (key in body) updates[key] = body[key]
   }
+
+  // Enforce length limits on text fields
+  if ('title' in updates)   updates.title   = sanitizeString(updates.title,   MAX.NOTE_TITLE)
+  if ('content' in updates) updates.content = sanitizeString(updates.content, MAX.NOTE_CONTENT)
 
   // Recompute word counts if content changed
   if ('content' in updates) {
@@ -68,7 +77,7 @@ export async function PATCH(
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return safeError(error, 'Not güncellenemedi')
   return NextResponse.json(data)
 }
 
@@ -78,6 +87,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  if (!validateUUID(id)) return NextResponse.json({ error: 'Geçersiz id' }, { status: 400 })
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
@@ -88,6 +99,6 @@ export async function DELETE(
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return safeError(error, 'Not silinemedi')
   return NextResponse.json({ ok: true })
 }

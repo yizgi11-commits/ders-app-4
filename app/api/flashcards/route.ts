@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sanitizeString, safeError, MAX } from '@/lib/security'
 
 // GET /api/flashcards?subject_id=&due_today=1
 export async function GET(req: NextRequest) {
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await query
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return safeError(error, 'Kartlar alınamadı')
 
   // Also return count of cards due today (for dashboard widget)
   const { count: dueCount } = await supabase
@@ -48,9 +49,11 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
   const body = await req.json()
-  const { front, back, subject_id } = body
+  const front      = sanitizeString(body.front ?? '', MAX.FLASHCARD_SIDE)
+  const back       = sanitizeString(body.back  ?? '', MAX.FLASHCARD_SIDE)
+  const subject_id = body.subject_id ?? null
 
-  if (!front?.trim() || !back?.trim()) {
+  if (!front || !back) {
     return NextResponse.json({ error: 'Ön yüz ve arka yüz zorunludur' }, { status: 400 })
   }
 
@@ -61,14 +64,14 @@ export async function POST(req: NextRequest) {
     .insert({
       user_id:          user.id,
       subject_id:       subject_id || null,
-      front:            front.trim(),
-      back:             back.trim(),
+      front,
+      back,
       next_review_date: today,
     })
     .select(`*, subjects ( id, name, icon, color )`)
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return safeError(error, 'Kart oluşturulamadı')
 
   return NextResponse.json(data, { status: 201 })
 }

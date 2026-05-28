@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { countWords, estimateReadingTime } from '@/lib/notes/ai-notes'
+import { sanitizeString, safeError, MAX } from '@/lib/security'
 
 // GET /api/notes
 export async function GET(req: NextRequest) {
@@ -50,12 +51,13 @@ export async function GET(req: NextRequest) {
   }
 
   if (search) {
-    query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`)
+    const safeSearch = sanitizeString(search, 200)
+    query = query.or(`title.ilike.%${safeSearch}%,content.ilike.%${safeSearch}%`)
   }
 
   const { data, error } = await query
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return safeError(error, 'Notlar alınamadı')
 
   // Flatten joined subject name
   const notes = (data ?? []).map((n: Record<string, unknown>) => {
@@ -77,11 +79,11 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
   const body = await req.json()
-  const title      = String(body.title ?? 'Başlıksız Not').trim()
-  const content    = String(body.content ?? '')
+  const title      = sanitizeString(body.title ?? 'Başlıksız Not', MAX.NOTE_TITLE) || 'Başlıksız Not'
+  const content    = sanitizeString(body.content ?? '', MAX.NOTE_CONTENT)
   const folder_id  = body.folder_id ?? null
   const subject_id = body.subject_id ?? null
-  const tags       = Array.isArray(body.tags) ? body.tags.map(String) : []
+  const tags       = Array.isArray(body.tags) ? body.tags.map((t: unknown) => sanitizeString(t, 50)).slice(0, 20) : []
 
   const word_count       = countWords(content)
   const reading_time_mins = estimateReadingTime(content)
@@ -101,6 +103,6 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return safeError(error, 'Not kaydedilemedi')
   return NextResponse.json(data, { status: 201 })
 }

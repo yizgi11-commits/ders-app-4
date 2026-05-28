@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sanitizeString, safeError, MAX } from '@/lib/security'
 
 // GET /api/notes/folders
 export async function GET() {
@@ -13,7 +14,7 @@ export async function GET() {
     .eq('user_id', user.id)
     .order('created_at', { ascending: true })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return safeError(error, 'Klasörler alınamadı')
   return NextResponse.json({ folders: data ?? [] })
 }
 
@@ -24,9 +25,9 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
   const body  = await req.json()
-  const name  = String(body.name ?? '').trim()
-  const color = String(body.color ?? 'indigo')
-  const icon  = String(body.icon ?? '📁')
+  const name  = sanitizeString(body.name ?? '', MAX.FOLDER_NAME)
+  const color = sanitizeString(body.color ?? 'indigo', 30)
+  const icon  = sanitizeString(body.icon ?? '📁', 10)
 
   if (!name) return NextResponse.json({ error: 'İsim gerekli' }, { status: 400 })
 
@@ -36,6 +37,6 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return safeError(error, 'Klasör oluşturulamadı')
   return NextResponse.json(data, { status: 201 })
 }

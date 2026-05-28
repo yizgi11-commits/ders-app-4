@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sanitizeString, validateUUID, safeError, MAX } from '@/lib/security'
 
 // GET /api/subjects — list all subjects with topics + analytics
 export async function GET() {
@@ -14,7 +15,7 @@ export async function GET() {
     .order('sort_order')
     .order('sort_order', { referencedTable: 'topics' })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return safeError(error, 'Dersler alınamadı')
 
   // Gather per-subject analytics from task_templates + daily_tasks
   const subjectNames = (subjects ?? []).map((s: { name: string }) => s.name)
@@ -51,9 +52,9 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
   const body = await req.json()
-  const name  = String(body.name ?? '').trim()
-  const icon  = String(body.icon ?? '📚')
-  const color = String(body.color ?? '#6366f1')
+  const name  = sanitizeString(body.name ?? '', MAX.SUBJECT_NAME)
+  const icon  = sanitizeString(body.icon ?? '📚', 10)
+  const color = sanitizeString(body.color ?? '#6366f1', 20)
 
   if (!name) return NextResponse.json({ error: 'İsim gerekli' }, { status: 400 })
 
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return safeError(error, 'Ders oluşturulamadı')
   return NextResponse.json(data)
 }
 
@@ -86,19 +87,27 @@ export async function PATCH(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
   const body = await req.json()
-  const { id, ...updates } = body
+  const { id, ...rawUpdates } = body
 
   if (!id) return NextResponse.json({ error: 'id gerekli' }, { status: 400 })
+  if (!validateUUID(id)) return NextResponse.json({ error: 'Geçersiz id' }, { status: 400 })
+
+  // Sanitize editable fields
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  if ('name'  in rawUpdates) updates.name  = sanitizeString(rawUpdates.name,  MAX.SUBJECT_NAME)
+  if ('icon'  in rawUpdates) updates.icon  = sanitizeString(rawUpdates.icon,  10)
+  if ('color' in rawUpdates) updates.color = sanitizeString(rawUpdates.color, 20)
+  if ('sort_order' in rawUpdates) updates.sort_order = Number(rawUpdates.sort_order)
 
   const { data, error } = await supabase
     .from('subjects')
-    .update({ ...updates, updated_at: new Date().toISOString() })
+    .update(updates)
     .eq('id', id)
     .eq('user_id', user.id)
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return safeError(error, 'Ders güncellenemedi')
   return NextResponse.json(data)
 }
 
@@ -112,6 +121,7 @@ export async function DELETE(req: NextRequest) {
   const { id } = body
 
   if (!id) return NextResponse.json({ error: 'id gerekli' }, { status: 400 })
+  if (!validateUUID(id)) return NextResponse.json({ error: 'Geçersiz id' }, { status: 400 })
 
   const { error } = await supabase
     .from('subjects')
@@ -119,6 +129,6 @@ export async function DELETE(req: NextRequest) {
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return safeError(error, 'Ders silinemedi')
   return NextResponse.json({ ok: true })
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sanitizeString, validateUUID, safeError, MAX } from '@/lib/security'
 
 // POST /api/topics — create topic
 export async function POST(req: NextRequest) {
@@ -8,10 +9,11 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
   const body = await req.json()
-  const title     = String(body.title ?? '').trim()
+  const title     = sanitizeString(body.title ?? '', MAX.TOPIC_NAME)
   const subjectId = String(body.subject_id ?? '')
 
   if (!title || !subjectId) return NextResponse.json({ error: 'title ve subject_id gerekli' }, { status: 400 })
+  if (!validateUUID(subjectId)) return NextResponse.json({ error: 'Geçersiz subject_id' }, { status: 400 })
 
   // Verify subject ownership
   const { data: subject } = await supabase
@@ -41,7 +43,7 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return safeError(error, 'Konu oluşturulamadı')
   return NextResponse.json(data)
 }
 
@@ -52,19 +54,26 @@ export async function PATCH(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
   const body = await req.json()
-  const { id, ...updates } = body
+  const { id, ...rawUpdates } = body
 
   if (!id) return NextResponse.json({ error: 'id gerekli' }, { status: 400 })
+  if (!validateUUID(id)) return NextResponse.json({ error: 'Geçersiz id' }, { status: 400 })
+
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  if ('title'  in rawUpdates) updates.title  = sanitizeString(rawUpdates.title,  MAX.TOPIC_NAME)
+  if ('status' in rawUpdates) updates.status = rawUpdates.status
+  if ('notes'  in rawUpdates) updates.notes  = sanitizeString(rawUpdates.notes,  MAX.NOTE_CONTENT)
+  if ('sort_order' in rawUpdates) updates.sort_order = Number(rawUpdates.sort_order)
 
   const { data, error } = await supabase
     .from('topics')
-    .update({ ...updates, updated_at: new Date().toISOString() })
+    .update(updates)
     .eq('id', id)
     .eq('user_id', user.id)
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return safeError(error, 'Konu güncellenemedi')
   return NextResponse.json(data)
 }
 
@@ -78,6 +87,7 @@ export async function DELETE(req: NextRequest) {
   const { id } = body
 
   if (!id) return NextResponse.json({ error: 'id gerekli' }, { status: 400 })
+  if (!validateUUID(id)) return NextResponse.json({ error: 'Geçersiz id' }, { status: 400 })
 
   const { error } = await supabase
     .from('topics')
@@ -85,6 +95,6 @@ export async function DELETE(req: NextRequest) {
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return safeError(error, 'Konu silinemedi')
   return NextResponse.json({ ok: true })
 }
