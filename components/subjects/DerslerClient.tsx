@@ -107,15 +107,15 @@ export default function DerslerClient() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           {/* Search */}
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-none">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Ders ara…"
-              className="text-sm bg-white border border-border rounded-xl pl-9 pr-4 py-2 w-52 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-all"
+              className="text-sm bg-white border border-border rounded-xl pl-9 pr-4 py-2 w-full sm:w-52 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-all"
             />
           </div>
 
@@ -123,7 +123,7 @@ export default function DerslerClient() {
             onClick={() => { setEditSubject(null); setShowCreate(true) }}
             whileHover={{ scale: 1.03, y: -1 }}
             whileTap={{ scale: 0.97 }}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-200/50"
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-200/50 shrink-0"
           >
             <Plus className="w-4 h-4" />
             Yeni Ders

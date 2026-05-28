@@ -59,7 +59,8 @@ export default function WeekOverview({ blocks, weekStart, selectedDate, onSelect
         Haftalık Özet
       </h3>
 
-      <div className="grid grid-cols-7 gap-2">
+      <div className="overflow-x-auto -mx-2 px-2">
+      <div className="grid grid-cols-7 gap-2 min-w-[280px]">
         {days.map((day, i) => {
           const isSelected = day.date === selectedDate
           const pct = day.studyBlocks > 0 ? (day.completed / day.studyBlocks) * 100 : 0
@@ -132,6 +133,7 @@ export default function WeekOverview({ blocks, weekStart, selectedDate, onSelect
             </motion.button>
           )
         })}
+      </div>
       </div>
     </div>
   )

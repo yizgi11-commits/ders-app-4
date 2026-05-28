@@ -341,7 +341,7 @@ export default function PomodoroTimer() {
           <div className={cn('absolute inset-0 bg-gradient-to-br opacity-40 pointer-events-none', cfg.bg)} />
 
           {/* Session type tabs */}
-          <div className="relative z-10 flex bg-white/[0.06] rounded-xl p-1 gap-0.5 w-full max-w-xs border border-white/[0.07]">
+          <div className="relative z-10 flex bg-white/[0.06] rounded-xl p-1 gap-0.5 w-full border border-white/[0.07]">
             {(['focus', 'short_break', 'long_break'] as SessionType[]).map(type => (
               <button
                 key={type}

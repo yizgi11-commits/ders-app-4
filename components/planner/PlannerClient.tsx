@@ -155,7 +155,7 @@ export default function PlannerClient() {
             <CalendarDays className="w-5 h-5 text-indigo-500" />
             Çalışma Planı
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-2">
+          <p className="text-sm text-gray-500 mt-0.5 flex flex-wrap items-center gap-2">
             Haftalık programını oluştur ve takip et.
             <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-violet-600 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded-full">
               <Sparkles className="w-3 h-3" />

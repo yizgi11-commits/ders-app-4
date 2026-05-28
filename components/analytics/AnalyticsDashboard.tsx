@@ -51,27 +51,28 @@ export default function AnalyticsDashboard({ data }: Props) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="flex bg-white rounded-xl border border-border p-1 gap-0.5 w-fit shadow-sm"
+        className="overflow-x-auto -mx-1 px-1 pb-0.5"
       >
-        {TABS.map(({ id, label }) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            className="relative px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors"
-            style={{ color: tab === id ? undefined : undefined }}
-          >
-            {tab === id && (
-              <motion.div
-                layoutId="analytics-tab"
-                className="absolute inset-0 bg-indigo-600 rounded-lg"
-                transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-              />
-            )}
-            <span className={`relative z-10 ${tab === id ? 'text-white' : 'text-muted-foreground hover:text-gray-700'}`}>
-              {label}
-            </span>
-          </button>
-        ))}
+        <div className="flex bg-white rounded-xl border border-border p-1 gap-0.5 w-max min-w-full sm:w-fit shadow-sm">
+          {TABS.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className="relative px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0"
+            >
+              {tab === id && (
+                <motion.div
+                  layoutId="analytics-tab"
+                  className="absolute inset-0 bg-indigo-600 rounded-lg"
+                  transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                />
+              )}
+              <span className={`relative z-10 ${tab === id ? 'text-white' : 'text-muted-foreground hover:text-gray-700'}`}>
+                {label}
+              </span>
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       {/* Summary row — always visible */}
