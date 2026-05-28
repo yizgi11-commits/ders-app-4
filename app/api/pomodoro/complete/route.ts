@@ -5,6 +5,7 @@ import { levelFromTotalXp } from '@/lib/tasks/xp'
 import type { UserXP } from '@/lib/tasks/types'
 import type { StudyStatistics, DailyFocusTime } from '@/lib/pomodoro/types'
 import { checkAndUnlockAchievements } from '@/lib/gamification/check'
+import { invalidateDashboardCaches } from '@/lib/cache'
 
 // POST /api/pomodoro/complete
 // Body: { sessionId: string, elapsedSeconds: number }
@@ -121,11 +122,12 @@ export async function POST(req: NextRequest) {
     .eq('date', today)
     .maybeSingle()
 
-  // ── Check achievements ────────────────
+  // ── Invalidate dashboard caches + check achievements ─────────
   const pomodoroHour = isFocus ? new Date().getHours() : null
-  const newAchievements = isFocus
-    ? await checkAndUnlockAchievements(supabase, user.id, pomodoroHour)
-    : []
+  const [newAchievements] = await Promise.all([
+    isFocus ? checkAndUnlockAchievements(supabase, user.id, 'pomodoro', pomodoroHour) : Promise.resolve([]),
+    isFocus ? invalidateDashboardCaches(supabase, user.id) : Promise.resolve(),
+  ])
 
   return NextResponse.json({
     xp_earned:           xpEarned,

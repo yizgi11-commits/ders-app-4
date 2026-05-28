@@ -1,38 +1,65 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { ACHIEVEMENTS, ACHIEVEMENT_MAP } from './achievements'
 import type { UserStats } from './types'
+import { getCache, setCache, TTL, cacheKey } from '@/lib/cache'
+
+// ─────────────────────────────────────────────────────────────────
+// Trigger types — determines which achievement categories to check.
+// Only relevant achievements are evaluated, never the full list.
+// ─────────────────────────────────────────────────────────────────
+export type AchievementTrigger = 'task' | 'pomodoro'
+
+const TRIGGER_CATEGORIES: Record<AchievementTrigger, string[]> = {
+  task:     ['task', 'xp', 'xp'],    // tasks + XP milestones + level-ups
+  pomodoro: ['pomodoro', 'focus', 'streak', 'special', 'xp'], // everything focus-related
+}
 
 // ─────────────────────────────────────────────────────────────────
 // checkAndUnlockAchievements
-// Call from API routes after any significant action.
-// Returns the list of newly unlocked achievement IDs.
 // ─────────────────────────────────────────────────────────────────
 export async function checkAndUnlockAchievements(
   supabase:     SupabaseClient,
   userId:       string,
+  trigger:      AchievementTrigger = 'task',
   pomodoroHour: number | null = null,
 ): Promise<string[]> {
-  // 1 ── Collect user stats (parallel) ───────────────────────────
-  const [
-    xpRes,
-    streakRes,
-    statsRes,
-    unlockedRes,
-    taskCountRes,
-  ] = await Promise.all([
+
+  // ── 1. Load already-unlocked list (from cache first) ──────────
+  const achKey   = cacheKey.achievements()
+  const cachedIds = await getCache<string[]>(supabase, userId, achKey)
+
+  let unlockedIds: Set<string>
+
+  if (cachedIds) {
+    unlockedIds = new Set(cachedIds)
+  } else {
+    const { data } = await supabase
+      .from('user_achievements')
+      .select('achievement_id')
+      .eq('user_id', userId)
+    unlockedIds = new Set((data ?? []).map((r: { achievement_id: string }) => r.achievement_id))
+    // Cache the unlocked list
+    await setCache(supabase, userId, achKey, [...unlockedIds], TTL.ACHIEVEMENTS)
+  }
+
+  // ── 2. Filter to only relevant categories ─────────────────────
+  const relevantCategories = new Set(TRIGGER_CATEGORIES[trigger])
+  const candidates = ACHIEVEMENTS.filter(
+    a => relevantCategories.has(a.category) && !unlockedIds.has(a.id)
+  )
+
+  if (candidates.length === 0) return []
+
+  // ── 3. Collect only the stats needed ──────────────────────────
+  const [xpRes, streakRes, statsRes, taskCountRes] = await Promise.all([
     supabase.from('user_xp').select('total_xp, level').eq('user_id', userId).single(),
     supabase.from('user_streaks').select('current_streak, longest_streak').eq('user_id', userId).single(),
     supabase.from('study_statistics').select('total_focus_minutes, total_sessions_completed').eq('user_id', userId).maybeSingle(),
-    supabase.from('user_achievements').select('achievement_id').eq('user_id', userId),
     supabase.from('daily_tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('completed', true),
   ])
 
-  const xp        = xpRes.data
-  const streak    = streakRes.data
-  const pStats    = statsRes.data
-  const unlocked  = new Set((unlockedRes.data ?? []).map((r: { achievement_id: string }) => r.achievement_id))
-  const taskCount = taskCountRes.count ?? 0
-
+  const xp     = xpRes.data
+  const streak = streakRes.data
   if (!xp || !streak) return []
 
   const userStats: UserStats = {
@@ -40,22 +67,18 @@ export async function checkAndUnlockAchievements(
     level:                  xp.level,
     currentStreak:          streak.current_streak,
     longestStreak:          streak.longest_streak,
-    totalFocusMinutes:      pStats?.total_focus_minutes ?? 0,
-    totalSessionsCompleted: pStats?.total_sessions_completed ?? 0,
-    totalTasksCompleted:    taskCount,
+    totalFocusMinutes:      statsRes.data?.total_focus_minutes ?? 0,
+    totalSessionsCompleted: statsRes.data?.total_sessions_completed ?? 0,
+    totalTasksCompleted:    taskCountRes.count ?? 0,
     pomodoroHour,
   }
 
-  // 2 ── Find newly qualifying achievements ──────────────────────
-  const toUnlock = ACHIEVEMENTS.filter(
-    a => !unlocked.has(a.id) && a.condition(userStats)
-  )
-
+  // ── 4. Find newly qualifying ───────────────────────────────────
+  const toUnlock = candidates.filter(a => a.condition(userStats))
   if (toUnlock.length === 0) return []
 
-  // 3 ── Insert them + award XP ──────────────────────────────────
+  // ── 5. Insert + award XP ──────────────────────────────────────
   const now = new Date().toISOString()
-
   await supabase.from('user_achievements').insert(
     toUnlock.map(a => ({
       user_id:        userId,
@@ -65,20 +88,17 @@ export async function checkAndUnlockAchievements(
     }))
   )
 
-  // Award XP for each achievement
   const totalBonus = toUnlock.reduce((s, a) => s + a.xpReward, 0)
   if (totalBonus > 0) {
     await supabase.rpc('increment_xp', { p_user_id: userId, p_amount: totalBonus })
-      .then(({ error }) => {
-        if (error) {
-          // Fallback if RPC not available — direct update
-          return supabase.rpc('increment_xp', { p_user_id: userId, p_amount: totalBonus })
-        }
-      })
   }
 
-  return toUnlock.map(a => a.id)
+  // ── 6. Update achievements cache with new IDs ─────────────────
+  const newIds = toUnlock.map(a => a.id)
+  const allIds = [...unlockedIds, ...newIds]
+  await setCache(supabase, userId, achKey, allIds, TTL.ACHIEVEMENTS)
+
+  return newIds
 }
 
-// ── Re-export lookup for API routes ───────────────────────────
 export { ACHIEVEMENT_MAP }

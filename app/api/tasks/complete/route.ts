@@ -5,6 +5,7 @@ import { updateStreak } from "@/lib/tasks/progression";
 import { ALL_TASKS_BONUS, streakBonus } from "@/lib/tasks/xp";
 import type { UserXP, UserStreak } from "@/lib/tasks/types";
 import { checkAndUnlockAchievements } from "@/lib/gamification/check";
+import { invalidateDashboardCaches } from "@/lib/cache";
 
 // POST /api/tasks/complete
 // Body: { taskId: string }
@@ -91,8 +92,11 @@ export async function POST(req: NextRequest) {
     })
     .eq("user_id", user.id);
 
-  // ── Check achievements ────────────────
-  const newAchievements = await checkAndUnlockAchievements(supabase, user.id)
+  // ── Invalidate dashboard caches + check achievements ─────────
+  const [newAchievements] = await Promise.all([
+    checkAndUnlockAchievements(supabase, user.id, 'task'),
+    invalidateDashboardCaches(supabase, user.id),
+  ])
 
   return NextResponse.json({
     xp_earned:            baseXp,
