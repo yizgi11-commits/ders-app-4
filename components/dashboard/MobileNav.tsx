@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Menu, X, LayoutDashboard, BookOpen, CalendarDays,
-  BarChart2, Trophy, Settings, Zap, Timer, Sparkles, StickyNote,
+  BarChart2, Trophy, Settings, Zap, Timer, Sparkles, StickyNote, Brain,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -19,6 +19,7 @@ const navItems = [
   { href: '/dashboard/basarimlar', label: 'Başarımlar',    icon: Trophy },
   { href: '/dashboard/ai-coach',   label: 'AI Koç',        icon: Sparkles },
   { href: '/dashboard/notlar',     label: 'Notlar',        icon: StickyNote },
+  { href: '/dashboard/flashcards', label: 'Flash Kartlar',  icon: Brain },
   { href: '/dashboard/ayarlar',    label: 'Ayarlar',       icon: Settings },
 ]
 

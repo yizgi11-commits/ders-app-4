@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard, BookOpen, CalendarDays,
-  BarChart2, Trophy, Settings, Zap, Timer, LogOut, Sparkles, StickyNote,
+  BarChart2, Trophy, Settings, Zap, Timer, LogOut, Sparkles, StickyNote, Brain,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -20,6 +20,7 @@ const navItems = [
   { href: '/dashboard/basarimlar', label: 'Başarımlar',    icon: Trophy },
   { href: '/dashboard/ai-coach',   label: 'AI Koç',        icon: Sparkles },
   { href: '/dashboard/notlar',     label: 'Notlar',        icon: StickyNote },
+  { href: '/dashboard/flashcards', label: 'Flash Kartlar',  icon: Brain },
 ]
 
 const bottomItems = [

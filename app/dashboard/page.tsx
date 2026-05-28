@@ -7,6 +7,7 @@ import StatsGrid       from '@/components/dashboard/StatsGrid'
 import DashboardHeader from '@/components/dashboard/DashboardHeader'
 import DailyGoalsWidget from '@/components/gamification/DailyGoalsWidget'
 import AICoachWidget from '@/components/ai/AICoachWidget'
+import FlashcardWidget from '@/components/flashcards/FlashcardWidget'
 
 // ── Inline skeletons (no extra file needed) ─────────────────────
 function XPCardSkeleton() {
@@ -58,6 +59,7 @@ export default function DashboardPage() {
             <StudyStreak />
           </Suspense>
           <DailyGoalsWidget />
+          <FlashcardWidget />
         </div>
       </div>
 
