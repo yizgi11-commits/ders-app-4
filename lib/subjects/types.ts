@@ -101,3 +101,27 @@ export interface SubjectAnalytics {
   totalXpEarned:   number
   sessionsCount:   number
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Atlas — computed topic/subject progress
+// ─────────────────────────────────────────────────────────────────
+export interface TopicProgress extends Topic {
+  progress_pct:    number         // 0-100, derived from activity signals below
+  has_focus:       boolean        // at least one completed Focus session
+  has_recall:      boolean        // at least one reviewed Recall card
+  has_note:        boolean        // at least one Vault note
+  last_studied_at: string | null  // ISO date, most recent activity
+}
+
+export interface SubjectWithProgress extends Subject {
+  topics:          TopicProgress[]
+  completedTopics: number
+  totalTopics:     number
+  subjectPct:      number         // completedTopics / totalTopics * 100
+}
+
+export const PROGRESS_WEIGHTS = {
+  focus:  34,
+  recall: 33,
+  note:   33,
+} as const

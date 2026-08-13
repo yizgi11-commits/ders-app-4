@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sanitizeString, safeError, MAX } from '@/lib/security'
 
-// GET /api/flashcards?subject_id=&due_today=1
+// GET /api/flashcards?subject_id=&topic_id=&due_today=1
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url)
   const subjectId = searchParams.get('subject_id')
+  const topicId   = searchParams.get('topic_id')
   const dueToday  = searchParams.get('due_today') === '1'
   const today     = new Date().toISOString().split('T')[0]
 
@@ -23,6 +24,7 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false })
 
   if (subjectId) query = query.eq('subject_id', subjectId)
+  if (topicId)   query = query.eq('topic_id', topicId)
   if (dueToday)  query = query.lte('next_review_date', today)
 
   const { data, error } = await query
@@ -52,6 +54,7 @@ export async function POST(req: NextRequest) {
   const front      = sanitizeString(body.front ?? '', MAX.FLASHCARD_SIDE)
   const back       = sanitizeString(body.back  ?? '', MAX.FLASHCARD_SIDE)
   const subject_id = body.subject_id ?? null
+  const topic_id   = body.topic_id ?? null
 
   if (!front || !back) {
     return NextResponse.json({ error: 'Ön yüz ve arka yüz zorunludur' }, { status: 400 })
@@ -64,6 +67,7 @@ export async function POST(req: NextRequest) {
     .insert({
       user_id:          user.id,
       subject_id:       subject_id || null,
+      topic_id:         topic_id || null,
       front,
       back,
       next_review_date: today,

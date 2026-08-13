@@ -107,7 +107,7 @@ export default function Features() {
             </span>
           </h2>
           <p className="text-white/50 text-lg max-w-xl mx-auto">
-            Study OS, seni hedeflerine ulaştıracak tüm araçları tek bir yerde toplar.
+            Noetic OS, seni hedeflerine ulaştıracak tüm araçları tek bir yerde toplar.
           </p>
         </motion.div>
 

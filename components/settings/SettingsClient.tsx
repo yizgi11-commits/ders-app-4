@@ -26,7 +26,7 @@ export default function SettingsClient() {
   // Form state
   const [ad, setAd] = useState('')
   const [email, setEmail] = useState('')
-  const [studyGoal, setStudyGoal] = useState('genel_basari')
+  const [studyGoal, setStudyGoal] = useState('ders_basarisi')
   const [examType, setExamType] = useState('')
   const [dailyMins, setDailyMins] = useState(120)
   const [prefHours, setPrefHours] = useState('evening')
@@ -39,7 +39,7 @@ export default function SettingsClient() {
       .then(data => {
         setAd(data.ad ?? '')
         setEmail(data.email ?? '')
-        setStudyGoal(data.profile?.study_goal ?? 'genel_basari')
+        setStudyGoal(data.profile?.study_goal ?? 'ders_basarisi')
         setExamType(data.profile?.exam_type ?? '')
         setDailyMins(data.profile?.daily_available_mins ?? 120)
         setPrefHours(data.profile?.preferred_hours ?? 'evening')
@@ -338,7 +338,7 @@ export default function SettingsClient() {
                   <div className="space-y-3">
                     {[
                       { label: 'Versiyon', value: '1.0.0' },
-                      { label: 'Platform', value: 'Study OS Web' },
+                      { label: 'Platform', value: 'Noetic OS Web' },
                     ].map(item => (
                       <div key={item.label} className="flex items-center justify-between">
                         <span className="text-sm text-gray-500">{item.label}</span>

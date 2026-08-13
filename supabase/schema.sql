@@ -1,5 +1,5 @@
 -- ============================================================
--- Study OS — Core Schema
+-- Noetic OS — Core Schema
 -- Run this in Supabase SQL Editor (Dashboard → SQL Editor)
 -- ============================================================
 

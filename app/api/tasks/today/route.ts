@@ -35,6 +35,7 @@ export async function GET() {
       .from("daily_tasks")
       .select("completed")
       .eq("user_id", user.id)
+      .eq("source", "system")
       .eq("date", userXp.last_active_date);
 
     const completedCount = (yesterdayTasks ?? []).filter(
@@ -63,6 +64,7 @@ export async function GET() {
     .from("daily_tasks")
     .select("*, task_templates(*)")
     .eq("user_id", user.id)
+    .eq("source", "system")
     .eq("date", today)
     .order("created_at");
 

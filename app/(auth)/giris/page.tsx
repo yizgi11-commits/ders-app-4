@@ -24,6 +24,24 @@ export default function GirisPage() {
     e.preventDefault()
     setHata('')
     setYukleniyor(true)
+    
+    // Test admin credentials check (development mode)
+    if (process.env.NODE_ENV === 'development' &&
+        form.email === process.env.NEXT_PUBLIC_TEST_ADMIN_EMAIL &&
+        form.password === process.env.NEXT_PUBLIC_TEST_ADMIN_PASSWORD) {
+      // Store test admin session in localStorage
+      localStorage.setItem('test_admin_session', JSON.stringify({
+        email: form.email,
+        timestamp: Date.now(),
+        isAdmin: true
+      }))
+      setYukleniyor(false)
+      router.push('/dashboard')
+      router.refresh()
+      return
+    }
+
+    // Normal Supabase authentication
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword(form)
     setYukleniyor(false)
@@ -65,7 +83,7 @@ export default function GirisPage() {
               <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-900/50">
                 <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
               </div>
-              <span className="text-sm font-bold text-white">Study OS</span>
+              <span className="text-sm font-bold text-white">Noetic OS</span>
             </div>
 
             {/* Header */}
@@ -174,6 +192,26 @@ export default function GirisPage() {
                 Ücretsiz kayıt ol →
               </Link>
             </p>
+
+            {/* TEST ADMIN INFO — Development Only */}
+            {process.env.NODE_ENV === 'development' && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="mt-6 pt-5 border-t border-white/[0.06] space-y-2"
+              >
+                <p className="text-[10px] font-semibold text-yellow-400/60 uppercase tracking-wider">🧪 Test Modu</p>
+                <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-lg p-3 space-y-1.5">
+                  <p className="text-xs text-yellow-400/80">
+                    <span className="font-semibold">Email:</span> {process.env.NEXT_PUBLIC_TEST_ADMIN_EMAIL}
+                  </p>
+                  <p className="text-xs text-yellow-400/80">
+                    <span className="font-semibold">Şifre:</span> {process.env.NEXT_PUBLIC_TEST_ADMIN_PASSWORD}
+                  </p>
+                </div>
+              </motion.div>
+            )}
           </div>
         </motion.div>
       </div>

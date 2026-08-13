@@ -44,7 +44,7 @@ export default function Navbar() {
           >
             <Zap className="w-4 h-4 text-white" />
           </motion.div>
-          <span className="text-sm font-bold text-white tracking-tight">Study OS</span>
+          <span className="text-sm font-bold text-white tracking-tight">Noetic OS</span>
         </Link>
 
         {/* Desktop nav */}

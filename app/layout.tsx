@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Study OS — Akıllı Öğrenci Platformu',
-    template: '%s — Study OS',
+    default: 'Noetic OS — Akıllı Öğrenci Platformu',
+    template: '%s — Noetic OS',
   },
   description: 'Çalışmalarını takip et, XP kazan, hedeflerine ulaş. Öğrenciler için tasarlanmış premium verimlilik platformu.',
   keywords: ['öğrenci', 'ders takip', 'pomodoro', 'çalışma planı', 'XP sistemi'],

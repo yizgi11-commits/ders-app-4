@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { OnboardingData } from '@/lib/onboarding/types'
-import { DEFAULT_SUBJECTS, HOURS_TO_START } from '@/lib/onboarding/types'
-import type { StudyGoal, PreferredHours, FocusIntensity } from '@/lib/onboarding/types'
+import type { OnboardingData, StudyGoal } from '@/lib/onboarding/types'
+import { DEFAULT_SUBJECTS } from '@/lib/onboarding/types'
 
 // ─── GET /api/onboarding — Check onboarding status ──────────────
 export async function GET() {
@@ -30,25 +29,26 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
   const body: OnboardingData = await req.json()
+  const dailyAvailMins = body.dailyGoalHours * 60
 
   // 1. Save/update profile
   await supabase.from('user_profiles').upsert({
     user_id:              user.id,
     display_name:         body.displayName || user.user_metadata?.ad || 'Öğrenci',
     study_goal:           body.studyGoal,
-    exam_type:            body.examType,
-    daily_available_mins: body.dailyAvailMins,
-    preferred_hours:      body.preferredHours,
-    focus_intensity:      body.focusIntensity,
-    consistency_level:    body.consistencyLevel,
+    grade_level:          body.gradeLevel,
+    daily_available_mins: dailyAvailMins,
     onboarding_completed: true,
     onboarding_step:      6,
     updated_at:           new Date().toISOString(),
   }, { onConflict: 'user_id' })
 
-  // 2. Create default subjects based on study goal
-  const defaultSubs = DEFAULT_SUBJECTS[body.studyGoal as StudyGoal] ?? DEFAULT_SUBJECTS.genel_basari
-  const subjectRows = defaultSubs.map((s, i) => ({
+  // 2. Create subjects for the ones the user selected (all defaults if none picked)
+  const pool = DEFAULT_SUBJECTS[body.studyGoal as StudyGoal] ?? DEFAULT_SUBJECTS.ders_basarisi
+  const chosen = body.subjects.length > 0
+    ? pool.filter(s => body.subjects.includes(s.name))
+    : pool
+  const subjectRows = chosen.map((s, i) => ({
     user_id:    user.id,
     name:       s.name,
     icon:       s.icon,
@@ -71,22 +71,14 @@ export async function POST(req: NextRequest) {
     subjectIds = (inserted ?? []).map(s => s.id)
   }
 
-  // 3. Save study preferences for the planner
-  const startHour = HOURS_TO_START[body.preferredHours as PreferredHours] ?? 16
-  const weakSubjectIds = body.weakSubjects
-    .map(name => {
-      const idx = defaultSubs.findIndex(s => s.name === name)
-      return idx >= 0 && subjectIds[idx] ? subjectIds[idx] : null
-    })
-    .filter(Boolean) as string[]
-
+  // 3. Save study preferences (incl. difficulty analysis) for the planner
   await supabase.from('study_preferences').upsert({
     user_id:            user.id,
-    daily_study_mins:   body.dailyAvailMins,
-    intensity:          body.focusIntensity,
-    start_hour:         startHour,
+    daily_study_mins:   dailyAvailMins,
+    start_hour:         16,
     subject_priorities: subjectIds,
-    weak_subjects:      weakSubjectIds,
+    weak_subjects:      [],
+    difficulties:       body.difficulties,
     updated_at:         new Date().toISOString(),
   }, { onConflict: 'user_id' })
 
@@ -104,15 +96,14 @@ export async function POST(req: NextRequest) {
     }, { onConflict: 'user_id' }),
   ])
 
-  // 5. Set daily goals based on consistency
-  const goalMap: Record<string, { focus: number; pomodoros: number; tasks: number }> = {
-    never:     { focus: 30,  pomodoros: 2, tasks: 2 },
-    rarely:    { focus: 45,  pomodoros: 3, tasks: 3 },
-    sometimes: { focus: 60,  pomodoros: 4, tasks: 3 },
-    often:     { focus: 90,  pomodoros: 5, tasks: 4 },
-    daily:     { focus: 120, pomodoros: 6, tasks: 5 },
+  // 5. Set daily goals based on the target daily study hours
+  const goalMap: Record<number, { focus: number; pomodoros: number; tasks: number }> = {
+    1: { focus: 60,  pomodoros: 2, tasks: 2 },
+    2: { focus: 120, pomodoros: 4, tasks: 3 },
+    3: { focus: 180, pomodoros: 5, tasks: 4 },
+    4: { focus: 240, pomodoros: 6, tasks: 5 },
   }
-  const goals = goalMap[body.consistencyLevel] ?? goalMap.sometimes
+  const goals = goalMap[body.dailyGoalHours] ?? goalMap[2]
   const today = new Date().toISOString().split('T')[0]
 
   await supabase.from('daily_goals').upsert({

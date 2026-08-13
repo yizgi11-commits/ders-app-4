@@ -42,7 +42,7 @@ export default function AuthLeftPanel() {
           <Zap className="w-4.5 h-4.5 text-white" />
         </div>
         <div>
-          <p className="text-white font-bold text-sm leading-tight">Study OS</p>
+          <p className="text-white font-bold text-sm leading-tight">Noetic OS</p>
           <p className="text-white/30 text-[10px] tracking-widest uppercase">Öğrenci Platformu</p>
         </div>
       </motion.div>

@@ -5,22 +5,22 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Menu, X, LayoutDashboard, BookOpen, CalendarDays,
-  BarChart2, Trophy, Settings, Zap, Timer, Sparkles, StickyNote, Brain,
+  Menu, X, LayoutDashboard, CalendarDays, BarChart2, Settings,
+  Zap, Timer, Brain, Map, Archive, Milestone, User,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { href: '/dashboard',            label: 'Genel Bakış',   icon: LayoutDashboard },
-  { href: '/dashboard/pomodoro',   label: 'Pomodoro',      icon: Timer },
-  { href: '/dashboard/dersler',    label: 'Derslerim',     icon: BookOpen },
-  { href: '/dashboard/plan',       label: 'Çalışma Planı', icon: CalendarDays },
-  { href: '/dashboard/istatistik', label: 'İstatistikler', icon: BarChart2 },
-  { href: '/dashboard/basarimlar', label: 'Başarımlar',    icon: Trophy },
-  { href: '/dashboard/ai-coach',   label: 'AI Koç',        icon: Sparkles },
-  { href: '/dashboard/notlar',     label: 'Notlar',        icon: StickyNote },
-  { href: '/dashboard/flashcards', label: 'Flash Kartlar',  icon: Brain },
-  { href: '/dashboard/ayarlar',    label: 'Ayarlar',       icon: Settings },
+  { href: '/dashboard',          label: 'Command Center', icon: LayoutDashboard },
+  { href: '/dashboard/focus',    label: 'Focus',          icon: Timer },
+  { href: '/dashboard/atlas',    label: 'Atlas',          icon: Map },
+  { href: '/dashboard/planner',  label: 'Planner',        icon: CalendarDays },
+  { href: '/dashboard/vault',    label: 'Vault',          icon: Archive },
+  { href: '/dashboard/recall',   label: 'Recall',         icon: Brain },
+  { href: '/dashboard/journey',  label: 'Journey',        icon: Milestone },
+  { href: '/dashboard/insights', label: 'Insights',       icon: BarChart2 },
+  { href: '/dashboard/profile',  label: 'Profile',        icon: User },
+  { href: '/dashboard/settings', label: 'Settings',       icon: Settings },
 ]
 
 export default function MobileNav() {
@@ -66,7 +66,7 @@ export default function MobileNav() {
                   <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center shadow-md shadow-indigo-950/60">
                     <Zap className="w-4 h-4 text-white" />
                   </div>
-                  <p className="text-sm font-bold text-white tracking-tight">Study OS</p>
+                  <p className="text-sm font-bold text-white tracking-tight">Noetic OS</p>
                 </div>
                 <motion.button
                   onClick={() => setOpen(false)}

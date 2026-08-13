@@ -51,7 +51,7 @@ export default function Footer() {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center">
                 <BookOpen className="w-4 h-4 text-white" />
               </div>
-              <span className="text-white font-bold text-lg">Study OS</span>
+              <span className="text-white font-bold text-lg">Noetic OS</span>
             </Link>
             <p className="text-white/40 text-sm leading-relaxed max-w-xs">
               Türkiye'nin en akıllı çalışma planlama platformu. Hedeflerine odaklan, gerisini bize bırak.
@@ -80,7 +80,7 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-white/[0.06]">
-          <p className="text-white/30 text-sm">© 2025 Study OS. Tüm hakları saklıdır.</p>
+          <p className="text-white/30 text-sm">© 2025 Noetic OS. Tüm hakları saklıdır.</p>
           <div className="flex items-center gap-4">
             <Link href="#" className="text-white/30 text-sm hover:text-white/50 transition-colors">
               Gizlilik

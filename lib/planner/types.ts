@@ -138,3 +138,58 @@ export interface WeekDay {
   completed:  number
   total:      number
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Planner — Tasks / Goals / Exams
+// ─────────────────────────────────────────────────────────────────
+export type TaskPriority = 'high' | 'medium' | 'low'
+
+export const TASK_PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string; bg: string; border: string }> = {
+  high:   { label: 'High',   color: 'text-red-700',    bg: 'bg-red-50',    border: 'border-red-200' },
+  medium: { label: 'Medium', color: 'text-amber-700',  bg: 'bg-amber-50',  border: 'border-amber-200' },
+  low:    { label: 'Low',    color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+}
+
+export const DURATION_OPTIONS = [15, 30, 45, 60, 90] as const
+
+// A daily_tasks row created from the Planner (source = 'planner')
+export interface PlannerTask {
+  id:                string
+  user_id:           string
+  date:              string
+  completed:         boolean
+  completed_at:      string | null
+  duration_minutes:  number | null
+  priority:          TaskPriority | null
+  subject_id:        string | null
+  topic_id:          string | null
+  topic_text:        string | null
+  created_at:        string
+  subjects?:         { id: string; name: string; icon: string; color: string } | null
+  topics?:            { id: string; title: string } | null
+}
+
+export interface Goal {
+  id:                   string
+  user_id:              string
+  title:                string
+  subject_id:           string | null
+  topic_id:             string | null
+  deadline:             string | null
+  manual_progress_pct:  number
+  completed:            boolean
+  created_at:           string
+  updated_at:           string
+  subjects?:            { id: string; name: string; icon: string; color: string } | null
+  progress_pct?:        number  // computed: topic progress if linked, else manual_progress_pct
+}
+
+export interface Exam {
+  id:          string
+  user_id:     string
+  name:        string
+  exam_date:   string
+  subject_id:  string | null
+  created_at:  string
+  subjects?:   { id: string; name: string; icon: string; color: string } | null
+}

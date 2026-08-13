@@ -32,6 +32,7 @@ export async function generateDailyTasks(
     .from("daily_tasks")
     .select("id")
     .eq("user_id", userId)
+    .eq("source", "system")
     .eq("date", today);
 
   if (existing && existing.length > 0) {

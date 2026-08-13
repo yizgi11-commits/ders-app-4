@@ -3,21 +3,17 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { STUDY_GOALS, EXAM_TYPES } from '@/lib/onboarding/types'
-import type { StudyGoal, ExamType } from '@/lib/onboarding/types'
+import { STUDY_GOALS } from '@/lib/onboarding/types'
+import type { StudyGoal } from '@/lib/onboarding/types'
 
 interface Props {
   value: StudyGoal
-  examType: ExamType | null
   onChange: (v: StudyGoal) => void
-  onExamChange: (v: ExamType | null) => void
   onNext: () => void
-  onBack: () => void
+  onBack?: () => void
 }
 
-export default function StepGoal({ value, examType, onChange, onExamChange, onNext, onBack }: Props) {
-  const showExam = value === 'universite_sinavi' || value === 'sertifika'
-
+export default function StepGoal({ value, onChange, onNext, onBack }: Props) {
   return (
     <motion.div
       initial={{ opacity: 0, x: 40 }}
@@ -30,22 +26,19 @@ export default function StepGoal({ value, examType, onChange, onExamChange, onNe
         animate={{ opacity: 1, y: 0 }}
         className="text-2xl font-black text-white mb-2"
       >
-        Hedefin ne? 🎯
+        Ne başarmak istiyorsun? 🎯
       </motion.h2>
       <p className="text-sm text-white/35 mb-8">Sana en uygun planı oluşturmamıza yardımcı olur.</p>
 
       {/* Goal cards */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-3 mb-8">
         {STUDY_GOALS.map((goal, i) => (
           <motion.button
             key={goal.value}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.06 }}
-            onClick={() => {
-              onChange(goal.value)
-              if (!showExam) onExamChange(null)
-            }}
+            onClick={() => onChange(goal.value)}
             whileHover={{ y: -3 }}
             whileTap={{ scale: 0.97 }}
             className={cn(
@@ -69,39 +62,13 @@ export default function StepGoal({ value, examType, onChange, onExamChange, onNe
         ))}
       </div>
 
-      {/* Exam type (conditional) */}
-      {showExam && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="mb-6"
-        >
-          <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Sınav Türü</p>
-          <div className="flex flex-wrap gap-2">
-            {EXAM_TYPES.map(e => (
-              <button
-                key={e.value}
-                onClick={() => onExamChange(e.value)}
-                className={cn(
-                  'px-3 py-1.5 rounded-lg border text-xs font-medium transition-all',
-                  examType === e.value
-                    ? 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300'
-                    : 'bg-white/[0.03] border-white/[0.07] text-white/40 hover:text-white/60',
-                )}
-              >
-                {e.label}
-              </button>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
       {/* Navigation */}
       <div className="flex items-center justify-between mt-8">
-        <button onClick={onBack} className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors px-3 py-2">
-          <ArrowLeft className="w-3.5 h-3.5" /> Geri
-        </button>
+        {onBack ? (
+          <button onClick={onBack} className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors px-3 py-2">
+            <ArrowLeft className="w-3.5 h-3.5" /> Geri
+          </button>
+        ) : <div />}
         <motion.button
           onClick={onNext}
           whileHover={{ scale: 1.03 }}

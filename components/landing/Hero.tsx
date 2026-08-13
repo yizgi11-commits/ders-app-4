@@ -50,16 +50,16 @@ export default function Hero() {
           variants={fadeUp}
           className="text-5xl sm:text-6xl lg:text-[76px] font-black text-white leading-[1.04] tracking-tight mb-6"
         >
-          Bugün ne çalışacağını
+          Daha fazla çalış değil.
           <br />
           <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-indigo-300 bg-clip-text text-transparent">
-            düşünme.
+            Daha iyi öğren.
           </span>
         </motion.h1>
 
         <motion.p variants={fadeUp} className="text-lg sm:text-xl text-white/40 max-w-2xl leading-relaxed mb-10">
-          Study OS, çalışma alışkanlığını otomatik planlayan, ilerlemenizi takip eden
-          ve seni motive eden akıllı bir üretkenlik platformu.
+          Noetic OS, bilimsel öğrenme yöntemleri ve yapay zekâ ile
+          öğrenme sürecini yöneten kişisel öğrenme işletim sistemidir.
         </motion.p>
 
         {/* CTAs */}
@@ -132,7 +132,7 @@ export default function Hero() {
                   <div className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0">
                     <Zap className="w-3 h-3 text-white" />
                   </div>
-                  <span className="hidden sm:block text-[11px] font-bold text-white/70">Study OS</span>
+                  <span className="hidden sm:block text-[11px] font-bold text-white/70">Noetic OS</span>
                 </div>
                 {[
                   { icon: '⊞', label: 'Genel Bakış', active: true },

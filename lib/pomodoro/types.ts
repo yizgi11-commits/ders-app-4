@@ -22,17 +22,68 @@ export const SESSION_LABELS: Record<SessionType, string> = {
 export const FOCUS_SESSION_XP = 25
 
 // ─────────────────────────────────────────
+// Focus page — duration / mode / ambient sound / rating
+// ─────────────────────────────────────────
+export type FocusDuration = 25 | 45 | 60 | 'custom'
+
+export const FOCUS_DURATION_OPTIONS: { value: FocusDuration; label: string }[] = [
+  { value: 25,       label: '25 min' },
+  { value: 45,       label: '45 min' },
+  { value: 60,       label: '60 min' },
+  { value: 'custom', label: 'Custom' },
+]
+
+export type FocusMode = 'focus' | 'deep_focus' | 'study' | 'ambient'
+
+export const FOCUS_MODE_LABELS: Record<FocusMode, string> = {
+  focus:      'Focus',
+  deep_focus: 'Deep Focus',
+  study:      'Study',
+  ambient:    'Ambient',
+}
+
+export type AmbientSound = 'rain' | 'white_noise' | 'library' | 'none'
+
+export const AMBIENT_SOUND_LABELS: Record<AmbientSound, string> = {
+  rain:         'Rain',
+  white_noise:  'White Noise',
+  library:      'Library',
+  none:         'None',
+}
+
+export type SessionRating = 'poor' | 'okay' | 'good' | 'excellent'
+
+export const SESSION_RATING_LABELS: Record<SessionRating, string> = {
+  poor:      'Poor',
+  okay:      'Okay',
+  good:      'Good',
+  excellent: 'Excellent',
+}
+
+// How far out the Recall Engine schedules the next review, per rating.
+export const RATING_REVIEW_DAYS: Record<SessionRating, number> = {
+  poor:      1,
+  okay:      7,
+  good:      14,
+  excellent: 14,
+}
+
+// ─────────────────────────────────────────
 // Database row shapes
 // ─────────────────────────────────────────
 export interface PomodoroSession {
   id:               string
   user_id:          string
   task_id:          string | null
+  subject_id:       string | null
+  topic_id:         string | null
   type:             SessionType
   duration_seconds: number
   elapsed_seconds:  number
   status:           SessionStatus
   xp_earned:        number
+  session_rating:   SessionRating | null
+  recall_text:      string | null
   started_at:       string
   completed_at:     string | null
   created_at:       string
@@ -59,15 +110,21 @@ export interface DailyFocusTime {
 // ─────────────────────────────────────────
 // Persisted to localStorage for page-refresh survival
 // ─────────────────────────────────────────
-export interface PersistedTimerState {
-  timerStatus:       TimerStatus
-  sessionType:       SessionType
-  secondsLeft:       number
-  totalSeconds:      number
-  sessionCount:      number          // focus sessions completed this cycle (0–4)
-  activeSessionId:   string | null
-  linkedTaskId:      string | null
-  savedAt:           number          // Date.now() — to detect time passed while away
+export interface PersistedFocusState {
+  timerStatus:     TimerStatus
+  secondsLeft:     number
+  totalSeconds:    number
+  activeSessionId: string | null
+  mode:            FocusMode
+  duration:        FocusDuration
+  customMinutes:   number
+  subjectId:       string | null
+  subjectName:     string | null
+  topicId:         string | null
+  topicName:       string | null
+  linkedTaskId:    string | null
+  ambientSound:    AmbientSound
+  savedAt:         number          // Date.now() — to detect time passed while away
 }
 
 // ─────────────────────────────────────────
@@ -89,4 +146,9 @@ export interface StatsResponse {
   statistics:  StudyStatistics | null
   today:       DailyFocusTime  | null
   weekMinutes: number
+}
+
+export interface FinishSessionResponse {
+  next_review_date: string | null
+  task_completed:   boolean
 }

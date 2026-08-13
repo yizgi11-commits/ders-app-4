@@ -4,27 +4,28 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
-  LayoutDashboard, BookOpen, CalendarDays,
-  BarChart2, Trophy, Settings, Zap, Timer, LogOut, Sparkles, StickyNote, Brain,
+  LayoutDashboard, CalendarDays, BarChart2, Settings, Zap, Timer,
+  LogOut, Brain, Map, Archive, Milestone, User,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
+const commandItem = { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard }
+
 const navItems = [
-  { href: '/dashboard',            label: 'Genel Bakış',   icon: LayoutDashboard },
-  { href: '/dashboard/pomodoro',   label: 'Pomodoro',      icon: Timer },
-  { href: '/dashboard/dersler',    label: 'Derslerim',     icon: BookOpen },
-  { href: '/dashboard/plan',       label: 'Çalışma Planı', icon: CalendarDays },
-  { href: '/dashboard/istatistik', label: 'İstatistikler', icon: BarChart2 },
-  { href: '/dashboard/basarimlar', label: 'Başarımlar',    icon: Trophy },
-  { href: '/dashboard/ai-coach',   label: 'AI Koç',        icon: Sparkles },
-  { href: '/dashboard/notlar',     label: 'Notlar',        icon: StickyNote },
-  { href: '/dashboard/flashcards', label: 'Flash Kartlar',  icon: Brain },
+  { href: '/dashboard/focus',    label: 'Focus',    icon: Timer },
+  { href: '/dashboard/atlas',    label: 'Atlas',    icon: Map },
+  { href: '/dashboard/planner',  label: 'Planner',  icon: CalendarDays },
+  { href: '/dashboard/vault',    label: 'Vault',    icon: Archive },
+  { href: '/dashboard/recall',   label: 'Recall',   icon: Brain },
+  { href: '/dashboard/journey',  label: 'Journey',  icon: Milestone },
+  { href: '/dashboard/insights', label: 'Insights', icon: BarChart2 },
 ]
 
 const bottomItems = [
-  { href: '/dashboard/ayarlar', label: 'Ayarlar', icon: Settings },
+  { href: '/dashboard/profile',  label: 'Profile',  icon: User },
+  { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]
 
 export default function Sidebar() {
@@ -36,6 +37,42 @@ export default function Sidebar() {
     await supabase.auth.signOut()
     router.push('/giris')
     router.refresh()
+  }
+
+  function renderItem({ href, label, icon: Icon }: { href: string; label: string; icon: typeof LayoutDashboard }) {
+    const active = pathname === href
+    return (
+      <Link key={href} href={href}>
+        <motion.div
+          whileHover={{ x: 2 }}
+          whileTap={{ scale: 0.97 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+          className={cn(
+            'relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150',
+            active ? 'text-white' : 'text-white/35 hover:text-white/65 hover:bg-white/[0.04]'
+          )}
+        >
+          {active && (
+            <motion.div
+              layoutId="sidebar-pill"
+              className="absolute inset-0 bg-white/[0.09] rounded-lg border border-white/[0.07]"
+              transition={{ type: 'spring', stiffness: 420, damping: 36 }}
+            />
+          )}
+          <Icon className={cn(
+            'w-4 h-4 shrink-0 relative z-10 transition-colors',
+            active ? 'text-indigo-400' : ''
+          )} />
+          <span className="relative z-10 text-[13px]">{label}</span>
+          {active && (
+            <motion.div
+              layoutId="sidebar-dot"
+              className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400 relative z-10"
+            />
+          )}
+        </motion.div>
+      </Link>
+    )
   }
 
   return (
@@ -51,53 +88,23 @@ export default function Sidebar() {
           <Zap className="w-4 h-4 text-white" />
         </motion.div>
         <div>
-          <p className="text-sm font-bold text-white leading-tight tracking-tight">Study OS</p>
-          <p className="text-[10px] text-white/25 tracking-widest uppercase">Öğrenci Platformu</p>
+          <p className="text-sm font-bold text-white leading-tight tracking-tight">Noetic OS</p>
+          <p className="text-[10px] text-white/25 tracking-widest uppercase">Öğrenme İşletim Sistemi</p>
         </div>
       </div>
 
       {/* Section label */}
       <div className="px-5 mb-1.5">
-        <p className="text-[9px] font-semibold text-white/20 uppercase tracking-[0.12em]">Gezinti</p>
+        <p className="text-[9px] font-semibold text-white/20 uppercase tracking-[0.12em]">Command Center</p>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-2.5 flex flex-col gap-0.5 overflow-y-auto">
-        {navItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href
-          return (
-            <Link key={href} href={href}>
-              <motion.div
-                whileHover={{ x: 2 }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                className={cn(
-                  'relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150',
-                  active ? 'text-white' : 'text-white/35 hover:text-white/65 hover:bg-white/[0.04]'
-                )}
-              >
-                {active && (
-                  <motion.div
-                    layoutId="sidebar-pill"
-                    className="absolute inset-0 bg-white/[0.09] rounded-lg border border-white/[0.07]"
-                    transition={{ type: 'spring', stiffness: 420, damping: 36 }}
-                  />
-                )}
-                <Icon className={cn(
-                  'w-4 h-4 shrink-0 relative z-10 transition-colors',
-                  active ? 'text-indigo-400' : ''
-                )} />
-                <span className="relative z-10 text-[13px]">{label}</span>
-                {active && (
-                  <motion.div
-                    layoutId="sidebar-dot"
-                    className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400 relative z-10"
-                  />
-                )}
-              </motion.div>
-            </Link>
-          )
-        })}
+        {renderItem(commandItem)}
+
+        <div className="my-2 mx-3 border-t border-white/[0.06]" />
+
+        {navItems.map(renderItem)}
       </nav>
 
       {/* Bottom */}

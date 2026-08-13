@@ -3,16 +3,13 @@
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-import type {
-  OnboardingData, StudyGoal, ExamType, PreferredHours,
-  FocusIntensity, ConsistencyLevel,
-} from '@/lib/onboarding/types'
+import type { OnboardingData } from '@/lib/onboarding/types'
 import { ONBOARDING_STEPS, DEFAULT_SUBJECTS } from '@/lib/onboarding/types'
-import StepWelcome from './StepWelcome'
 import StepGoal from './StepGoal'
-import StepTime from './StepTime'
+import StepGrade from './StepGrade'
 import StepSubjects from './StepSubjects'
-import StepHabits from './StepHabits'
+import StepDailyGoal from './StepDailyGoal'
+import StepDifficulty from './StepDifficulty'
 import StepReady from './StepReady'
 
 interface Props {
@@ -26,14 +23,12 @@ export default function OnboardingWizard({ userName }: Props) {
 
   // Form state
   const [data, setData] = useState<OnboardingData>({
-    displayName:      userName,
-    studyGoal:        'genel_basari',
-    examType:         null,
-    dailyAvailMins:   120,
-    weakSubjects:     [],
-    preferredHours:   'evening',
-    focusIntensity:   'normal',
-    consistencyLevel: 'sometimes',
+    displayName:    userName,
+    studyGoal:      'ders_basarisi',
+    gradeLevel:     null,
+    subjects:       [],
+    dailyGoalHours: 2,
+    difficulties:   [],
   })
 
   function update<K extends keyof OnboardingData>(key: K, value: OnboardingData[K]) {
@@ -77,7 +72,8 @@ export default function OnboardingWizard({ userName }: Props) {
   }, [data, router])
 
   // Available subjects for the subject step
-  const availableSubjects = DEFAULT_SUBJECTS[data.studyGoal] ?? DEFAULT_SUBJECTS.genel_basari
+  const availableSubjects = DEFAULT_SUBJECTS[data.studyGoal] ?? DEFAULT_SUBJECTS.ders_basarisi
+  const isReadyStep = step === totalSteps - 1
 
   return (
     <div className="min-h-screen bg-[#080810] flex flex-col items-center justify-center relative overflow-hidden">
@@ -97,90 +93,100 @@ export default function OnboardingWizard({ userName }: Props) {
       </div>
 
       {/* Progress bar */}
-      {step > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="fixed top-0 left-0 right-0 z-50"
-        >
-          <div className="h-1 bg-white/[0.05]">
-            <motion.div
-              className="h-full bg-gradient-to-r from-indigo-500 to-violet-500"
-              animate={{ width: `${(step / (totalSteps - 1)) * 100}%` }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="fixed top-0 left-0 right-0 z-50"
+      >
+        <div className="h-1 bg-white/[0.05]">
+          <motion.div
+            className="h-full bg-gradient-to-r from-indigo-500 to-violet-500"
+            animate={{ width: `${(step / (totalSteps - 1)) * 100}%` }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          />
+        </div>
+        <div className="flex items-center justify-center gap-2 py-3">
+          {ONBOARDING_STEPS.map((s, i) => (
+            <div
+              key={s.key}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                i === step ? 'bg-indigo-400 scale-125' :
+                i < step ? 'bg-indigo-500/40' :
+                'bg-white/10'
+              }`}
             />
-          </div>
-          <div className="flex items-center justify-center gap-2 py-3">
-            {ONBOARDING_STEPS.map((s, i) => (
-              <div
-                key={s.key}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  i === step ? 'bg-indigo-400 scale-125' :
-                  i < step ? 'bg-indigo-500/40' :
-                  'bg-white/10'
-                }`}
-              />
-            ))}
-          </div>
-        </motion.div>
-      )}
+          ))}
+        </div>
+      </motion.div>
 
       {/* Step content */}
       <div className="relative z-10 w-full max-w-xl px-6">
+        {!isReadyStep && (
+          <motion.p
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center text-xs font-semibold text-white/25 uppercase tracking-[0.15em] mb-3"
+          >
+            Noetic seni tanısın.
+          </motion.p>
+        )}
+
         <AnimatePresence mode="wait">
           {step === 0 && (
-            <StepWelcome
-              key="welcome"
-              name={data.displayName}
+            <StepGoal
+              key="goal"
+              value={data.studyGoal}
+              onChange={(g) => setData(prev => ({ ...prev, studyGoal: g, subjects: [] }))}
               onNext={goNext}
             />
           )}
           {step === 1 && (
-            <StepGoal
-              key="goal"
-              value={data.studyGoal}
-              examType={data.examType}
-              onChange={(g) => update('studyGoal', g)}
-              onExamChange={(e) => update('examType', e)}
+            <StepGrade
+              key="grade"
+              value={data.gradeLevel}
+              onChange={(v) => update('gradeLevel', v)}
               onNext={goNext}
               onBack={goBack}
             />
           )}
           {step === 2 && (
-            <StepTime
-              key="time"
-              dailyMins={data.dailyAvailMins}
-              preferredHours={data.preferredHours}
-              onDailyChange={(v) => update('dailyAvailMins', v)}
-              onHoursChange={(v) => update('preferredHours', v)}
-              onNext={goNext}
-              onBack={goBack}
-            />
-          )}
-          {step === 3 && (
             <StepSubjects
               key="subjects"
               subjects={availableSubjects}
-              weakSubjects={data.weakSubjects}
-              onToggleWeak={(name) => {
+              selected={data.subjects}
+              onToggle={(name) => {
                 setData(prev => ({
                   ...prev,
-                  weakSubjects: prev.weakSubjects.includes(name)
-                    ? prev.weakSubjects.filter(n => n !== name)
-                    : [...prev.weakSubjects, name],
+                  subjects: prev.subjects.includes(name)
+                    ? prev.subjects.filter(n => n !== name)
+                    : [...prev.subjects, name],
                 }))
               }}
               onNext={goNext}
               onBack={goBack}
             />
           )}
+          {step === 3 && (
+            <StepDailyGoal
+              key="daily-goal"
+              value={data.dailyGoalHours}
+              onChange={(v) => update('dailyGoalHours', v)}
+              onNext={goNext}
+              onBack={goBack}
+            />
+          )}
           {step === 4 && (
-            <StepHabits
-              key="habits"
-              intensity={data.focusIntensity}
-              consistency={data.consistencyLevel}
-              onIntensityChange={(v) => update('focusIntensity', v)}
-              onConsistencyChange={(v) => update('consistencyLevel', v)}
+            <StepDifficulty
+              key="difficulty"
+              value={data.difficulties}
+              onToggle={(d) => {
+                setData(prev => ({
+                  ...prev,
+                  difficulties: prev.difficulties.includes(d)
+                    ? prev.difficulties.filter(x => x !== d)
+                    : [...prev.difficulties, d],
+                }))
+              }}
               onNext={goNext}
               onBack={goBack}
             />
@@ -188,7 +194,6 @@ export default function OnboardingWizard({ userName }: Props) {
           {step === 5 && (
             <StepReady
               key="ready"
-              data={data}
               loading={loading}
               onComplete={handleComplete}
               onBack={goBack}

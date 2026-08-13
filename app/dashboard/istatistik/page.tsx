@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { fetchAnalyticsData } from '@/lib/analytics/queries'
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard'
 
-export const metadata = { title: 'İstatistikler — Study OS' }
+export const metadata = { title: 'İstatistikler — Noetic OS' }
 
 // Revalidate every 5 minutes so data stays fresh but server renders fast
 export const revalidate = 300

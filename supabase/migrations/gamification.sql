@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════
--- Study OS — Gamification Schema Migration
+-- Noetic OS — Gamification Schema Migration
 -- Run this in: Supabase Dashboard → SQL Editor
 -- ═══════════════════════════════════════════════════════════════
 

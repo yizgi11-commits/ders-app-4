@@ -7,7 +7,7 @@ create table if not exists user_profiles (
   id                  uuid        default gen_random_uuid() primary key,
   user_id             uuid        references auth.users(id) on delete cascade not null unique,
   display_name        text,
-  study_goal          text,           -- 'universite_sinavi', 'lise_sinavi', 'genel_basari', 'sertifika'
+  study_goal          text,           -- 'sinav_hazirligi', 'ders_basarisi', 'duzenli_aliskanlik', 'genel_gelisim'
   exam_type           text,           -- 'YKS', 'LGS', 'KPSS', 'DGS', 'ALES', 'diger'
   daily_available_mins int          not null default 120,
   preferred_hours     text          not null default 'afternoon',  -- 'morning','afternoon','evening','night'

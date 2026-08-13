@@ -3,7 +3,7 @@ import type { UserStatsForAI } from './types'
 // ─────────────────────────────────────────────────────────────────
 // SYSTEM PROMPT (shared, cached by Anthropic)
 // ─────────────────────────────────────────────────────────────────
-export const SYSTEM_PROMPT = `Sen Study OS'un yapay zeka destekli çalışma koçusun.
+export const SYSTEM_PROMPT = `Sen Noetic OS'un yapay zeka destekli çalışma koçusun.
 Öğrencilerin çalışma alışkanlıklarını analiz ederek kişiselleştirilmiş, Türkçe içgörüler üretiyorsun.
 
 KURALLAR:

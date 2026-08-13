@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { ArrowRight, ArrowLeft, AlertTriangle, Check } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SubjectInfo {
@@ -12,13 +12,13 @@ interface SubjectInfo {
 
 interface Props {
   subjects: SubjectInfo[]
-  weakSubjects: string[]
-  onToggleWeak: (name: string) => void
+  selected: string[]
+  onToggle: (name: string) => void
   onNext: () => void
   onBack: () => void
 }
 
-export default function StepSubjects({ subjects, weakSubjects, onToggleWeak, onNext, onBack }: Props) {
+export default function StepSubjects({ subjects, selected, onToggle, onNext, onBack }: Props) {
   return (
     <motion.div
       initial={{ opacity: 0, x: 40 }}
@@ -31,32 +31,29 @@ export default function StepSubjects({ subjects, weakSubjects, onToggleWeak, onN
         animate={{ opacity: 1, y: 0 }}
         className="text-2xl font-black text-white mb-2"
       >
-        Zayıf derslerini seç 📚
+        Hangi dersleri çalışıyorsun? 📚
       </motion.h2>
-      <p className="text-sm text-white/35 mb-3">
-        Bu derslere programında daha fazla zaman ayrılacak.
-      </p>
-      <p className="text-[11px] text-white/20 mb-8">
-        Hedefe göre oluşturulan dersler otomatik eklenecek. İstediğin zaman değiştirebilirsin.
+      <p className="text-sm text-white/35 mb-8">
+        İstediğin kadar seçebilirsin — programın bu derslere göre oluşturulacak.
       </p>
 
       {/* Subject grid */}
       <div className="grid grid-cols-2 gap-3 mb-8">
         {subjects.map((sub, i) => {
-          const isWeak = weakSubjects.includes(sub.name)
+          const isSelected = selected.includes(sub.name)
           return (
             <motion.button
               key={sub.name}
               initial={{ opacity: 0, y: 16, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ delay: i * 0.06, type: 'spring', stiffness: 300, damping: 25 }}
-              onClick={() => onToggleWeak(sub.name)}
+              onClick={() => onToggle(sub.name)}
               whileHover={{ y: -3 }}
               whileTap={{ scale: 0.95 }}
               className={cn(
                 'relative flex items-center gap-3 p-4 rounded-xl border transition-all text-left',
-                isWeak
-                  ? 'bg-amber-500/10 border-amber-500/25'
+                isSelected
+                  ? 'bg-indigo-500/15 border-indigo-500/30'
                   : 'bg-white/[0.03] border-white/[0.07] hover:border-white/[0.14]',
               )}
             >
@@ -71,22 +68,16 @@ export default function StepSubjects({ subjects, weakSubjects, onToggleWeak, onN
               {/* Name */}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white">{sub.name}</p>
-                {isWeak && (
-                  <p className="text-[10px] text-amber-400/70 flex items-center gap-1 mt-0.5">
-                    <AlertTriangle className="w-3 h-3" />
-                    Zayıf — ekstra odak
-                  </p>
-                )}
               </div>
 
               {/* Check indicator */}
-              {isWeak && (
+              {isSelected && (
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center"
+                  className="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0"
                 >
-                  <Check className="w-3 h-3 text-amber-400" />
+                  <Check className="w-3 h-3 text-indigo-300" />
                 </motion.div>
               )}
             </motion.button>
@@ -97,9 +88,9 @@ export default function StepSubjects({ subjects, weakSubjects, onToggleWeak, onN
       {/* Info */}
       <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 mb-8">
         <p className="text-[11px] text-white/30 text-center">
-          {weakSubjects.length === 0
-            ? '💡 Zayıf ders seçmezsen tüm derslere eşit zaman ayrılır.'
-            : `${weakSubjects.length} zayıf ders seçildi — bu derslere 1.5x fazla zaman ayrılacak.`
+          {selected.length === 0
+            ? '💡 Ders seçmezsen bu listedeki tüm dersler eklenir.'
+            : `${selected.length} ders seçildi.`
           }
         </p>
       </div>

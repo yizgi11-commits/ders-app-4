@@ -8,7 +8,12 @@ export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user || user.email !== 'yizgi11@gmail.com') {
+  // Check admin access
+  const isOwner = user?.email === 'yizgi11@gmail.com'
+  const isTestAdmin = process.env.NODE_ENV === 'development' && 
+                      user?.email === process.env.NEXT_PUBLIC_TEST_ADMIN_EMAIL
+
+  if (!user || (!isOwner && !isTestAdmin)) {
     return NextResponse.json({ error: 'Yetkisiz' }, { status: 403 })
   }
 

@@ -1,5 +1,5 @@
 -- ============================================================
--- Study OS — Pomodoro Schema
+-- Noetic OS — Pomodoro Schema
 -- Run in Supabase SQL Editor after schema.sql
 -- ============================================================
 
