@@ -12,6 +12,7 @@ export interface Note {
   user_id: string
   folder_id: string | null
   subject_id: string | null
+  topic_id: string | null
   title: string
   content: string
   content_preview: string
@@ -26,6 +27,8 @@ export interface Note {
   // joined
   folder?: NoteFolder
   subject_name?: string
+  subjects?: { id: string; name: string; icon: string; color: string } | null
+  topics?: { id: string; title: string } | null
 }
 
 export type NoteFilter = 'all' | 'pinned' | 'favorites' | 'archived' | 'recent'

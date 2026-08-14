@@ -30,7 +30,7 @@ export default function FlashcardWidget() {
 
   if (!hasAny) {
     return (
-      <Link href="/dashboard/flashcards">
+      <Link href="/dashboard/vault">
         <motion.div
           whileHover={{ y: -2 }}
           className="bg-white rounded-2xl border border-border p-4 flex items-center gap-3 hover:shadow-sm transition-all cursor-pointer"

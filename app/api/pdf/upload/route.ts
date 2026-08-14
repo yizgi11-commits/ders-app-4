@@ -70,6 +70,25 @@ export async function POST(req: NextRequest) {
   // We send up to 8000 chars to Claude for flashcard generation
   const generationText = extractedText.slice(0, 8000)
 
+  // ── Register the document so Vault can list it and Noetic Assist ──
+  // ── can work on its text later (storage alone keeps no metadata). ──
+  const subjectId = (formData.get('subject_id') as string | null) || null
+  const topicId   = (formData.get('topic_id')   as string | null) || null
+
+  const { data: doc } = await supabase
+    .from('documents')
+    .insert({
+      user_id:        user.id,
+      name:           file.name,
+      storage_path:   uploadError ? null : path,
+      size_bytes:     file.size,
+      extracted_text: extractedText.slice(0, 200_000),
+      subject_id:     subjectId,
+      topic_id:       topicId,
+    })
+    .select('id')
+    .single()
+
   return NextResponse.json({
     text:           generationText,
     preview:        previewText,
@@ -77,5 +96,6 @@ export async function POST(req: NextRequest) {
     path:           uploadError ? null : path,
     name:           file.name,
     size:           file.size,
+    document_id:    doc?.id ?? null,
   })
 }

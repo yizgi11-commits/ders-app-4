@@ -12,13 +12,15 @@ export async function GET(req: NextRequest) {
   const subjectId = searchParams.get('subject_id')
   const topicId   = searchParams.get('topic_id')
   const dueToday  = searchParams.get('due_today') === '1'
+  const savedOnly = searchParams.get('saved') === '1'
   const today     = new Date().toISOString().split('T')[0]
 
   let query = supabase
     .from('flashcards')
     .select(`
       *,
-      subjects ( id, name, icon, color )
+      subjects ( id, name, icon, color ),
+      topics ( id, title )
     `)
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
@@ -26,6 +28,7 @@ export async function GET(req: NextRequest) {
   if (subjectId) query = query.eq('subject_id', subjectId)
   if (topicId)   query = query.eq('topic_id', topicId)
   if (dueToday)  query = query.lte('next_review_date', today)
+  if (savedOnly) query = query.eq('is_favorite', true)
 
   const { data, error } = await query
 

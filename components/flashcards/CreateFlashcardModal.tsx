@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X, Brain, ChevronDown, Save } from 'lucide-react'
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { X, Brain, Save } from 'lucide-react'
 import type { FlashcardWithSubject } from '@/lib/flashcards/types'
-
-interface Subject { id: string; name: string; icon: string; color: string }
+import AtlasLinkPicker from '@/components/vault/AtlasLinkPicker'
 
 interface Props {
   initial?:   FlashcardWithSubject | null
@@ -29,17 +28,10 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
 
   const [front, setFront]       = useState(initial?.front ?? '')
   const [back, setBack]         = useState(initial?.back ?? '')
-  const [subjectId, setSubject] = useState(initial?.subject_id ?? '')
-  const [subjects, setSubjects] = useState<Subject[]>([])
+  const [subjectId, setSubjectId] = useState<string | null>(initial?.subject_id ?? null)
+  const [topicId, setTopicId]     = useState<string | null>(initial?.topic_id ?? null)
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState('')
-
-  useEffect(() => {
-    fetch('/api/subjects')
-      .then(r => r.json())
-      .then(d => setSubjects(d.subjects ?? []))
-      .catch(() => {})
-  }, [])
 
   async function handleSave() {
     if (!front.trim() || !back.trim()) {
@@ -50,12 +42,19 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
     setError('')
 
     try {
+      const payload = {
+        front:      front.trim(),
+        back:       back.trim(),
+        subject_id: subjectId,
+        topic_id:   topicId,
+      }
+
       if (isEdit && initial) {
         // Update
         const res = await fetch(`/api/flashcards/${initial.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ front: front.trim(), back: back.trim(), subject_id: subjectId || null }),
+          body: JSON.stringify(payload),
         })
         const data = await res.json()
         if (!res.ok) { setError(data.error ?? 'Kaydedilemedi'); return }
@@ -66,7 +65,7 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
         const res = await fetch('/api/flashcards', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ front: front.trim(), back: back.trim(), subject_id: subjectId || null }),
+          body: JSON.stringify(payload),
         })
         const data = await res.json()
         if (!res.ok) { setError(data.error ?? 'Kaydedilemedi'); return }
@@ -143,25 +142,13 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
             />
           </div>
 
-          {/* Subject */}
-          <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
-              Ders (isteğe bağlı)
-            </label>
-            <div className="relative">
-              <select
-                value={subjectId}
-                onChange={e => setSubject(e.target.value)}
-                className="w-full text-sm border border-border rounded-xl px-3 py-2.5 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 pr-8"
-              >
-                <option value="">— Ders yok</option>
-                {subjects.map(s => (
-                  <option key={s.id} value={s.id}>{s.icon} {s.name}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            </div>
-          </div>
+          {/* Atlas link — Subject > Topic */}
+          <AtlasLinkPicker
+            subjectId={subjectId}
+            topicId={topicId}
+            onChange={(s, t) => { setSubjectId(s); setTopicId(t) }}
+            label="Atlas bağlantısı (isteğe bağlı)"
+          />
 
           {/* Preview */}
           {(front || back) && (

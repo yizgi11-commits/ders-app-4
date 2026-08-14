@@ -22,7 +22,8 @@ export async function GET(req: NextRequest) {
     .select(`
       *,
       folder:note_folders(id, name, color, icon),
-      subject:subjects(name)
+      subjects(id, name, icon, color),
+      topics(id, title)
     `)
     .eq('user_id', user.id)
     .order('is_pinned', { ascending: false })
@@ -64,14 +65,11 @@ export async function GET(req: NextRequest) {
 
   if (error) return safeError(error, 'Notlar alınamadı')
 
-  // Flatten joined subject name
+  // Keep the flattened subject_name for existing consumers, while leaving
+  // the joined `subjects`/`topics` objects in place for Vault's Atlas label.
   const notes = (data ?? []).map((n: Record<string, unknown>) => {
-    const subject = n.subject as { name?: string } | null
-    return {
-      ...n,
-      subject_name: subject?.name ?? null,
-      subject: undefined,
-    }
+    const subject = n.subjects as { name?: string } | null
+    return { ...n, subject_name: subject?.name ?? null }
   })
 
   return NextResponse.json({ notes })

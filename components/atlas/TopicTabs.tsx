@@ -125,7 +125,7 @@ function LearnTab({ notes }: { notes: Note[] }) {
           <div className="flex items-start justify-between gap-3">
             <p className="text-sm font-bold text-gray-900">{note.title}</p>
             <Link
-              href="/dashboard/notlar"
+              href="/dashboard/vault"
               className="flex items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-700 shrink-0"
             >
               Open <ExternalLink className="w-3 h-3" />

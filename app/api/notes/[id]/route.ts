@@ -49,7 +49,7 @@ export async function PATCH(
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
   const body = await req.json()
-  const allowed = ['title', 'content', 'folder_id', 'subject_id', 'tags', 'is_pinned', 'is_archived', 'is_favorite']
+  const allowed = ['title', 'content', 'folder_id', 'subject_id', 'topic_id', 'tags', 'is_pinned', 'is_archived', 'is_favorite']
   const updates: Record<string, unknown> = {}
 
   for (const key of allowed) {

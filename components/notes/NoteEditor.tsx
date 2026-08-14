@@ -7,11 +7,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Bold, Italic, Code, Quote, Heading, List, CheckSquare,
   Eye, Edit3, Pin, Heart, Archive, Trash2, ChevronLeft,
-  Sparkles, X, BookOpen, FolderOpen, Tag, Type,
+  X, FolderOpen, Tag, Type,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Note } from '@/lib/notes/types'
-import AIPanel from './AIPanel'
+import AtlasLinkPicker from '@/components/vault/AtlasLinkPicker'
 
 interface Props {
   note: Note
@@ -135,11 +135,10 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
   const [preview, setPreview]   = useState(false)
   const [monoFont, setMonoFont] = useState(false)
   const [saveState, setSaveState] = useState<SaveState>('saved')
-  const [showAI, setShowAI]     = useState(false)
   const [showMeta, setShowMeta] = useState(false)
-  const [subjects, setSubjects] = useState<Array<{ id: string; name: string }>>([])
   const [folders, setFolders]   = useState<Array<{ id: string; name: string; icon: string }>>([])
   const [localSubjectId, setLocalSubjectId] = useState(note.subject_id)
+  const [localTopicId, setLocalTopicId]     = useState(note.topic_id)
   const [localFolderId, setLocalFolderId]   = useState(note.folder_id)
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags]         = useState<string[]>(note.tags)
@@ -154,7 +153,6 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
 
   // Fetch meta lists
   useEffect(() => {
-    fetch('/api/subjects').then(r => r.json()).then(d => setSubjects(d.subjects ?? []))
     fetch('/api/notes/folders').then(r => r.json()).then(d => setFolders(d.folders ?? []))
   }, [])
 
@@ -167,6 +165,7 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
     setIsFavorite(note.is_favorite)
     setIsArchived(note.is_archived)
     setLocalSubjectId(note.subject_id)
+    setLocalTopicId(note.topic_id)
     setLocalFolderId(note.folder_id)
     setLastSaved(new Date(note.updated_at))
     setSaveState('saved')
@@ -263,9 +262,10 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
     await onUpdate(note.id, { [field]: value })
   }
 
-  async function updateSubject(id: string | null) {
-    setLocalSubjectId(id)
-    await onUpdate(note.id, { subject_id: id })
+  async function updateAtlasLink(subjectId: string | null, topicId: string | null) {
+    setLocalSubjectId(subjectId)
+    setLocalTopicId(topicId)
+    await onUpdate(note.id, { subject_id: subjectId, topic_id: topicId })
   }
 
   async function updateFolder(id: string | null) {
@@ -351,20 +351,6 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
         >
           <Tag className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Meta</span>
-        </button>
-
-        {/* AI panel */}
-        <button
-          onClick={() => setShowAI(!showAI)}
-          className={cn(
-            'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors',
-            showAI
-              ? 'bg-violet-50 text-violet-700'
-              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
-          )}
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">AI Araçları</span>
         </button>
 
         {/* Delete */}
@@ -514,22 +500,13 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
                   </button>
                 </div>
 
-                {/* Subject */}
-                <div>
-                  <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">
-                    <BookOpen className="w-3 h-3" /> Ders
-                  </label>
-                  <select
-                    value={localSubjectId ?? ''}
-                    onChange={e => updateSubject(e.target.value || null)}
-                    className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                  >
-                    <option value="">Ders seçin</option>
-                    {subjects.map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
-                </div>
+                {/* Atlas link — Subject > Topic */}
+                <AtlasLinkPicker
+                  compact
+                  subjectId={localSubjectId}
+                  topicId={localTopicId}
+                  onChange={updateAtlasLink}
+                />
 
                 {/* Folder */}
                 <div>
@@ -580,16 +557,6 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
           )}
         </AnimatePresence>
 
-        {/* AI Panel */}
-        <AnimatePresence>
-          {showAI && (
-            <AIPanel
-              noteId={note.id}
-              noteContent={content}
-              onClose={() => setShowAI(false)}
-            />
-          )}
-        </AnimatePresence>
       </div>
     </div>
   )
