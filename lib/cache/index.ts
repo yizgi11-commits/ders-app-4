@@ -19,6 +19,7 @@ export const cacheKey = {
   weeklyProgress:  (weekKey: string) => `dashboard:weekly:${weekKey}`,
   aiInsights:      (date: string)    => `ai:insights:${date}`,
   aiGenerating:    ()                => `ai:insights:generating`,
+  noeticInsight:   (date: string)    => `ai:noetic-insight:${date}`,
   achievements:    ()                => `achievements:unlocked`,
 }
 

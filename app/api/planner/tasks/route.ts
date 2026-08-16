@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sanitizeString, validateUUID, safeError, MAX } from '@/lib/security'
 import { DURATION_OPTIONS, type TaskPriority } from '@/lib/planner/types'
+import { checkAndUnlockAchievements } from '@/lib/gamification/check'
 
 const VALID_PRIORITIES: TaskPriority[] = ['high', 'medium', 'low']
 
@@ -86,5 +87,8 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) return safeError(error, 'Görev oluşturulamadı')
+
+  void checkAndUnlockAchievements(supabase, user.id, 'planner')
+
   return NextResponse.json(data, { status: 201 })
 }

@@ -4,6 +4,8 @@ import Sidebar from '@/components/dashboard/Sidebar'
 import Header from '@/components/dashboard/Header'
 import PageTransition from '@/components/dashboard/PageTransition'
 import GamificationProvider from '@/components/gamification/GamificationProvider'
+import AssistProvider from '@/components/assist/AssistProvider'
+import FloatingAssist from '@/components/assist/FloatingAssist'
 
 export default async function DashboardLayout({
   children,
@@ -31,15 +33,18 @@ export default async function DashboardLayout({
 
   return (
     <GamificationProvider>
-      <div className="flex min-h-screen bg-[oklch(0.979_0.003_250)]">
-        <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <Header userName={ad} userEmail={email} />
-          <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
-            <PageTransition>{children}</PageTransition>
-          </main>
+      <AssistProvider>
+        <div className="flex min-h-screen bg-[oklch(0.979_0.003_250)]">
+          <Sidebar />
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <Header userName={ad} userEmail={email} />
+            <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
+              <PageTransition>{children}</PageTransition>
+            </main>
+          </div>
         </div>
-      </div>
+        <FloatingAssist />
+      </AssistProvider>
     </GamificationProvider>
   )
 }

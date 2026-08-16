@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { validateUUID, safeError } from '@/lib/security'
 import { RECALL_GRADES, intervalForGrade, type RecallGrade } from '@/lib/recall/types'
+import { checkAndUnlockAchievements } from '@/lib/gamification/check'
 
 // POST /api/recall/review
 // Body: { flashcard_id: string, grade: RecallGrade }
@@ -59,9 +60,12 @@ export async function POST(req: NextRequest) {
     reviewed_at:   now,
   })
 
+  const newAchievements = await checkAndUnlockAchievements(supabase, user.id, 'recall')
+
   return NextResponse.json({
     flashcard:        updated,
     next_review_date: nextStr,
     interval_days:    days,
+    new_achievements: newAchievements,
   })
 }

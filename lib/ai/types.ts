@@ -2,22 +2,6 @@
 // AI Study Coach — shared types
 // ─────────────────────────────────────────────────────────────────
 
-export type InsightType = 'positive' | 'warning' | 'tip' | 'neutral'
-
-export interface Insight {
-  type:    InsightType
-  icon:    string        // emoji
-  text:    string        // Turkish, personalized
-  metric?: string        // e.g. "+22%", "3 gün"
-}
-
-export interface DailyCoachData {
-  insights:     Insight[]   // 3–5 insights
-  motivation:   string      // single motivational sentence
-  greeting:     string      // personalized greeting line
-  generated_at: string      // ISO string
-}
-
 export interface WeeklyReport {
   summary:              string      // 2–3 sentence summary
   productivity_trend:   'improving' | 'stable' | 'declining'
@@ -31,27 +15,7 @@ export interface WeeklyReport {
   generated_at:         string
 }
 
-export interface Recommendations {
-  difficulty_adjustment: 'increase' | 'decrease' | 'maintain'
-  difficulty_reason:     string
-  optimal_session_mins:  number    // recommended Pomodoro duration
-  break_tip:             string
-  focus_tip:             string
-  workload_tip:          string
-  generated_at:          string
-}
-
-// ─── DB row ──────────────────────────────────────────────────────
-export interface AIInsightRow {
-  id:           string
-  user_id:      string
-  insight_type: 'daily' | 'weekly' | 'recommendations'
-  cache_key:    string           // date "YYYY-MM-DD" or week "YYYY-Www"
-  content:      DailyCoachData | WeeklyReport | Recommendations
-  generated_at: string
-}
-
-// ─── Stats snapshot passed to AI ────────────────────────────────
+// ─── Stats snapshot used by collect-stats.ts / smart-weekly.ts ────
 export interface UserStatsForAI {
   // XP & Level
   totalXp:          number

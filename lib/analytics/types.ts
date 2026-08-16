@@ -60,6 +60,22 @@ export interface ProductivityScore {
   xp_growth: number         // 0-100 — xp in last 7 days vs weekly xp target
 }
 
+// ── Hourly productivity ────────────────────────────────────────────
+
+export interface HourlyStat {
+  hour:     number   // 0-23
+  minutes:  number   // focus minutes logged in this hour, last 30 days
+  sessions: number
+}
+
+// ── Recall (this week) ─────────────────────────────────────────────
+
+export interface RecallWeekStat {
+  total:       number
+  successful:  number   // graded good or easy
+  successRate: number   // 0-100
+}
+
 // ── Insights ───────────────────────────────────────────────────────
 
 export type InsightType = 'positive' | 'warning' | 'neutral' | 'achievement'
@@ -89,6 +105,8 @@ export interface AnalyticsData {
   // Aggregated
   subjectStats:  SubjectStat[]
   pomodoroStats: PomodoroStat
+  hourlyStats:   HourlyStat[]     // always 24 entries, hour 0-23
+  recallWeek:    RecallWeekStat
 
   // Derived
   weeklyComparison:  WeeklyComparison

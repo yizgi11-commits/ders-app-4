@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
   DailyFocusStat, DailyTaskStat, DailyXPStat,
   SubjectStat, PomodoroStat, AnalyticsData,
+  HourlyStat, RecallWeekStat,
 } from './types'
 import { computeProductivityScore } from './productivity'
 import { generateInsights }         from './insights'
@@ -35,6 +36,7 @@ export async function fetchAnalyticsData(
     tasksRes,
     pomodoroSessionsRes,
     statsRes,
+    recallRes,
   ] = await Promise.all([
     // 1. User XP
     supabase
@@ -80,6 +82,13 @@ export async function fetchAnalyticsData(
       .select('total_focus_minutes, total_sessions_completed, total_sessions_interrupted, current_session_streak, longest_streak_sessions')
       .eq('user_id', userId)
       .maybeSingle(),
+
+    // 7. Recall reviews — last 7 days (for the weekly Recall metric)
+    supabase
+      .from('recall_reviews')
+      .select('grade')
+      .eq('user_id', userId)
+      .gte('reviewed_at', daysAgoStr(6) + 'T00:00:00'),
   ])
 
   // ── Extract raw data ─────────────────────────────────────────────
@@ -192,6 +201,31 @@ export async function fetchAnalyticsData(
     longest_streak:    rawStats?.longest_streak_sessions ?? 0,
   }
 
+  // ── Hourly distribution (completed focus sessions, last 30 days) ──
+  const hourMinutes  = new Array(24).fill(0)
+  const hourSessions = new Array(24).fill(0)
+  for (const s of rawSessions) {
+    if (s.status !== 'completed' || s.type !== 'focus') continue
+    const h = new Date(s.started_at).getHours()
+    hourMinutes[h]  += Math.round((s.elapsed_seconds || s.duration_seconds || 0) / 60)
+    hourSessions[h] += 1
+  }
+  const hourlyStats: HourlyStat[] = hourMinutes.map((minutes, hour) => ({
+    hour, minutes, sessions: hourSessions[hour],
+  }))
+
+  // ── Recall success this week ──────────────────────────────────────
+  // Falls back to zeros when the recall_reviews table has no rows yet.
+  const rawRecall = (recallRes.data ?? []) as Array<{ grade: string }>
+  const recallSuccessful = rawRecall.filter(r => r.grade === 'good' || r.grade === 'easy').length
+  const recallWeek: RecallWeekStat = {
+    total:       rawRecall.length,
+    successful:  recallSuccessful,
+    successRate: rawRecall.length > 0
+      ? Math.round((recallSuccessful / rawRecall.length) * 100)
+      : 0,
+  }
+
   // ── Weekly comparison (last 7 vs previous 7 days) ─────────────────
   const this7  = dates30.slice(-7)
   const last7  = dates30.slice(-14, -7)
@@ -269,7 +303,7 @@ export async function fetchAnalyticsData(
   return {
     totalXP, level, currentStreak, longestStreak,
     dailyFocus, dailyTasks, dailyXP,
-    subjectStats, pomodoroStats,
+    subjectStats, pomodoroStats, hourlyStats, recallWeek,
     weeklyComparison, productivityScore, insights, mostProductiveDay,
     bestStreak: longestStreak,
   }

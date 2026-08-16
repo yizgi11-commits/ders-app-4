@@ -7,11 +7,13 @@ import { getCache, setCache, TTL, cacheKey } from '@/lib/cache'
 // Trigger types — determines which achievement categories to check.
 // Only relevant achievements are evaluated, never the full list.
 // ─────────────────────────────────────────────────────────────────
-export type AchievementTrigger = 'task' | 'pomodoro'
+export type AchievementTrigger = 'task' | 'pomodoro' | 'recall' | 'planner'
 
 const TRIGGER_CATEGORIES: Record<AchievementTrigger, string[]> = {
-  task:     ['task', 'xp', 'xp'],    // tasks + XP milestones + level-ups
-  pomodoro: ['pomodoro', 'focus', 'streak', 'special', 'xp'], // everything focus-related
+  task:     ['task', 'xp'],                              // tasks + XP milestones + level-ups
+  pomodoro: ['focus', 'streak', 'special', 'xp'],        // everything focus-related
+  recall:   ['recall', 'xp'],
+  planner:  ['planner'],
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -51,16 +53,36 @@ export async function checkAndUnlockAchievements(
   if (candidates.length === 0) return []
 
   // ── 3. Collect only the stats needed ──────────────────────────
-  const [xpRes, streakRes, statsRes, taskCountRes] = await Promise.all([
+  // Extra lookups are skipped unless a pending candidate depends on
+  // them, so the common task/pomodoro path stays at four queries.
+  const needsRecall  = candidates.some(a => a.category === 'recall')
+  const needsPlanner = candidates.some(a => a.category === 'planner')
+  const needsSession = candidates.some(a => a.id === 'DEEP_FOCUS_60')
+
+  const [xpRes, streakRes, statsRes, taskCountRes, recallRes, plannerRes, sessionRes] = await Promise.all([
     supabase.from('user_xp').select('total_xp, level').eq('user_id', userId).single(),
     supabase.from('user_streaks').select('current_streak, longest_streak').eq('user_id', userId).single(),
     supabase.from('study_statistics').select('total_focus_minutes, total_sessions_completed').eq('user_id', userId).maybeSingle(),
     supabase.from('daily_tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('completed', true),
+    needsRecall
+      ? supabase.from('recall_reviews').select('id', { count: 'exact', head: true }).eq('user_id', userId)
+      : Promise.resolve({ count: 0 }),
+    needsPlanner
+      ? supabase.from('daily_tasks').select('date').eq('user_id', userId).eq('source', 'planner')
+      : Promise.resolve({ data: [] as { date: string }[] }),
+    needsSession
+      ? supabase.from('pomodoro_sessions').select('elapsed_seconds')
+          .eq('user_id', userId).eq('status', 'completed')
+          .order('elapsed_seconds', { ascending: false }).limit(1)
+      : Promise.resolve({ data: [] as { elapsed_seconds: number }[] }),
   ])
 
   const xp     = xpRes.data
   const streak = streakRes.data
   if (!xp || !streak) return []
+
+  const plannerDates = (plannerRes.data ?? []) as { date: string }[]
+  const longestSeconds = (sessionRes.data ?? [])[0]?.elapsed_seconds ?? 0
 
   const userStats: UserStats = {
     totalXp:                xp.total_xp,
@@ -71,6 +93,9 @@ export async function checkAndUnlockAchievements(
     totalSessionsCompleted: statsRes.data?.total_sessions_completed ?? 0,
     totalTasksCompleted:    taskCountRes.count ?? 0,
     pomodoroHour,
+    totalRecalls:           recallRes.count ?? 0,
+    plannerDaysUsed:        new Set(plannerDates.map(r => r.date)).size,
+    longestSessionMinutes:  Math.floor(longestSeconds / 60),
   }
 
   // ── 4. Find newly qualifying ───────────────────────────────────

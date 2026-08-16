@@ -4,6 +4,9 @@
 
 export type AchievementRarity = 'common' | 'uncommon' | 'rare' | 'legendary'
 
+export type AchievementCategory =
+  | 'focus' | 'streak' | 'task' | 'xp' | 'recall' | 'planner' | 'special'
+
 export interface Achievement {
   id:          string
   title:       string
@@ -11,7 +14,7 @@ export interface Achievement {
   icon:        string          // emoji
   xpReward:    number
   rarity:      AchievementRarity
-  category:    'pomodoro' | 'streak' | 'task' | 'xp' | 'focus' | 'special'
+  category:    AchievementCategory
   /** Check if the condition is met given current stats */
   condition:   (stats: UserStats) => boolean
 }
@@ -25,7 +28,10 @@ export interface UserStats {
   totalFocusMinutes:     number
   totalSessionsCompleted: number
   totalTasksCompleted:   number
-  pomodoroHour:          number | null  // hour of last pomodoro (for early bird / night owl)
+  pomodoroHour:          number | null  // hour of last session (for early bird / night owl)
+  totalRecalls:          number         // graded reviews in recall_reviews
+  plannerDaysUsed:       number         // distinct days with a Planner-created task
+  longestSessionMinutes: number         // longest single completed focus session
 }
 
 /** DB row shape */
@@ -35,17 +41,6 @@ export interface UserAchievement {
   achievement_id: string
   unlocked_at:  string
   xp_rewarded:  number
-}
-
-/** DB row shape */
-export interface DailyGoal {
-  id:                   string
-  user_id:              string
-  date:                 string
-  focus_minutes_goal:   number
-  pomodoro_goal:        number
-  tasks_goal:           number
-  created_at:           string
 }
 
 /** Event emitted to the GamificationProvider */

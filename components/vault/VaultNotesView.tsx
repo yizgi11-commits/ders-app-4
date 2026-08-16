@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import type { Note } from '@/lib/notes/types'
 import { relativeTime, atlasLabel } from '@/lib/vault/types'
 import NoteEditor from '@/components/notes/NoteEditor'
+import { useAssist } from '@/components/assist/AssistProvider'
 
 interface Props {
   search:     string
@@ -19,6 +20,14 @@ export default function VaultNotesView({ search, savedOnly = false, onAssist, re
   const [notes, setNotes]       = useState<Note[]>([])
   const [loading, setLoading]   = useState(true)
   const [selected, setSelected] = useState<Note | null>(null)
+  const { setOverride } = useAssist()
+
+  // Keep the floating Assist's ambient context in sync with the editor,
+  // so reopening the drawer without re-clicking "Noetic Assist" still
+  // knows which note is open — and forgets it once the editor closes.
+  useEffect(() => {
+    setOverride(selected ? { kind: 'vault-note', noteId: selected.id, title: selected.title || 'Başlıksız Not' } : null)
+  }, [selected, setOverride])
 
   const load = useCallback(async () => {
     const params = new URLSearchParams()
