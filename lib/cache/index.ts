@@ -6,9 +6,10 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export const TTL = {
   DASHBOARD_STATS:  60 * 60 * 24,      // 24 h — invalidated by pomodoro/task complete
   WEEKLY_PROGRESS:  60 * 60 * 24,      // 24 h — invalidated by pomodoro/task complete
+  ANALYTICS_DATA:   60 * 60 * 24,      // 24 h — invalidated by the same events as above
+  AI_STATS:         60 * 60 * 24,      // 24 h — collectUserStats() snapshot for the weekly report
   AI_INSIGHTS:      60 * 60 * 24,      // 24 h — one Claude call per user per day
   ACHIEVEMENTS:     60 * 60 * 24 * 7,  // 7 days — only grows, rarely changes
-  GENERATING_LOCK:  30,                 // 30 s  — prevents duplicate AI calls
 } as const
 
 // ─────────────────────────────────────────────────────────────────
@@ -17,8 +18,8 @@ export const TTL = {
 export const cacheKey = {
   dashboardStats:  (date: string)    => `dashboard:stats:${date}`,
   weeklyProgress:  (weekKey: string) => `dashboard:weekly:${weekKey}`,
-  aiInsights:      (date: string)    => `ai:insights:${date}`,
-  aiGenerating:    ()                => `ai:insights:generating`,
+  analyticsData:   (date: string)    => `analytics:data:${date}`,
+  aiStats:         (date: string)    => `ai:stats:${date}`,
   noeticInsight:   (date: string)    => `ai:noetic-insight:${date}`,
   achievements:    ()                => `achievements:unlocked`,
 }
@@ -71,7 +72,9 @@ export async function deleteCache(
     .in('cache_key', keys)
 }
 
-// Invalidate all dashboard-related caches (call after pomodoro/task complete)
+// Invalidate all caches derived from focus/task/recall activity (call
+// after pomodoro/task/recall completion or a Planner task is created —
+// anything that moves the numbers these caches serve).
 export async function invalidateDashboardCaches(
   supabase: SupabaseClient,
   userId:   string,
@@ -88,5 +91,7 @@ export async function invalidateDashboardCaches(
     userId,
     cacheKey.dashboardStats(today),
     cacheKey.weeklyProgress(weekKey),
+    cacheKey.analyticsData(today),
+    cacheKey.aiStats(today),
   )
 }

@@ -5,15 +5,26 @@ import { getAnthropicClient, AI_MODEL } from '@/lib/ai/client'
 import { logUsage } from '@/lib/ai/usage'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { sanitizeString, validateUUID, MAX } from '@/lib/security'
-import { fetchAnalyticsData } from '@/lib/analytics/queries'
+import { getCachedAnalyticsData } from '@/lib/analytics/queries'
 import type { AssistPageContext } from '@/lib/assist/types'
 
 export const runtime = 'nodejs'
 
+const ENDPOINT = '/api/assist'
+
 const GENERAL_SYSTEM = `Sen Noetic OS'in genel öğrenme asistanısın. Öğrencinin öğrenme sürecinde sorularını yanıtlıyorsun.
 Kısa, net, Türkçe. Gereksiz uzatma — birkaç cümle veya kısa madde listesi yeterli.`
 
-interface Grounded { system: string; grounding: string }
+/**
+ * `staticSystem` is identical across every call in the same context kind
+ * (same words for every user, every topic) — it's the part worth marking
+ * with `cache_control`. `dynamicContext` is the per-request data (topic
+ * name, this week's numbers, ...) and is never cached. Splitting them is
+ * what makes Anthropic's ephemeral prompt cache actually able to hit;
+ * folding both into one interpolated string (the previous shape) made
+ * every call's system prompt unique and defeated caching entirely.
+ */
+interface Grounded { staticSystem: string; dynamicContext: string }
 
 async function buildGrounding(
   supabase: SupabaseClient,
@@ -37,9 +48,8 @@ async function buildGrounding(
       const subjectName = (topic.subjects as { name?: string } | null)?.name ?? 'ders'
 
       return {
-        system: `Sen Noetic OS'in Atlas modülündeki öğrenme asistanısın. Kullanıcı "${topic.title}" konusunu inceliyor (${subjectName} dersi).
-Bu konuyu doğru, net ve öğretici şekilde Türkçe anlat. Bilmediğin veya emin olmadığın bir şeyi uydurma.`,
-        grounding: `Konu: ${topic.title}\nDers: ${subjectName}`,
+        staticSystem: `Sen Noetic OS'in Atlas modülündeki öğrenme asistanısın. Kullanıcının incelediği konuyu doğru, net ve öğretici şekilde Türkçe anlat. Bilmediğin veya emin olmadığın bir şeyi uydurma.`,
+        dynamicContext: `Konu: ${topic.title}\nDers: ${subjectName}`,
       }
     }
 
@@ -53,17 +63,15 @@ Bu konuyu doğru, net ve öğretici şekilde Türkçe anlat. Bilmediğin veya em
         .maybeSingle()
 
       return {
-        system: `Sen Noetic OS'in Atlas modülündeki öğrenme asistanısın. Kullanıcı "${subject?.name ?? 'bir ders'}" dersinin konu haritasına bakıyor.
-Kısa, net, Türkçe yanıtla.`,
-        grounding: '',
+        staticSystem: `Sen Noetic OS'in Atlas modülündeki öğrenme asistanısın. Kısa, net, Türkçe yanıtla.`,
+        dynamicContext: `Kullanıcı "${subject?.name ?? 'bir ders'}" dersinin konu haritasına bakıyor.`,
       }
     }
 
     case 'atlas':
       return {
-        system: `Sen Noetic OS'in Atlas modülündeki öğrenme asistanısın. Kullanıcı derslerinin ve konularının haritasına bakıyor.
-Kısa, net, Türkçe yanıtla.`,
-        grounding: '',
+        staticSystem: `Sen Noetic OS'in Atlas modülündeki öğrenme asistanısın. Kullanıcı derslerinin ve konularının haritasına bakıyor. Kısa, net, Türkçe yanıtla.`,
+        dynamicContext: '',
       }
 
     case 'planner': {
@@ -88,21 +96,22 @@ Kısa, net, Türkçe yanıtla.`,
         : 'kayıtlı hedef yok'
 
       return {
-        system: `Sen Noetic OS'in Planner modülündeki planlama asistanısın. Kullanıcının önümüzdeki 7 günü, hedefleri ve sınavları için somut, uygulanabilir öneriler ver.
-Kısa, net, Türkçe. Genel geçer tavsiye değil, verilen veriye dayan.`,
-        grounding: `Önümüzdeki 7 gün planlanan görev: ${tasks.length}, tamamlanan: ${tasks.filter(t => t.completed).length}
+        staticSystem: `Sen Noetic OS'in Planner modülündeki planlama asistanısın. Kullanıcının önümüzdeki 7 günü, hedefleri ve sınavları için somut, uygulanabilir öneriler ver. Kısa, net, Türkçe. Genel geçer tavsiye değil, verilen veriye dayan.`,
+        dynamicContext: `Önümüzdeki 7 gün planlanan görev: ${tasks.length}, tamamlanan: ${tasks.filter(t => t.completed).length}
 Yaklaşan sınavlar: ${examsText}
 Açık hedefler: ${goalsText}`,
       }
     }
 
     case 'insights': {
-      const data = await fetchAnalyticsData(supabase, userId)
+      // app_cache-backed — see lib/analytics/queries.ts. Without this,
+      // every assist message asked in Insights context re-ran the full
+      // 7-query analytics fetch, even mid-conversation follow-ups.
+      const data = await getCachedAnalyticsData(supabase, userId)
       const w = data.weeklyComparison
       return {
-        system: `Sen Noetic OS'in Insights modülündeki analiz asistanısın. Kullanıcının verilerini yorumluyorsun.
-Kısa, net, veri odaklı, Türkçe. Sadece yorumla — tavsiye ver ama duygusal olma.`,
-        grounding: `Bu hafta odak: ${w.this_week_minutes} dk (geçen hafta ${w.last_week_minutes} dk)
+        staticSystem: `Sen Noetic OS'in Insights modülündeki analiz asistanısın. Kullanıcının verilerini yorumluyorsun. Kısa, net, veri odaklı, Türkçe. Sadece yorumla — tavsiye ver ama duygusal olma.`,
+        dynamicContext: `Bu hafta odak: ${w.this_week_minutes} dk (geçen hafta ${w.last_week_minutes} dk)
 Görev tamamlama: %${data.productivityScore.task_completion}
 Recall başarısı: %${data.recallWeek.successRate}
 Tutarlılık: %${data.productivityScore.consistency}
@@ -113,13 +122,12 @@ En verimli gün: ${data.mostProductiveDay ?? 'belirsiz'}`,
 
     case 'vault':
       return {
-        system: `Sen Noetic OS'in Vault modülündeki yardımcısın. Kullanıcı henüz belirli bir not veya belge açmadı.
-Kısa, net, Türkçe yanıtla.`,
-        grounding: '',
+        staticSystem: `Sen Noetic OS'in Vault modülündeki yardımcısın. Kullanıcı henüz belirli bir not veya belge açmadı. Kısa, net, Türkçe yanıtla.`,
+        dynamicContext: '',
       }
 
     default:
-      return { system: GENERAL_SYSTEM, grounding: '' }
+      return { staticSystem: GENERAL_SYSTEM, dynamicContext: '' }
   }
 }
 
@@ -137,7 +145,7 @@ export async function POST(req: NextRequest) {
   if (!pageContext?.kind) return NextResponse.json({ error: 'Geçersiz bağlam' }, { status: 400 })
   if (!message) return NextResponse.json({ error: 'Mesaj gerekli' }, { status: 400 })
 
-  const { allowed } = await checkRateLimit(supabase, user.id, 'assist', 30, 24)
+  const { allowed } = await checkRateLimit(supabase, user.id, ENDPOINT, 30, 24)
   if (!allowed) {
     return NextResponse.json({ error: 'Günlük Noetic Assist limitine ulaştın (30/gün). Yarın tekrar dene.' }, { status: 429 })
   }
@@ -150,20 +158,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 404 })
   }
 
-  const userTurn = grounded.grounding
-    ? `${grounded.grounding}\n\nKullanıcı: ${message}`
-    : message
-
   try {
     const anthropic = getAnthropicClient()
     const response = await anthropic.messages.create({
       model:      AI_MODEL,
       max_tokens: 500,
-      system: [{ type: 'text', text: grounded.system, cache_control: { type: 'ephemeral' } }],
-      messages: [{ role: 'user', content: userTurn }],
+      system: grounded.dynamicContext
+        ? [
+            { type: 'text', text: grounded.staticSystem, cache_control: { type: 'ephemeral' } },
+            { type: 'text', text: grounded.dynamicContext },
+          ]
+        : [{ type: 'text', text: grounded.staticSystem, cache_control: { type: 'ephemeral' } }],
+      messages: [{ role: 'user', content: message }],
     })
 
-    void logUsage(supabase, user.id, 'assist', response.usage.input_tokens, response.usage.output_tokens)
+    void logUsage(supabase, user.id, ENDPOINT, response.usage.input_tokens, response.usage.output_tokens)
 
     const text = response.content[0].type === 'text' ? response.content[0].text.trim() : ''
     if (!text) throw new Error('Boş yanıt')

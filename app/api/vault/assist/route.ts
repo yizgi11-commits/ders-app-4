@@ -16,49 +16,40 @@ const MAX_TOKENS: Record<AssistAction, number> = {
   quiz:       1600,
 }
 
-function buildPrompt(action: AssistAction, text: string): string {
-  const body = `Metin:\n${text}`
-
-  switch (action) {
-    case 'summarize':
-      return `Aşağıdaki ders içeriğini Türkçe olarak özetle. En fazla 6 cümle, sade ve net.
+// Fixed per-action instructions — identical for every user and every
+// call, unlike the note/document text. Sent as a `system` block with
+// `cache_control` so Anthropic can serve it from prompt cache instead
+// of re-billing full input price on every single Vault Assist click.
+// (Previously these were interpolated into the same string as the
+// source text, which meant no two calls ever shared an exact prefix —
+// structurally defeating prompt caching.)
+const SYSTEM_PROMPTS: Record<AssistAction, string> = {
+  summarize: `Aşağıdaki ders içeriğini Türkçe olarak özetle. En fazla 6 cümle, sade ve net.
 Sadece JSON döndür, başka hiçbir şey yazma.
 
-${body}
-
 Format:
-{"text":"..."}`
+{"text":"..."}`,
 
-    case 'explain':
-      return `Aşağıdaki ders içeriğini bir öğrenciye anlatır gibi Türkçe açıkla.
+  explain: `Aşağıdaki ders içeriğini bir öğrenciye anlatır gibi Türkçe açıkla.
 Zor kavramları basitleştir, gerekirse örnek ver. En fazla 3 paragraf.
 Sadece JSON döndür, başka hiçbir şey yazma.
 
-${body}
-
 Format:
-{"text":"..."}`
+{"text":"..."}`,
 
-    case 'flashcards':
-      return `Aşağıdaki ders içeriğinden 8-12 adet flash kart oluştur.
+  flashcards: `Aşağıdaki ders içeriğinden 8-12 adet flash kart oluştur.
 Her kart: ön yüz (soru veya kavram) + arka yüz (kısa, net cevap). Türkçe yaz.
 Sadece JSON döndür, başka hiçbir şey yazma.
 
-${body}
-
 Format:
-[{"front":"...","back":"..."},...]`
+[{"front":"...","back":"..."},...]`,
 
-    case 'quiz':
-      return `Aşağıdaki ders içeriğinden 5 adet çoktan seçmeli soru oluştur.
+  quiz: `Aşağıdaki ders içeriğinden 5 adet çoktan seçmeli soru oluştur.
 Her sorunun tam 4 seçeneği olsun. "correct" alanı doğru seçeneğin 0-tabanlı indeksi olsun.
 Türkçe yaz. Sadece JSON döndür, başka hiçbir şey yazma.
 
-${body}
-
 Format:
-[{"question":"...","options":["...","...","...","..."],"correct":0},...]`
-  }
+[{"question":"...","options":["...","...","...","..."],"correct":0},...]`,
 }
 
 function parseJson(raw: string): unknown {
@@ -139,7 +130,8 @@ export async function POST(req: NextRequest) {
     const msg = await anthropic.messages.create({
       model:      AI_MODEL,
       max_tokens: MAX_TOKENS[action],
-      messages: [{ role: 'user', content: buildPrompt(action, text.slice(0, 8000)) }],
+      system: [{ type: 'text', text: SYSTEM_PROMPTS[action], cache_control: { type: 'ephemeral' } }],
+      messages: [{ role: 'user', content: `Metin:\n${text.slice(0, 8000)}` }],
     })
 
     const content = msg.content[0]

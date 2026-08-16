@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { fetchAnalyticsData } from '@/lib/analytics/queries'
+import { getCachedAnalyticsData } from '@/lib/analytics/queries'
 import { getAnthropicClient, AI_MODEL } from '@/lib/ai/client'
 import { SYSTEM_PROMPT } from '@/lib/ai/prompts'
 import { logUsage } from '@/lib/ai/usage'
@@ -10,6 +10,8 @@ import type { AnalyticsData } from '@/lib/analytics/types'
 import type { NoeticInsightData } from '@/lib/insights/types'
 
 export const runtime = 'nodejs'
+
+const ENDPOINT = '/api/insights/noetic'
 
 function fmtHours(mins: number): string {
   const h = Math.floor(mins / 60)
@@ -89,12 +91,16 @@ export async function GET() {
   const cached = await getCache<NoeticInsightData>(supabase, user.id, key)
   if (cached) return NextResponse.json(cached)
 
-  const analytics = await fetchAnalyticsData(supabase, user.id)
+  const analytics = await getCachedAnalyticsData(supabase, user.id)
 
   // ── 2. Rate limit — only consumed on a real generation ───────────
-  const { allowed } = await checkRateLimit(supabase, user.id, 'insights/noetic', 5, 24)
+  const { allowed } = await checkRateLimit(supabase, user.id, ENDPOINT, 5, 24)
   if (!allowed) {
-    return NextResponse.json({ ...buildFallback(analytics), rate_limited: true })
+    // Cache the fallback too — otherwise every request for the rest of
+    // the day re-hits this branch (and would look cacheable but wasn't).
+    const fallback = { ...buildFallback(analytics), rate_limited: true }
+    await setCache(supabase, user.id, key, fallback, TTL.AI_INSIGHTS)
+    return NextResponse.json(fallback)
   }
 
   // ── 3. Generate ──────────────────────────────────────────────────
@@ -110,7 +116,7 @@ export async function GET() {
     })
 
     void logUsage(
-      supabase, user.id, 'insights/noetic',
+      supabase, user.id, ENDPOINT,
       response.usage.input_tokens,
       response.usage.output_tokens,
     )

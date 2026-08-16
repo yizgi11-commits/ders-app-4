@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { UserStatsForAI } from './types'
+import { getCache, setCache, TTL, cacheKey } from '@/lib/cache'
 
 // ─────────────────────────────────────────────────────────────────
 // Collect all stats needed for AI generation
@@ -172,4 +173,26 @@ export async function collectUserStats(
     prevWeekFocusMinutes,
     prevWeekSessions,
   }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Cached wrapper — collectUserStats() runs 13 parallel queries. It
+// currently backs only the weekly-report generator, but each click of
+// "Haftalık Rapor Oluştur" re-ran the full 13-query set even though
+// nothing in the underlying data had changed since the last click.
+// Cached for a day, busted by invalidateDashboardCaches().
+// ─────────────────────────────────────────────────────────────────
+export async function getCachedUserStats(
+  supabase: SupabaseClient,
+  userId:   string,
+): Promise<UserStatsForAI> {
+  const today = new Date().toISOString().split('T')[0]
+  const key   = cacheKey.aiStats(today)
+
+  const cached = await getCache<UserStatsForAI>(supabase, userId, key)
+  if (cached) return cached
+
+  const stats = await collectUserStats(supabase, userId)
+  await setCache(supabase, userId, key, stats, TTL.AI_STATS)
+  return stats
 }

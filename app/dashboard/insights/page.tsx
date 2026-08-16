@@ -1,20 +1,20 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { fetchAnalyticsData } from '@/lib/analytics/queries'
+import { getCachedAnalyticsData } from '@/lib/analytics/queries'
 import InsightsClient from '@/components/insights/InsightsClient'
 
 export const metadata = { title: 'Insights' }
 
-// Server-render the metric layer; the AI layer fetches on the client so a
-// slow Claude call never blocks the numbers.
-export const revalidate = 300
-
+// This route is force-dynamic (createClient() reads the session cookie),
+// so a static `revalidate` export never applies here — the real caching
+// is app_cache-backed, inside getCachedAnalyticsData (24h, invalidated
+// on task/pomodoro/recall completion).
 export default async function InsightsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/giris')
 
-  const analytics = await fetchAnalyticsData(supabase, user.id)
+  const analytics = await getCachedAnalyticsData(supabase, user.id)
 
   return (
     <div className="max-w-5xl mx-auto space-y-5">

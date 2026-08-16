@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getAnthropicClient } from '@/lib/ai/client'
+import { getAnthropicClient, AI_MODEL } from '@/lib/ai/client'
 import { logUsage } from '@/lib/ai/usage'
 import { sanitizeString, safeError, MAX } from '@/lib/security'
 import { checkRateLimit } from '@/lib/security/rate-limit'
@@ -40,12 +40,11 @@ export async function POST(req: NextRequest) {
   // ── Call Claude ────────────────────────────────────────────────
   const anthropic = getAnthropicClient()
 
-  const prompt = `Aşağıdaki ders notundan 10-15 adet flash kart oluştur.
+  // Fixed instructions in `system` (cache_control-eligible, identical
+  // for every call) — only the source text varies per request.
+  const SYSTEM_PROMPT = `Aşağıdaki ders notundan 10-15 adet flash kart oluştur.
 Her kart: ön yüz (soru veya kavram) + arka yüz (kısa, net cevap).
 Türkçe yaz. Sadece JSON döndür, başka hiçbir şey yazma.
-
-Metin:
-${trimmedText}
 
 Format:
 [{"front":"...","back":"..."},...]`
@@ -54,9 +53,10 @@ Format:
 
   try {
     const msg = await anthropic.messages.create({
-      model:      'claude-haiku-4-5',
+      model:      AI_MODEL,
       max_tokens: 2000,
-      messages: [{ role: 'user', content: prompt }],
+      system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+      messages: [{ role: 'user', content: `Metin:\n${trimmedText}` }],
     })
 
     const content = msg.content[0]

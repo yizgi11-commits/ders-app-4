@@ -6,6 +6,7 @@ import type {
 } from './types'
 import { computeProductivityScore } from './productivity'
 import { generateInsights }         from './insights'
+import { getCache, setCache, TTL, cacheKey } from '@/lib/cache'
 
 // ── Date helpers ────────────────────────────────────────────────────
 function daysAgoStr(n: number): string {
@@ -307,4 +308,27 @@ export async function fetchAnalyticsData(
     weeklyComparison, productivityScore, insights, mostProductiveDay,
     bestStreak: longestStreak,
   }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Cached wrapper — fetchAnalyticsData runs 7 parallel queries over up
+// to 30 days of history. It's read by the Insights page on every visit,
+// by the weekly-report generator, and by Assist's 'insights' context,
+// so without caching the same computation ran 2-3x per user action.
+// Cached for a day and busted by invalidateDashboardCaches() on the
+// same events (task/pomodoro/recall complete) that change the numbers.
+// ─────────────────────────────────────────────────────────────────
+export async function getCachedAnalyticsData(
+  supabase: SupabaseClient,
+  userId:   string,
+): Promise<AnalyticsData> {
+  const today = new Date().toISOString().split('T')[0]
+  const key   = cacheKey.analyticsData(today)
+
+  const cached = await getCache<AnalyticsData>(supabase, userId, key)
+  if (cached) return cached
+
+  const data = await fetchAnalyticsData(supabase, userId)
+  await setCache(supabase, userId, key, data, TTL.ANALYTICS_DATA)
+  return data
 }
