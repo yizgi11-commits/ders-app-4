@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { levelFromTotalXp } from "@/lib/tasks/xp";
-import { updateStreak } from "@/lib/tasks/progression";
 import { ALL_TASKS_BONUS, streakBonus } from "@/lib/tasks/xp";
 import type { UserXP, UserStreak } from "@/lib/tasks/types";
 import { checkAndUnlockAchievements } from "@/lib/gamification/check";
@@ -75,22 +74,10 @@ export async function POST(req: NextRequest) {
     })
     .eq("user_id", user.id);
 
-  // ── Update streak ─────────────────────
-  const { currentStreak, longestStreak } = updateStreak({
-    currentStreak: userStreak.current_streak,
-    longestStreak: userStreak.longest_streak,
-    lastStreakDate: userStreak.last_streak_date,
-  });
-
-  await supabase
-    .from("user_streaks")
-    .update({
-      current_streak:  currentStreak,
-      longest_streak:  longestStreak,
-      last_streak_date: today,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", user.id);
+  // Note: completing a task no longer bumps user_streaks — the Learning
+  // Streak is now driven by Focus sessions and Recall reviews only (see
+  // /api/pomodoro/complete and /api/recall/review). streakBonus above
+  // still reads the current streak value, it just isn't written here.
 
   // ── Invalidate dashboard caches + check achievements ─────────
   const [newAchievements] = await Promise.all([

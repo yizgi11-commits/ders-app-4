@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Flame, CheckCircle2, Circle, Loader2, Zap, PartyPopper, Star,
-  Clock, Percent, Timer, Plus, Brain, CalendarClock, ArrowRight, GraduationCap,
+  Timer, Plus, Brain, CalendarClock, ArrowRight, GraduationCap,
+  BookOpen, CalendarDays,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useGamification } from '@/components/gamification/GamificationProvider'
@@ -14,6 +15,10 @@ import type {
 } from '@/lib/tasks/types'
 import type { FlashcardWithSubject } from '@/lib/flashcards/types'
 import type { Exam } from '@/lib/planner/types'
+import {
+  computeLearningScore, computeNextAction, startSessionHref,
+  type NextAction,
+} from '@/lib/dashboard/command-center'
 
 const ESTIMATED_MINUTES: Record<Difficulty, number> = { 1: 25, 2: 45, 3: 60 }
 
@@ -23,13 +28,27 @@ function greetingFor(hour: number) {
   return 'Good evening'
 }
 
+interface ReviewHint { topicTitle: string | null; estimatedMinutes: number }
+interface ContinueLearning {
+  subjectId: string; subjectName: string; subjectIcon: string; subjectColor: string
+  topicId: string; topicTitle: string
+  progressPct: number
+  lastStudiedLabel: string
+}
+interface MonthlyStats { focusMinutes: number; topicsReviewed: number; reviewConsistencyPct: number }
+
 interface CommandCenterData {
-  tasks:        DailyTaskWithTemplate[]
-  streak:       UserStreak
-  todayMinutes: number
-  displayName:  string
-  flashcards:   FlashcardWithSubject[]
-  exams:        Exam[]
+  tasks:             DailyTaskWithTemplate[]
+  streak:            UserStreak
+  todayMinutes:      number
+  reviewsDueToday:   number
+  reviewsDoneToday:  number
+  reviewHint:        ReviewHint | null
+  continueLearning:  ContinueLearning | null
+  monthly:           MonthlyStats
+  displayName:       string
+  flashcards:        FlashcardWithSubject[]
+  exams:             Exam[]
 }
 
 const EMPTY_STREAK: UserStreak = {
@@ -69,33 +88,6 @@ function XpToast({ data, onClose }: { data: CompleteTaskResponse; onClose: () =>
   )
 }
 
-// ── Stat tile ─────────────────────────────
-const STAT_COLORS = {
-  indigo:  { bg: 'bg-indigo-50/80',  border: 'border-indigo-100',  icon: 'text-indigo-600',  ring: 'ring-indigo-100' },
-  emerald: { bg: 'bg-emerald-50/80', border: 'border-emerald-100', icon: 'text-emerald-600', ring: 'ring-emerald-100' },
-  orange:  { bg: 'bg-orange-50/80',  border: 'border-orange-100',  icon: 'text-orange-600',  ring: 'ring-orange-100' },
-} as const
-
-function StatTile({ icon: Icon, color, value, label }: {
-  icon: React.ElementType; color: keyof typeof STAT_COLORS; value: string; label: string
-}) {
-  const c = STAT_COLORS[color]
-  return (
-    <motion.div
-      whileHover={{ y: -2 }}
-      className={cn('bg-white rounded-2xl border p-4 flex flex-col gap-3 shadow-sm', c.border)}
-    >
-      <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center ring-1', c.bg, c.ring)}>
-        <Icon className={cn('w-4 h-4', c.icon)} />
-      </div>
-      <div>
-        <p className="text-xl font-black text-gray-900 tabular-nums">{value}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-      </div>
-    </motion.div>
-  )
-}
-
 // ── Quick action button ───────────────────
 function QuickAction({ href, icon: Icon, label, primary }: {
   href: string; icon: React.ElementType; label: string; primary?: boolean
@@ -119,16 +111,26 @@ function QuickAction({ href, icon: Icon, label, primary }: {
   )
 }
 
+const NEXT_ACTION_ICON: Record<NextAction['kind'], React.ElementType> = {
+  review: Brain, exam: GraduationCap, task: BookOpen, focus: Timer, plan: CalendarDays,
+}
+
+function scoreTone(score: number) {
+  if (score >= 75) return 'text-emerald-300'
+  if (score >= 40) return 'text-amber-300'
+  return 'text-white/70'
+}
+
 // ── Skeleton ──────────────────────────────
 function Skeleton() {
   return (
     <div className="max-w-5xl mx-auto space-y-5">
-      <div className="h-14 rounded-2xl skeleton-shimmer" />
+      <div className="h-10 rounded-2xl skeleton-shimmer" />
+      <div className="h-40 rounded-2xl skeleton-shimmer" />
       <div className="h-24 rounded-2xl skeleton-shimmer" />
+      <div className="h-32 rounded-2xl skeleton-shimmer" />
       <div className="h-56 rounded-2xl skeleton-shimmer" />
-      <div className="grid grid-cols-3 gap-3">
-        {[0, 1, 2].map(i => <div key={i} className="h-24 rounded-2xl skeleton-shimmer" />)}
-      </div>
+      <div className="h-24 rounded-2xl skeleton-shimmer" />
       <div className="grid grid-cols-3 gap-3">
         {[0, 1, 2].map(i => <div key={i} className="h-12 rounded-xl skeleton-shimmer" />)}
       </div>
@@ -147,28 +149,35 @@ export default function CommandCenter() {
 
   const load = useCallback(async () => {
     try {
-      const [tasksRes, statsRes, settingsRes, flashRes, examsRes] = await Promise.all([
-        fetch('/api/tasks/today'),
-        fetch('/api/dashboard/stats'),
+      const [ccRes, settingsRes, flashRes, examsRes] = await Promise.all([
+        fetch('/api/dashboard/command-center'),
         fetch('/api/settings'),
         fetch('/api/flashcards'),
         fetch('/api/exams?upcoming=1&limit=3'),
       ])
-      const [tasksJson, statsJson, settingsJson, flashJson, examsJson] = await Promise.all([
-        tasksRes.ok ? tasksRes.json() : { tasks: [], userStreak: null },
-        statsRes.ok ? statsRes.json() : { todayHours: 0 },
+      const [ccJson, settingsJson, flashJson, examsJson] = await Promise.all([
+        ccRes.ok ? ccRes.json() : {
+          tasks: [], userStreak: null, todayMinutes: 0,
+          reviewsDueToday: 0, reviewsDoneToday: 0, reviewHint: null, continueLearning: null,
+          monthly: { focusMinutes: 0, topicsReviewed: 0, reviewConsistencyPct: 0 },
+        },
         settingsRes.ok ? settingsRes.json() : { ad: '' },
         flashRes.ok ? flashRes.json() : { flashcards: [] },
         examsRes.ok ? examsRes.json() : { exams: [] },
       ])
 
       setData({
-        tasks:        tasksJson.tasks ?? [],
-        streak:       tasksJson.userStreak ?? EMPTY_STREAK,
-        todayMinutes: Math.round((statsJson.todayHours ?? 0) * 60),
-        displayName:  (settingsJson.ad || '').trim(),
-        flashcards:   flashJson.flashcards ?? [],
-        exams:        examsJson.exams ?? [],
+        tasks:            ccJson.tasks ?? [],
+        streak:           ccJson.userStreak ?? EMPTY_STREAK,
+        todayMinutes:     ccJson.todayMinutes ?? 0,
+        reviewsDueToday:  ccJson.reviewsDueToday ?? 0,
+        reviewsDoneToday: ccJson.reviewsDoneToday ?? 0,
+        reviewHint:       ccJson.reviewHint ?? null,
+        continueLearning: ccJson.continueLearning ?? null,
+        monthly:          ccJson.monthly ?? { focusMinutes: 0, topicsReviewed: 0, reviewConsistencyPct: 0 },
+        displayName:      (settingsJson.ad || '').trim(),
+        flashcards:       flashJson.flashcards ?? [],
+        exams:            examsJson.exams ?? [],
       })
     } finally {
       setLoading(false)
@@ -196,7 +205,7 @@ export default function CommandCenter() {
       setToast(json)
       notify({ newAchievements: json.new_achievements ?? [], levelUp: json.level_up, newLevel: json.level })
 
-      // Refresh streak + focus stats in the background
+      // Refresh everything (streak/score inputs all shift) in the background
       load()
     } finally {
       setCompleting(null)
@@ -205,17 +214,52 @@ export default function CommandCenter() {
 
   if (loading || !data) return <Skeleton />
 
-  const { tasks, streak, todayMinutes, displayName, flashcards, exams } = data
-  const done         = tasks.filter(t => t.completed).length
-  const total        = tasks.length
-  const pending      = total - done
-  const pct          = total > 0 ? Math.round((done / total) * 100) : 0
-  const priorityTask = tasks.find(t => !t.completed) ?? tasks[0]
-  const hour         = new Date().getHours()
-  const firstName    = displayName.split(' ')[0] || 'Student'
-  const focusH       = Math.floor(todayMinutes / 60)
-  const focusM       = todayMinutes % 60
-  const today        = new Date().toISOString().split('T')[0]
+  const {
+    tasks, streak, todayMinutes, reviewsDueToday, reviewsDoneToday,
+    reviewHint, continueLearning, monthly, displayName, flashcards, exams,
+  } = data
+
+  const done    = tasks.filter(t => t.completed).length
+  const total   = tasks.length
+  const hour    = new Date().getHours()
+  const firstName = displayName.split(' ')[0] || 'Student'
+  const today   = new Date().toISOString().split('T')[0]
+
+  const plannedMinutes = tasks.reduce((sum, t) => sum + ESTIMATED_MINUTES[t.task_templates.difficulty], 0)
+  const learningScore = computeLearningScore({
+    tasksTotal: total, tasksDone: done,
+    reviewsDue: reviewsDueToday, reviewsDone: reviewsDoneToday,
+    todayMinutes, plannedMinutes,
+  })
+
+  const firstIncomplete = tasks.find(t => !t.completed) ?? null
+  const firstIncompleteForAction = firstIncomplete ? {
+    id: firstIncomplete.id,
+    subject: firstIncomplete.task_templates.subject,
+    title: firstIncomplete.task_templates.title,
+  } : null
+
+  const nearestExam = exams.length > 0 ? {
+    name: exams[0].name,
+    daysAway: Math.round(
+      (new Date(exams[0].exam_date + 'T00:00:00').getTime() - new Date(today + 'T00:00:00').getTime()) / 86_400_000
+    ),
+  } : null
+
+  const nextAction = computeNextAction({
+    reviewsDue: reviewsDueToday,
+    reviewHint,
+    nearestExam,
+    firstIncompleteTask: firstIncompleteForAction,
+    todayMinutes,
+  })
+  const NextActionIcon = NEXT_ACTION_ICON[nextAction.kind]
+
+  const startHref = startSessionHref(reviewsDueToday, firstIncomplete?.id ?? null)
+
+  const monthH = Math.floor(monthly.focusMinutes / 60)
+  const monthM = monthly.focusMinutes % 60
+
   const upcomingCards = flashcards
     .slice()
     .sort((a, b) => a.next_review_date.localeCompare(b.next_review_date))
@@ -223,60 +267,136 @@ export default function CommandCenter() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-5">
-      {/* 1. HEADER */}
+      {/* HEADER */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-        className="flex items-start justify-between gap-4"
       >
-        <div>
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight">
-            {greetingFor(hour)}, {firstName}.
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {total === 0
-              ? "No priorities set for today yet."
-              : pending === 0
-              ? "You're all caught up today."
-              : `You have ${pending} ${pending === 1 ? 'priority' : 'priorities'} today.`}
-          </p>
-        </div>
-        <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 rounded-full px-3 py-1.5 shrink-0">
-          <Flame className="w-3.5 h-3.5 text-orange-500" />
-          <span className="text-sm font-bold text-orange-600 whitespace-nowrap">
-            {streak.current_streak} day streak
-          </span>
-        </div>
+        <h1 className="text-2xl font-black text-gray-900 tracking-tight">
+          {greetingFor(hour)}, {firstName}.
+        </h1>
       </motion.div>
 
-      {/* 2. TODAY'S DIRECTION */}
+      {/* 1. TODAY'S LEARNING */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.05 }}
-        className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 text-white shadow-lg shadow-indigo-200/50"
+        className="relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-950 rounded-2xl p-5 shadow-lg"
       >
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-2">
-          Today&apos;s Direction
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+
+        <p className="relative text-[11px] font-bold uppercase tracking-[0.14em] text-white/50 mb-3">
+          Today&apos;s Learning
         </p>
-        {priorityTask ? (
-          <p className="text-lg font-bold leading-snug">
-            {priorityTask.task_templates.subject} — {priorityTask.task_templates.title}
-            <span className="text-white/70 font-medium">
-              {' '}| {ESTIMATED_MINUTES[priorityTask.task_templates.difficulty]} min planned
-            </span>
+
+        <div className="relative flex items-center gap-5 flex-wrap mb-4">
+          <Stat value={total} label={total === 1 ? 'task' : 'tasks'} />
+          <Divider />
+          <Stat value={reviewsDueToday} label={reviewsDueToday === 1 ? 'review' : 'reviews'} />
+          <Divider />
+          <Stat value={plannedMinutes} label="min planned" />
+        </div>
+
+        <div className="relative flex items-center justify-between gap-4 pt-4 border-t border-white/10">
+          <p className="text-sm font-semibold text-white/80">
+            Learning Score: <span className={cn('font-black text-base', scoreTone(learningScore))}>{learningScore}</span>
           </p>
-        ) : (
-          <p className="text-lg font-bold">All priorities completed today 🎉</p>
-        )}
+          <Link href={startHref}>
+            <motion.div
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="flex items-center gap-2 bg-white text-gray-900 font-bold text-sm px-4 py-2.5 rounded-xl shadow-lg"
+            >
+              Start Today&apos;s Session
+              <ArrowRight className="w-3.5 h-3.5" />
+            </motion.div>
+          </Link>
+        </div>
       </motion.div>
 
-      {/* 3. TODAY'S TASKS */}
+      {/* 2. NEXT ACTION */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.1 }}
+        transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.08 }}
+        className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 shadow-lg shadow-indigo-200/50"
+      >
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-3">
+          Next Action
+        </p>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
+              <NextActionIcon className="w-5 h-5 text-white" />
+            </div>
+            <p className="text-white font-bold text-base leading-snug min-w-0 truncate">
+              {nextAction.text}
+            </p>
+          </div>
+          <Link href={nextAction.href}>
+            <motion.div
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white font-bold text-sm px-4 py-2 rounded-xl transition-colors shrink-0"
+            >
+              Start <ArrowRight className="w-3.5 h-3.5" />
+            </motion.div>
+          </Link>
+        </div>
+      </motion.div>
+
+      {/* 3. CONTINUE LEARNING — omitted entirely if no session history */}
+      {continueLearning && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.11 }}
+          className="bg-white rounded-2xl border border-border p-5 shadow-sm"
+        >
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3">
+            Continue Where You Left Off
+          </p>
+          <div className="flex items-center gap-4 flex-wrap">
+            <div
+              className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0"
+              style={{ background: `${continueLearning.subjectColor}15` }}
+            >
+              {continueLearning.subjectIcon}
+            </div>
+            <div className="flex-1 min-w-[180px]">
+              <p className="text-xs font-semibold text-indigo-600">{continueLearning.subjectName}</p>
+              <p className="text-base font-bold text-gray-900 truncate">{continueLearning.topicTitle}</p>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden max-w-[160px]">
+                  <div
+                    className={cn('h-full rounded-full', continueLearning.progressPct >= 100 ? 'bg-emerald-500' : 'bg-indigo-500')}
+                    style={{ width: `${continueLearning.progressPct}%` }}
+                  />
+                </div>
+                <span className="text-xs font-semibold text-gray-600">{continueLearning.progressPct}%</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1.5">{continueLearning.lastStudiedLabel}</p>
+            </div>
+            <Link href={`/dashboard/focus?subjectId=${continueLearning.subjectId}&topicId=${continueLearning.topicId}`}>
+              <motion.div
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="flex items-center gap-1.5 bg-gray-900 hover:bg-gray-800 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition-colors shrink-0"
+              >
+                Continue <ArrowRight className="w-3.5 h-3.5" />
+              </motion.div>
+            </Link>
+          </div>
+        </motion.div>
+      )}
+
+      {/* 4. TODAY'S TASKS */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.14 }}
         className="bg-white rounded-2xl border border-border p-5 shadow-sm"
       >
         <div className="flex items-center justify-between mb-4">
@@ -348,21 +468,35 @@ export default function CommandCenter() {
         </Link>
       </motion.div>
 
-      {/* 4. DAILY STATS */}
-      <div className="grid grid-cols-3 gap-3">
-        <StatTile icon={Clock}   color="indigo"  value={`${focusH}h ${focusM}m`} label="Focus" />
-        <StatTile icon={Percent} color="emerald" value={`${pct}%`}               label="Completion" />
-        <StatTile icon={Flame}   color="orange"  value={`${streak.current_streak}`} label="Day Streak" />
-      </div>
+      {/* 5. DAILY STATS — Learning Streak */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.17 }}
+        className="bg-white rounded-2xl border border-orange-100 p-5 shadow-sm"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-orange-50 ring-1 ring-orange-100 flex items-center justify-center shrink-0">
+            <Flame className="w-6 h-6 text-orange-500" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Learning Streak</p>
+            <p className="text-xl font-black text-gray-900 tabular-nums">🔥 {streak.current_streak} days</p>
+            <p className="text-xs text-muted-foreground mt-0.5 truncate">
+              {monthH}h {monthM}m this month · {monthly.topicsReviewed} topics reviewed · {monthly.reviewConsistencyPct}% review consistency
+            </p>
+          </div>
+        </div>
+      </motion.div>
 
-      {/* 5. QUICK ACTIONS */}
+      {/* 6. QUICK ACTIONS */}
       <div className="grid grid-cols-3 gap-3">
         <QuickAction href="/dashboard/focus"   icon={Timer} label="Start Focus" primary />
         <QuickAction href="/dashboard/planner" icon={Plus}  label="Add Task" />
         <QuickAction href="/dashboard/recall"  icon={Brain} label="Start Recall" />
       </div>
 
-      {/* 6. UPCOMING */}
+      {/* 7. UPCOMING */}
       <div className="bg-white rounded-2xl border border-border p-5 shadow-sm">
         <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
           <CalendarClock className="w-4 h-4 text-indigo-500" />
@@ -414,4 +548,17 @@ export default function CommandCenter() {
       </AnimatePresence>
     </div>
   )
+}
+
+function Stat({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="flex items-baseline gap-1.5">
+      <span className="text-2xl font-black text-white tabular-nums">{value}</span>
+      <span className="text-xs text-white/50 font-medium">{label}</span>
+    </div>
+  )
+}
+
+function Divider() {
+  return <span className="w-px h-6 bg-white/10" />
 }

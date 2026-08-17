@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { FOCUS_SESSION_XP } from '@/lib/pomodoro/types'
 import { levelFromTotalXp } from '@/lib/tasks/xp'
-import type { UserXP } from '@/lib/tasks/types'
+import { updateStreak } from '@/lib/tasks/progression'
+import type { UserXP, UserStreak } from '@/lib/tasks/types'
 import type { StudyStatistics, DailyFocusTime } from '@/lib/pomodoro/types'
 import { checkAndUnlockAchievements } from '@/lib/gamification/check'
 import { invalidateDashboardCaches } from '@/lib/cache'
@@ -111,6 +112,27 @@ export async function POST(req: NextRequest) {
         focus_minutes: daily.focus_minutes + focusMinutes,
         sessions_completed: daily.sessions_completed + 1,
       }).eq('id', daily.id)
+    }
+
+    // ── Learning Streak: a completed Focus session keeps it alive ──
+    const { data: streakRow } = await supabase
+      .from('user_streaks')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle<UserStreak>()
+
+    if (streakRow) {
+      const { currentStreak, longestStreak } = updateStreak({
+        currentStreak: streakRow.current_streak,
+        longestStreak: streakRow.longest_streak,
+        lastStreakDate: streakRow.last_streak_date,
+      })
+      await supabase.from('user_streaks').update({
+        current_streak: currentStreak,
+        longest_streak: longestStreak,
+        last_streak_date: today,
+        updated_at: now,
+      }).eq('user_id', user.id)
     }
   }
 

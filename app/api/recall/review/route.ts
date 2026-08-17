@@ -3,6 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { validateUUID, safeError } from '@/lib/security'
 import { RECALL_GRADES, intervalForGrade, type RecallGrade } from '@/lib/recall/types'
 import { checkAndUnlockAchievements } from '@/lib/gamification/check'
+import { updateStreak } from '@/lib/tasks/progression'
+import type { UserStreak } from '@/lib/tasks/types'
+import { invalidateDashboardCaches } from '@/lib/cache'
 
 // POST /api/recall/review
 // Body: { flashcard_id: string, grade: RecallGrade }
@@ -60,7 +63,32 @@ export async function POST(req: NextRequest) {
     reviewed_at:   now,
   })
 
-  const newAchievements = await checkAndUnlockAchievements(supabase, user.id, 'recall')
+  // ── Learning Streak: a completed Recall review keeps it alive ────
+  const { data: streakRow } = await supabase
+    .from('user_streaks')
+    .select('*')
+    .eq('user_id', user.id)
+    .maybeSingle<UserStreak>()
+
+  if (streakRow) {
+    const today = now.split('T')[0]
+    const { currentStreak, longestStreak } = updateStreak({
+      currentStreak: streakRow.current_streak,
+      longestStreak: streakRow.longest_streak,
+      lastStreakDate: streakRow.last_streak_date,
+    })
+    await supabase.from('user_streaks').update({
+      current_streak: currentStreak,
+      longest_streak: longestStreak,
+      last_streak_date: today,
+      updated_at: now,
+    }).eq('user_id', user.id)
+  }
+
+  const [newAchievements] = await Promise.all([
+    checkAndUnlockAchievements(supabase, user.id, 'recall'),
+    invalidateDashboardCaches(supabase, user.id),
+  ])
 
   return NextResponse.json({
     flashcard:        updated,

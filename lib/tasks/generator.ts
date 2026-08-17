@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Difficulty, TaskTemplate } from "./types";
+import { nextDifficulty } from "./progression";
+import type { Difficulty, TaskTemplate, DailyTaskWithTemplate, UserXP, UserStreak } from "./types";
 
 const DAILY_TASK_LIMIT = 3;
 
@@ -124,4 +125,91 @@ export async function ensureUserRecords(
       longest_streak: 0,
     });
   }
+}
+
+// ─────────────────────────────────────────
+// getTodaysSystemTasks
+//   Shared by /api/tasks/today and the Command Center route so both
+//   generate/fetch today's gamification tasks the exact same way
+//   instead of duplicating the ensure→progress→generate→fetch chain.
+// ─────────────────────────────────────────
+export interface TodaysSystemTasks {
+  tasks: DailyTaskWithTemplate[];
+  userXp: UserXP;
+  userStreak: UserStreak;
+}
+
+export async function getTodaysSystemTasks(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<TodaysSystemTasks> {
+  const today = new Date().toISOString().split("T")[0];
+
+  await ensureUserRecords(supabase, userId);
+
+  const { data: userXp } = await supabase
+    .from("user_xp")
+    .select("*")
+    .eq("user_id", userId)
+    .single<UserXP>();
+
+  if (!userXp) throw new Error("XP verisi bulunamadı");
+
+  // Progression: if this is a new day, recalculate difficulty from yesterday
+  let difficulty = userXp.current_difficulty as Difficulty;
+
+  if (userXp.last_active_date && userXp.last_active_date !== today) {
+    const { data: yesterdayTasks } = await supabase
+      .from("daily_tasks")
+      .select("completed")
+      .eq("user_id", userId)
+      .eq("source", "system")
+      .eq("date", userXp.last_active_date);
+
+    const completedCount = (yesterdayTasks ?? []).filter(
+      (t: { completed: boolean }) => t.completed
+    ).length;
+
+    difficulty = nextDifficulty({
+      current: difficulty,
+      completedCount,
+      totalCount: yesterdayTasks?.length ?? 3,
+      lastActiveDate: userXp.last_active_date,
+    });
+
+    await supabase
+      .from("user_xp")
+      .update({ current_difficulty: difficulty })
+      .eq("user_id", userId);
+  }
+
+  await generateDailyTasks(supabase, userId, difficulty);
+
+  const { data: tasks, error } = await supabase
+    .from("daily_tasks")
+    .select("*, task_templates(*)")
+    .eq("user_id", userId)
+    .eq("source", "system")
+    .eq("date", today)
+    .order("created_at");
+
+  if (error) throw new Error("Görevler alınamadı");
+
+  const { data: userStreak } = await supabase
+    .from("user_streaks")
+    .select("*")
+    .eq("user_id", userId)
+    .single<UserStreak>();
+
+  const { data: freshXp } = await supabase
+    .from("user_xp")
+    .select("*")
+    .eq("user_id", userId)
+    .single<UserXP>();
+
+  return {
+    tasks: (tasks ?? []) as DailyTaskWithTemplate[],
+    userXp: freshXp ?? userXp,
+    userStreak: userStreak ?? { user_id: userId, current_streak: 0, longest_streak: 0, last_streak_date: null, updated_at: '' },
+  };
 }
