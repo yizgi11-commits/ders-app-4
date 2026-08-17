@@ -16,9 +16,10 @@ import type {
 import type { FlashcardWithSubject } from '@/lib/flashcards/types'
 import type { Exam } from '@/lib/planner/types'
 import {
-  computeLearningScore, computeNextAction, startSessionHref,
+  computeNextAction, startSessionHref,
   type NextAction,
 } from '@/lib/dashboard/command-center'
+import type { LearningScoreResponse } from '@/lib/dashboard/learning-score'
 
 const ESTIMATED_MINUTES: Record<Difficulty, number> = { 1: 25, 2: 45, 3: 60 }
 
@@ -49,6 +50,12 @@ interface CommandCenterData {
   displayName:       string
   flashcards:        FlashcardWithSubject[]
   exams:             Exam[]
+  learningScore:     LearningScoreResponse
+}
+
+const EMPTY_LEARNING_SCORE: LearningScoreResponse = {
+  score: 0, change: 0,
+  breakdown: { focus: 0, recall: 0, completion: 0, consistency: 0 },
 }
 
 const EMPTY_STREAK: UserStreak = {
@@ -149,13 +156,14 @@ export default function CommandCenter() {
 
   const load = useCallback(async () => {
     try {
-      const [ccRes, settingsRes, flashRes, examsRes] = await Promise.all([
+      const [ccRes, settingsRes, flashRes, examsRes, scoreRes] = await Promise.all([
         fetch('/api/dashboard/command-center'),
         fetch('/api/settings'),
         fetch('/api/flashcards'),
         fetch('/api/exams?upcoming=1&limit=3'),
+        fetch('/api/learning-score'),
       ])
-      const [ccJson, settingsJson, flashJson, examsJson] = await Promise.all([
+      const [ccJson, settingsJson, flashJson, examsJson, scoreJson] = await Promise.all([
         ccRes.ok ? ccRes.json() : {
           tasks: [], userStreak: null, todayMinutes: 0,
           reviewsDueToday: 0, reviewsDoneToday: 0, reviewHint: null, continueLearning: null,
@@ -164,6 +172,7 @@ export default function CommandCenter() {
         settingsRes.ok ? settingsRes.json() : { ad: '' },
         flashRes.ok ? flashRes.json() : { flashcards: [] },
         examsRes.ok ? examsRes.json() : { exams: [] },
+        scoreRes.ok ? scoreRes.json() : EMPTY_LEARNING_SCORE,
       ])
 
       setData({
@@ -178,6 +187,7 @@ export default function CommandCenter() {
         displayName:      (settingsJson.ad || '').trim(),
         flashcards:       flashJson.flashcards ?? [],
         exams:            examsJson.exams ?? [],
+        learningScore:    scoreJson.score !== undefined ? scoreJson : EMPTY_LEARNING_SCORE,
       })
     } finally {
       setLoading(false)
@@ -217,6 +227,7 @@ export default function CommandCenter() {
   const {
     tasks, streak, todayMinutes, reviewsDueToday, reviewsDoneToday,
     reviewHint, continueLearning, monthly, displayName, flashcards, exams,
+    learningScore,
   } = data
 
   const done    = tasks.filter(t => t.completed).length
@@ -226,11 +237,6 @@ export default function CommandCenter() {
   const today   = new Date().toISOString().split('T')[0]
 
   const plannedMinutes = tasks.reduce((sum, t) => sum + ESTIMATED_MINUTES[t.task_templates.difficulty], 0)
-  const learningScore = computeLearningScore({
-    tasksTotal: total, tasksDone: done,
-    reviewsDue: reviewsDueToday, reviewsDone: reviewsDoneToday,
-    todayMinutes, plannedMinutes,
-  })
 
   const firstIncomplete = tasks.find(t => !t.completed) ?? null
   const firstIncompleteForAction = firstIncomplete ? {
@@ -301,7 +307,12 @@ export default function CommandCenter() {
 
         <div className="relative flex items-center justify-between gap-4 pt-4 border-t border-white/10">
           <p className="text-sm font-semibold text-white/80">
-            Learning Score: <span className={cn('font-black text-base', scoreTone(learningScore))}>{learningScore}</span>
+            Learning Score: <span className={cn('font-black text-base', scoreTone(learningScore.score))}>{learningScore.score}</span>
+            {learningScore.change !== 0 && (
+              <span className={cn('ml-1.5 text-xs font-bold', learningScore.change > 0 ? 'text-emerald-300' : 'text-red-300')}>
+                {learningScore.change > 0 ? '+' : ''}{learningScore.change}
+              </span>
+            )}
           </p>
           <Link href={startHref}>
             <motion.div

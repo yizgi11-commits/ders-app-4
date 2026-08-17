@@ -4,7 +4,9 @@ import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { BarChart2 } from 'lucide-react'
 import type { AnalyticsData } from '@/lib/analytics/types'
+import type { LearningScoreResponse } from '@/lib/dashboard/learning-score'
 import WeekMetrics from './WeekMetrics'
+import LearningScoreCard from './LearningScoreCard'
 import ProductiveHours from './ProductiveHours'
 import NoeticInsight from './NoeticInsight'
 import WeeklyReportButton from './WeeklyReportButton'
@@ -13,7 +15,10 @@ import WeeklyReportButton from './WeeklyReportButton'
 const SubjectDistribution = dynamic(() => import('@/components/analytics/SubjectDistribution'), { ssr: false })
 const FocusHeatmap        = dynamic(() => import('@/components/analytics/FocusHeatmap'),        { ssr: false })
 
-export default function InsightsClient({ data }: { data: AnalyticsData }) {
+export default function InsightsClient({ data, learningScore }: {
+  data: AnalyticsData
+  learningScore: LearningScoreResponse
+}) {
   return (
     <div className="space-y-8">
       {/* ── Layer 1 — objective metrics ───────────────────────── */}
@@ -27,6 +32,8 @@ export default function InsightsClient({ data }: { data: AnalyticsData }) {
         </div>
 
         <WeekMetrics data={data} />
+
+        <LearningScoreCard data={learningScore} />
 
         <ProductiveHours hourly={data.hourlyStats} />
 

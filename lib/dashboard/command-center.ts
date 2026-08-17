@@ -5,45 +5,6 @@
 // component so the priority ladder is easy to read/audit on its own.
 // ─────────────────────────────────────────────────────────────────
 
-export interface LearningScoreInput {
-  tasksTotal:     number
-  tasksDone:      number
-  reviewsDue:     number
-  reviewsDone:    number
-  todayMinutes:   number
-  plannedMinutes: number
-}
-
-/**
- * 0-100. Averages whichever of (task completion, review completion,
- * focus-time-vs-planned) actually had something to measure today —
- * a day with no tasks assigned isn't penalized for having "0 tasks done".
- * Falls back to 100 if the user already focused with nothing assigned,
- * else 0 for a genuinely empty day.
- */
-export function computeLearningScore({
-  tasksTotal, tasksDone, reviewsDue, reviewsDone, todayMinutes, plannedMinutes,
-}: LearningScoreInput): number {
-  const components: number[] = []
-
-  if (tasksTotal > 0) {
-    components.push((tasksDone / tasksTotal) * 100)
-  }
-
-  const reviewDenom = reviewsDue + reviewsDone
-  if (reviewDenom > 0) {
-    components.push((reviewsDone / reviewDenom) * 100)
-  }
-
-  if (plannedMinutes > 0) {
-    components.push(Math.min(100, (todayMinutes / plannedMinutes) * 100))
-  }
-
-  if (components.length === 0) return todayMinutes > 0 ? 100 : 0
-
-  return Math.round(components.reduce((a, b) => a + b, 0) / components.length)
-}
-
 export type NextActionKind = 'review' | 'exam' | 'task' | 'focus' | 'plan'
 
 export interface NextAction {

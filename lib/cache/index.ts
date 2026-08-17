@@ -10,6 +10,7 @@ export const TTL = {
   AI_STATS:         60 * 60 * 24,      // 24 h — collectUserStats() snapshot for the weekly report
   AI_INSIGHTS:      60 * 60 * 24,      // 24 h — one Claude call per user per day
   ACHIEVEMENTS:     60 * 60 * 24 * 7,  // 7 days — only grows, rarely changes
+  LEARNING_SCORE:   60 * 60 * 6,       // 6 h — invalidated by task/focus/recall completion
 } as const
 
 // ─────────────────────────────────────────────────────────────────
@@ -22,6 +23,7 @@ export const cacheKey = {
   aiStats:         (date: string)    => `ai:stats:${date}`,
   noeticInsight:   (date: string)    => `ai:noetic-insight:${date}`,
   achievements:    ()                => `achievements:unlocked`,
+  learningScore:   (date: string)    => `learning:score:${date}`,
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -93,5 +95,6 @@ export async function invalidateDashboardCaches(
     cacheKey.weeklyProgress(weekKey),
     cacheKey.analyticsData(today),
     cacheKey.aiStats(today),
+    cacheKey.learningScore(today),
   )
 }
