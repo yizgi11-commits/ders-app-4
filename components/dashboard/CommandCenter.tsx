@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Flame, CheckCircle2, Circle, Loader2, Zap, PartyPopper, Star,
   Timer, Plus, Brain, CalendarClock, ArrowRight, GraduationCap,
-  BookOpen, CalendarDays,
+  BookOpen, CalendarDays, Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useGamification } from '@/components/gamification/GamificationProvider'
@@ -237,6 +237,7 @@ export default function CommandCenter() {
   const today   = new Date().toISOString().split('T')[0]
 
   const plannedMinutes = tasks.reduce((sum, t) => sum + ESTIMATED_MINUTES[t.task_templates.difficulty], 0)
+  const showWeeklyReview = new Date().getDay() === 0 || learningScore.breakdown.consistency >= 100
 
   const firstIncomplete = tasks.find(t => !t.completed) ?? null
   const firstIncompleteForAction = firstIncomplete ? {
@@ -499,6 +500,28 @@ export default function CommandCenter() {
           </div>
         </div>
       </motion.div>
+
+      {/* 5b. WEEKLY REVIEW — Sundays, or once 7 days straight are active */}
+      {showWeeklyReview && (
+        <Link href="/dashboard/insights/weekly-review">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.19 }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center justify-between gap-3 bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-100 rounded-2xl p-4"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
+                <Sparkles className="w-4 h-4 text-violet-600" />
+              </div>
+              <p className="text-sm font-bold text-gray-900 truncate">Your weekly review is ready</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-violet-500 shrink-0" />
+          </motion.div>
+        </Link>
+      )}
 
       {/* 6. QUICK ACTIONS */}
       <div className="grid grid-cols-3 gap-3">
