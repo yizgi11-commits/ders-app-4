@@ -4,7 +4,7 @@ import { getCachedAnalyticsData } from '@/lib/analytics/queries'
 import { getAnthropicClient, AI_MODEL } from '@/lib/ai/client'
 import { SYSTEM_PROMPT } from '@/lib/ai/prompts'
 import { logUsage } from '@/lib/ai/usage'
-import { getCache, setCache, TTL, cacheKey } from '@/lib/cache'
+import { getCache, setCache, TTL, cacheKey, currentWeekKey } from '@/lib/cache'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import type { AnalyticsData } from '@/lib/analytics/types'
 import type { NoeticInsightData } from '@/lib/insights/types'
@@ -78,32 +78,44 @@ function buildFallback(d: AnalyticsData): NoeticInsightData {
   }
 }
 
-// GET /api/insights/noetic — the AI commentary layer on the Insights page
+// GET /api/insights/noetic — cache read ONLY. Never calls Claude and
+// never consumes the rate limit; if nothing is cached for this week
+// yet, returns { cached: false } so the client can offer an explicit
+// "Analiz Et" button instead of silently auto-generating.
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
-  const today = new Date().toISOString().split('T')[0]
-  const key   = cacheKey.noeticInsight(today)
-
-  // ── 1. Serve cached commentary (one generation per user per day) ──
+  const key = cacheKey.noeticInsight(currentWeekKey())
   const cached = await getCache<NoeticInsightData>(supabase, user.id, key)
-  if (cached) return NextResponse.json(cached)
+
+  return NextResponse.json(cached ? { ...cached, cached: true } : { cached: false })
+}
+
+// POST /api/insights/noetic — on-demand generation, triggered only by
+// the user clicking "Analiz Et". Cached per ISO week (7 days), so a
+// second click the same week serves the cached read instead of a new
+// Claude call.
+export async function POST() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
+
+  const key = cacheKey.noeticInsight(currentWeekKey())
+
+  const cached = await getCache<NoeticInsightData>(supabase, user.id, key)
+  if (cached) return NextResponse.json({ ...cached, cached: true })
 
   const analytics = await getCachedAnalyticsData(supabase, user.id)
 
-  // ── 2. Rate limit — only consumed on a real generation ───────────
   const { allowed } = await checkRateLimit(supabase, user.id, ENDPOINT, 5, 24)
   if (!allowed) {
-    // Cache the fallback too — otherwise every request for the rest of
-    // the day re-hits this branch (and would look cacheable but wasn't).
     const fallback = { ...buildFallback(analytics), rate_limited: true }
     await setCache(supabase, user.id, key, fallback, TTL.AI_INSIGHTS)
     return NextResponse.json(fallback)
   }
 
-  // ── 3. Generate ──────────────────────────────────────────────────
   let insight: NoeticInsightData
 
   try {

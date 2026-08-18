@@ -2,23 +2,41 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Sparkles, Loader2, RefreshCw } from 'lucide-react'
+import { Sparkles, Loader2, RefreshCw, Wand2 } from 'lucide-react'
 import type { NoeticInsightData } from '@/lib/insights/types'
 
-export default function NoeticInsight() {
-  const [data, setData]       = useState<NoeticInsightData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError]     = useState(false)
+type Status = 'checking' | 'idle' | 'generating' | 'ready' | 'error'
 
+export default function NoeticInsight() {
+  const [status, setStatus] = useState<Status>('checking')
+  const [data, setData]     = useState<NoeticInsightData | null>(null)
+
+  // Cache read only — never triggers generation. If nothing was
+  // generated yet this week, the user gets an explicit "Analiz Et"
+  // button instead of a silent auto-generation.
   useEffect(() => {
     let cancelled = false
     fetch('/api/insights/noetic')
       .then(r => r.ok ? r.json() : Promise.reject())
-      .then(d => { if (!cancelled) setData(d) })
-      .catch(() => { if (!cancelled) setError(true) })
-      .finally(() => { if (!cancelled) setLoading(false) })
+      .then((d: NoeticInsightData & { cached: boolean }) => {
+        if (cancelled) return
+        if (d.cached) { setData(d); setStatus('ready') } else setStatus('idle')
+      })
+      .catch(() => { if (!cancelled) setStatus('idle') })
     return () => { cancelled = true }
   }, [])
+
+  async function generate() {
+    setStatus('generating')
+    try {
+      const res = await fetch('/api/insights/noetic', { method: 'POST' })
+      if (!res.ok) throw new Error()
+      setData(await res.json())
+      setStatus('ready')
+    } catch {
+      setStatus('error')
+    }
+  }
 
   return (
     <motion.div
@@ -51,17 +69,43 @@ export default function NoeticInsight() {
         )}
       </div>
 
-      {loading ? (
+      {status === 'checking' && (
+        <div className="relative flex items-center gap-2.5 text-white/40 py-3">
+          <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+          <span className="text-sm">Kontrol ediliyor…</span>
+        </div>
+      )}
+
+      {status === 'idle' && (
+        <div className="relative py-1">
+          <p className="text-sm text-white/50 leading-relaxed mb-3.5">
+            Bu haftanın verilerini yorumlamamı ister misin?
+          </p>
+          <button
+            onClick={generate}
+            className="flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-colors border border-white/10"
+          >
+            <Wand2 className="w-3.5 h-3.5 text-indigo-300" />
+            Analiz Et
+          </button>
+        </div>
+      )}
+
+      {status === 'generating' && (
         <div className="relative flex items-center gap-2.5 text-white/40 py-3">
           <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
           <span className="text-sm">Veriler yorumlanıyor…</span>
         </div>
-      ) : error || !data ? (
+      )}
+
+      {status === 'error' && (
         <div className="relative flex items-center gap-2.5 text-white/40 py-3">
           <RefreshCw className="w-4 h-4" />
           <span className="text-sm">Yorum şu anda üretilemedi.</span>
         </div>
-      ) : (
+      )}
+
+      {status === 'ready' && data && (
         <div className="relative">
           <p className="text-lg font-bold text-white leading-snug flex items-start gap-2.5">
             <span className="text-xl shrink-0 leading-none mt-0.5">{data.icon}</span>

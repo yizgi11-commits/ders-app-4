@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Loader2, RotateCcw, BookmarkPlus, Check } from 'lucide-react'
+import { Lock, Loader2, RotateCcw, BookmarkPlus, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { AssistPageContext, AssistChatMessage } from '@/lib/assist/types'
 
@@ -16,17 +16,15 @@ interface Props {
   quickActions?: QuickAction[]
   /** Only meaningful when a 'save' quick action is present (Atlas topic). */
   onSave?:       (lastAnswer: string | null) => Promise<void>
-  placeholder?:  string
 }
 
 let idCounter = 0
 function nextId() { idCounter += 1; return `msg-${idCounter}` }
 
 export default function AssistConversation({
-  pageContext, introText, quickActions = [], onSave, placeholder = 'Bir şey sor…',
+  pageContext, introText, quickActions = [], onSave,
 }: Props) {
   const [messages, setMessages] = useState<AssistChatMessage[]>([])
-  const [input, setInput]       = useState('')
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState<string | null>(null)
   const [saved, setSaved]       = useState(false)
@@ -48,7 +46,6 @@ export default function AssistConversation({
     const trimmed = text.trim()
     if (!trimmed || loading) return
 
-    setInput('')
     setError(null)
     setMessages(prev => [...prev, { id: nextId(), role: 'user', text: trimmed }])
     setLoading(true)
@@ -169,25 +166,22 @@ export default function AssistConversation({
         </div>
       )}
 
-      {/* Input */}
+      {/* Free text — Pro-only, locked for now. Contextual buttons above
+          cover every supported action without needing typed input. */}
       <div className="p-3 border-t border-border">
         <div className="flex items-center gap-2">
           <input
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') send(input) }}
-            placeholder={placeholder}
-            disabled={loading}
-            className="flex-1 text-sm bg-gray-50 border border-border rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 disabled:opacity-60"
+            disabled
+            placeholder="Serbest soru sorma — Pro ile geliyor"
+            className="flex-1 text-sm bg-gray-50 border border-border rounded-xl px-3.5 py-2.5 text-muted-foreground placeholder:text-muted-foreground/70 cursor-not-allowed"
           />
-          <button
-            onClick={() => send(input)}
-            disabled={loading || !input.trim()}
-            className="w-10 h-10 shrink-0 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white flex items-center justify-center transition-colors"
-          >
-            <Send className="w-4 h-4" />
-          </button>
+          <div className="w-10 h-10 shrink-0 rounded-xl bg-gray-100 text-gray-400 flex items-center justify-center">
+            <Lock className="w-4 h-4" />
+          </div>
         </div>
+        <p className="text-[10px] font-semibold text-indigo-400 uppercase tracking-wider mt-1.5 text-center">
+          Coming with Pro
+        </p>
       </div>
     </div>
   )

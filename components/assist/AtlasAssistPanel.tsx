@@ -76,7 +76,6 @@ export default function AtlasAssistPanel({ subjectId, topicId }: Props) {
       introText={`${topicTitle} hakkında ne öğrenmek istiyorsun?`}
       quickActions={quickActions}
       onSave={saveToVault}
-      placeholder={`${topicTitle} hakkında sor…`}
     />
   )
 }

@@ -76,13 +76,13 @@ export async function POST(req: NextRequest) {
   if (!ACTIONS.includes(action)) return NextResponse.json({ error: 'Geçersiz işlem' }, { status: 400 })
   if (!validateUUID(id))         return NextResponse.json({ error: 'Geçersiz id' }, { status: 400 })
 
-  // ── Rate limit: 20 assists per day ─────────────────────────────
+  // ── Rate limit: 5 assists per day (Free tier) ────────────────────
   const { allowed, remaining } = await checkRateLimit(
-    supabase, user.id, '/api/vault/assist', 20, 24
+    supabase, user.id, '/api/vault/assist', 5, 24
   )
   if (!allowed) {
     return NextResponse.json(
-      { error: 'Günlük Noetic Assist limitine ulaştınız (20/gün). Yarın tekrar deneyin.' },
+      { error: 'Günlük Noetic Assist limitine ulaştınız (5/gün). Yarın tekrar deneyin.' },
       { status: 429, headers: { 'X-RateLimit-Remaining': '0' } }
     )
   }

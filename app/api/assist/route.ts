@@ -6,6 +6,7 @@ import { logUsage } from '@/lib/ai/usage'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { sanitizeString, validateUUID, MAX } from '@/lib/security'
 import { getCachedAnalyticsData } from '@/lib/analytics/queries'
+import { buildPlannerReply, buildInsightsReply } from '@/lib/assist/deterministic'
 import type { AssistPageContext } from '@/lib/assist/types'
 
 export const runtime = 'nodejs'
@@ -23,8 +24,15 @@ Kısa, net, Türkçe. Gereksiz uzatma — birkaç cümle veya kısa madde listes
  * what makes Anthropic's ephemeral prompt cache actually able to hit;
  * folding both into one interpolated string (the previous shape) made
  * every call's system prompt unique and defeated caching entirely.
+ *
+ * Not every context needs the LLM at all: "Optimize my schedule" and
+ * "Explain my performance" both reduce to sorting/formatting data the
+ * app already has, so those return a ready-made `text` instead — no
+ * Claude call, no rate limit, no cost. See lib/assist/deterministic.ts.
  */
-interface Grounded { staticSystem: string; dynamicContext: string }
+type Grounded =
+  | { ai: true;  staticSystem: string; dynamicContext: string }
+  | { ai: false; text: string }
 
 async function buildGrounding(
   supabase: SupabaseClient,
@@ -48,6 +56,7 @@ async function buildGrounding(
       const subjectName = (topic.subjects as { name?: string } | null)?.name ?? 'ders'
 
       return {
+        ai: true,
         staticSystem: `Sen Noetic OS'in Atlas modülündeki öğrenme asistanısın. Kullanıcının incelediği konuyu doğru, net ve öğretici şekilde Türkçe anlat. Bilmediğin veya emin olmadığın bir şeyi uydurma.`,
         dynamicContext: `Konu: ${topic.title}\nDers: ${subjectName}`,
       }
@@ -63,6 +72,7 @@ async function buildGrounding(
         .maybeSingle()
 
       return {
+        ai: true,
         staticSystem: `Sen Noetic OS'in Atlas modülündeki öğrenme asistanısın. Kısa, net, Türkçe yanıtla.`,
         dynamicContext: `Kullanıcı "${subject?.name ?? 'bir ders'}" dersinin konu haritasına bakıyor.`,
       }
@@ -70,6 +80,7 @@ async function buildGrounding(
 
     case 'atlas':
       return {
+        ai: true,
         staticSystem: `Sen Noetic OS'in Atlas modülündeki öğrenme asistanısın. Kullanıcı derslerinin ve konularının haritasına bakıyor. Kısa, net, Türkçe yanıtla.`,
         dynamicContext: '',
       }
@@ -88,46 +99,43 @@ async function buildGrounding(
       const tasks = (tasksRes.data ?? []) as { completed: boolean }[]
       const goals = (goalsRes.data ?? []) as { title: string; deadline: string | null }[]
 
-      const examsText = exams.length > 0
-        ? exams.map(e => `${e.name} (${e.exam_date})`).join(', ')
-        : 'kayıtlı sınav yok'
-      const goalsText = goals.length > 0
-        ? goals.map(g => `${g.title}${g.deadline ? ` (${g.deadline})` : ''}`).join(', ')
-        : 'kayıtlı hedef yok'
-
       return {
-        staticSystem: `Sen Noetic OS'in Planner modülündeki planlama asistanısın. Kullanıcının önümüzdeki 7 günü, hedefleri ve sınavları için somut, uygulanabilir öneriler ver. Kısa, net, Türkçe. Genel geçer tavsiye değil, verilen veriye dayan.`,
-        dynamicContext: `Önümüzdeki 7 gün planlanan görev: ${tasks.length}, tamamlanan: ${tasks.filter(t => t.completed).length}
-Yaklaşan sınavlar: ${examsText}
-Açık hedefler: ${goalsText}`,
+        ai:   false,
+        text: buildPlannerReply({
+          exams,
+          tasksTotal:     tasks.length,
+          tasksCompleted: tasks.filter(t => t.completed).length,
+          goals,
+        }),
       }
     }
 
     case 'insights': {
-      // app_cache-backed — see lib/analytics/queries.ts. Without this,
-      // every assist message asked in Insights context re-ran the full
-      // 7-query analytics fetch, even mid-conversation follow-ups.
+      // app_cache-backed — see lib/analytics/queries.ts.
       const data = await getCachedAnalyticsData(supabase, userId)
       const w = data.weeklyComparison
       return {
-        staticSystem: `Sen Noetic OS'in Insights modülündeki analiz asistanısın. Kullanıcının verilerini yorumluyorsun. Kısa, net, veri odaklı, Türkçe. Sadece yorumla — tavsiye ver ama duygusal olma.`,
-        dynamicContext: `Bu hafta odak: ${w.this_week_minutes} dk (geçen hafta ${w.last_week_minutes} dk)
-Görev tamamlama: %${data.productivityScore.task_completion}
-Recall başarısı: %${data.recallWeek.successRate}
-Tutarlılık: %${data.productivityScore.consistency}
-Seri: ${data.currentStreak} gün
-En verimli gün: ${data.mostProductiveDay ?? 'belirsiz'}`,
+        ai:   false,
+        text: buildInsightsReply({
+          thisWeekMinutes:   w.this_week_minutes,
+          minutesChangePct:  w.minutes_change_pct,
+          taskCompletionPct: data.productivityScore.task_completion,
+          recallSuccessPct:  data.recallWeek.successRate,
+          recallTotal:       data.recallWeek.total,
+          consistencyPct:    data.productivityScore.consistency,
+        }),
       }
     }
 
     case 'vault':
       return {
+        ai: true,
         staticSystem: `Sen Noetic OS'in Vault modülündeki yardımcısın. Kullanıcı henüz belirli bir not veya belge açmadı. Kısa, net, Türkçe yanıtla.`,
         dynamicContext: '',
       }
 
     default:
-      return { staticSystem: GENERAL_SYSTEM, dynamicContext: '' }
+      return { ai: true, staticSystem: GENERAL_SYSTEM, dynamicContext: '' }
   }
 }
 
@@ -145,17 +153,23 @@ export async function POST(req: NextRequest) {
   if (!pageContext?.kind) return NextResponse.json({ error: 'Geçersiz bağlam' }, { status: 400 })
   if (!message) return NextResponse.json({ error: 'Mesaj gerekli' }, { status: 400 })
 
-  const { allowed } = await checkRateLimit(supabase, user.id, ENDPOINT, 30, 24)
-  if (!allowed) {
-    return NextResponse.json({ error: 'Günlük Noetic Assist limitine ulaştın (30/gün). Yarın tekrar dene.' }, { status: 429 })
-  }
-
   let grounded: Grounded
   try {
     grounded = await buildGrounding(supabase, user.id, pageContext)
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Bağlam yüklenemedi'
     return NextResponse.json({ error: msg }, { status: 404 })
+  }
+
+  // Deterministic contexts (Planner, Insights) never touch Claude — no
+  // rate limit needed, since there's no AI cost to protect.
+  if (!grounded.ai) {
+    return NextResponse.json({ text: grounded.text })
+  }
+
+  const { allowed } = await checkRateLimit(supabase, user.id, ENDPOINT, 10, 24)
+  if (!allowed) {
+    return NextResponse.json({ error: 'Günlük Noetic Assist limitine ulaştın (10/gün). Yarın tekrar dene.' }, { status: 429 })
   }
 
   try {

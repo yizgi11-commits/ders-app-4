@@ -11,4 +11,6 @@ export interface NoeticInsightData {
   rate_limited?: boolean
   /** Claude was unavailable; body was assembled from the raw numbers. */
   fallback?:     boolean
+  /** Served from this week's app_cache entry rather than freshly generated. */
+  cached?:       boolean
 }
