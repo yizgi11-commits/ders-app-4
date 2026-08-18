@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getUserTier } from '@/lib/subscription'
 import Sidebar from '@/components/dashboard/Sidebar'
 import Header from '@/components/dashboard/Header'
 import PageTransition from '@/components/dashboard/PageTransition'
@@ -30,12 +31,13 @@ export default async function DashboardLayout({
 
   const ad    = user.user_metadata?.ad ?? user.email?.split('@')[0] ?? 'Öğrenci'
   const email = user.email ?? ''
+  const tier  = await getUserTier(supabase, user.id)
 
   return (
     <GamificationProvider>
       <AssistProvider>
         <div className="flex min-h-screen bg-[oklch(0.979_0.003_250)]">
-          <Sidebar />
+          <Sidebar tier={tier} />
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             <Header userName={ad} userEmail={email} />
             <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
@@ -43,7 +45,7 @@ export default async function DashboardLayout({
             </main>
           </div>
         </div>
-        <FloatingAssist />
+        <FloatingAssist tier={tier} />
       </AssistProvider>
     </GamificationProvider>
   )

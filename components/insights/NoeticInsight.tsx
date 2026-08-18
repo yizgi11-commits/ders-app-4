@@ -1,20 +1,24 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Sparkles, Loader2, RefreshCw, Wand2 } from 'lucide-react'
+import { Sparkles, Loader2, RefreshCw, Wand2, Lock } from 'lucide-react'
 import type { NoeticInsightData } from '@/lib/insights/types'
+import type { SubscriptionTier } from '@/lib/subscription'
 
 type Status = 'checking' | 'idle' | 'generating' | 'ready' | 'error'
 
-export default function NoeticInsight() {
+export default function NoeticInsight({ tier }: { tier: SubscriptionTier }) {
   const [status, setStatus] = useState<Status>('checking')
   const [data, setData]     = useState<NoeticInsightData | null>(null)
 
   // Cache read only — never triggers generation. If nothing was
   // generated yet this week, the user gets an explicit "Analiz Et"
-  // button instead of a silent auto-generation.
+  // button instead of a silent auto-generation. Free never calls this
+  // at all — AI Insights is Pro-only.
   useEffect(() => {
+    if (tier !== 'pro') return
     let cancelled = false
     fetch('/api/insights/noetic')
       .then(r => r.ok ? r.json() : Promise.reject())
@@ -24,7 +28,7 @@ export default function NoeticInsight() {
       })
       .catch(() => { if (!cancelled) setStatus('idle') })
     return () => { cancelled = true }
-  }, [])
+  }, [tier])
 
   async function generate() {
     setStatus('generating')
@@ -69,6 +73,18 @@ export default function NoeticInsight() {
         )}
       </div>
 
+      {tier === 'free' ? (
+        <Link href="/dashboard/upgrade" className="relative flex items-center gap-3 group">
+          <div className="w-9 h-9 rounded-xl bg-white/[0.06] flex items-center justify-center shrink-0">
+            <Lock className="w-4 h-4 text-white/40" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-white/70">Haftalık AI yorumu Pro’da açılır.</p>
+            <p className="text-xs text-indigo-300 group-hover:text-indigo-200 transition-colors">Yükseltmek için dokun →</p>
+          </div>
+        </Link>
+      ) : (
+      <>
       {status === 'checking' && (
         <div className="relative flex items-center gap-2.5 text-white/40 py-3">
           <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
@@ -115,6 +131,8 @@ export default function NoeticInsight() {
             {data.body}
           </p>
         </div>
+      )}
+      </>
       )}
     </motion.div>
   )

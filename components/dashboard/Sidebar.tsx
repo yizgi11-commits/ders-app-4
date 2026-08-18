@@ -5,11 +5,12 @@ import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard, CalendarDays, BarChart2, Settings, Zap, Timer,
-  LogOut, Brain, Map, Archive, Milestone, User,
+  LogOut, Brain, Map, Archive, Milestone, User, Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import type { SubscriptionTier } from '@/lib/subscription'
 
 const commandItem = { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard }
 
@@ -28,7 +29,7 @@ const bottomItems = [
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ tier }: { tier: SubscriptionTier }) {
   const pathname = usePathname()
   const router   = useRouter()
 
@@ -109,6 +110,19 @@ export default function Sidebar() {
 
       {/* Bottom */}
       <div className="px-2.5 py-4 border-t border-white/[0.06] flex flex-col gap-0.5">
+        {tier === 'free' && (
+          <Link href="/dashboard/upgrade">
+            <motion.div
+              whileHover={{ x: 2 }}
+              whileTap={{ scale: 0.97 }}
+              className="flex items-center gap-2.5 px-3 py-2 mb-1.5 rounded-lg text-[13px] font-semibold text-indigo-300 bg-gradient-to-r from-indigo-500/15 to-violet-500/15 border border-indigo-500/20 hover:from-indigo-500/25 hover:to-violet-500/25 transition-colors"
+            >
+              <Sparkles className="w-4 h-4 shrink-0 text-indigo-300" />
+              Upgrade
+            </motion.div>
+          </Link>
+        )}
+
         {bottomItems.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href}>
             <motion.div

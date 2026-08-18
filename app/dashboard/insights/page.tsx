@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getCachedAnalyticsData } from '@/lib/analytics/queries'
 import { getCachedLearningScore } from '@/lib/dashboard/learning-score'
+import { getUserTier } from '@/lib/subscription'
 import InsightsClient from '@/components/insights/InsightsClient'
 
 export const metadata = { title: 'Insights' }
@@ -15,9 +16,10 @@ export default async function InsightsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/giris')
 
-  const [analytics, learningScore] = await Promise.all([
+  const [analytics, learningScore, tier] = await Promise.all([
     getCachedAnalyticsData(supabase, user.id),
     getCachedLearningScore(supabase, user.id),
+    getUserTier(supabase, user.id),
   ])
 
   return (
@@ -27,7 +29,7 @@ export default async function InsightsPage() {
         <p className="text-sm text-muted-foreground mt-0.5">Verilerin ne söylüyor?</p>
       </div>
 
-      <InsightsClient data={analytics} learningScore={learningScore} />
+      <InsightsClient data={analytics} learningScore={learningScore} tier={tier} />
     </div>
   )
 }

@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Brain, Eye, Loader2 } from 'lucide-react'
+import { X, Brain, Eye, Loader2, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   RECALL_GRADES, GRADE_CONFIG,
@@ -21,6 +22,7 @@ export default function RecallSession({ cards, onClose, onFinished }: Props) {
   const [revealed, setRevealed] = useState(false)
   const [saving, setSaving]   = useState(false)
   const [done, setDone]       = useState(false)
+  const [locked, setLocked]   = useState(false)
   const [tally, setTally]     = useState<Record<RecallGrade, number>>({
     again: 0, hard: 0, good: 0, easy: 0,
   })
@@ -32,11 +34,16 @@ export default function RecallSession({ cards, onClose, onFinished }: Props) {
     if (!card || saving) return
     setSaving(true)
     try {
-      await fetch('/api/recall/review', {
+      const res = await fetch('/api/recall/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ flashcard_id: card.id, grade: g }),
       })
+      if (res.status === 403) {
+        setLocked(true)
+        onFinished()
+        return
+      }
       setTally(t => ({ ...t, [g]: t[g] + 1 }))
       setRevealed(false)
 
@@ -50,6 +57,40 @@ export default function RecallSession({ cards, onClose, onFinished }: Props) {
       setSaving(false)
     }
   }, [card, saving, index, total, onFinished])
+
+  // ── Free daily limit hit mid-session ────────────────────────────
+  if (locked) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        className="max-w-lg mx-auto py-14 flex flex-col items-center text-center gap-5"
+      >
+        <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center">
+          <Lock className="w-7 h-7 text-indigo-300" />
+        </div>
+        <div>
+          <h2 className="text-xl font-black text-gray-900">Bugünkü Recall limitine ulaştın</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {tally.again + tally.hard + tally.good + tally.easy} kart tamamladın. Free planda günde 20 kart — Pro ile sınırsız.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-xl border border-border text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            Recall&apos;a dön
+          </button>
+          <Link
+            href="/dashboard/upgrade"
+            className="px-5 py-2.5 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-sm font-bold transition-colors"
+          >
+            Upgrade
+          </Link>
+        </div>
+      </motion.div>
+    )
+  }
 
   // ── Summary ──────────────────────────────────────────────────
   if (done) {

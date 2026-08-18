@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
 import AssistConversation, { type QuickAction } from './AssistConversation'
 import type { SubjectWithTopics } from '@/lib/subjects/types'
+import type { SubscriptionTier } from '@/lib/subscription'
 
 interface Props {
   subjectId: string
   topicId?:  string
+  tier:      SubscriptionTier
 }
 
-export default function AtlasAssistPanel({ subjectId, topicId }: Props) {
+export default function AtlasAssistPanel({ subjectId, topicId, tier }: Props) {
   const [names, setNames] = useState<{ subjectName: string; topicTitle: string | null } | null>(null)
 
   useEffect(() => {
@@ -45,6 +47,7 @@ export default function AtlasAssistPanel({ subjectId, topicId }: Props) {
       <AssistConversation
         pageContext={{ kind: 'atlas-subject', subjectId }}
         introText={`${names.subjectName} dersinin konu haritasına bakıyorsun. Bir konu seçersen o konu hakkında birlikte çalışabiliriz — yine de şimdiden bir şey sorabilirsin.`}
+        tier={tier}
       />
     )
   }
@@ -76,6 +79,7 @@ export default function AtlasAssistPanel({ subjectId, topicId }: Props) {
       introText={`${topicTitle} hakkında ne öğrenmek istiyorsun?`}
       quickActions={quickActions}
       onSave={saveToVault}
+      tier={tier}
     />
   )
 }

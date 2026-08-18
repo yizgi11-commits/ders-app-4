@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { checkLimit } from '@/lib/subscription'
 
 // POST /api/pdf/upload
 // Accepts multipart/form-data: file (PDF), subject_id (optional)
@@ -8,6 +9,14 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
+
+  const { allowed, limit } = await checkLimit(supabase, user.id, 'vaultPdfs')
+  if (!allowed) {
+    return NextResponse.json(
+      { error: `Free planda en fazla ${limit} PDF yükleyebilirsin. Pro ile sınırsız olur.`, locked: true },
+      { status: 403 },
+    )
+  }
 
   const formData = await req.formData()
   const file = formData.get('file') as File | null

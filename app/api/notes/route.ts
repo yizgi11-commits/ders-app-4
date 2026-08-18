@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { countWords, estimateReadingTime } from '@/lib/notes/ai-notes'
 import { sanitizeString, safeError, MAX } from '@/lib/security'
+import { checkLimit } from '@/lib/subscription'
 
 // GET /api/notes
 export async function GET(req: NextRequest) {
@@ -80,6 +81,14 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
+
+  const { allowed, limit } = await checkLimit(supabase, user.id, 'vaultNotes')
+  if (!allowed) {
+    return NextResponse.json(
+      { error: `Free planda en fazla ${limit} not oluşturabilirsin. Pro ile sınırsız olur.`, locked: true },
+      { status: 403 },
+    )
+  }
 
   const body = await req.json()
   const title      = sanitizeString(body.title ?? 'Başlıksız Not', MAX.NOTE_TITLE) || 'Başlıksız Not'

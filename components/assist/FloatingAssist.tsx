@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, X } from 'lucide-react'
 import { useAssist } from './AssistProvider'
 import { contextFromPathname, sectionOf, type AssistSection } from '@/lib/assist/types'
+import type { SubscriptionTier } from '@/lib/subscription'
 import AssistConversation from './AssistConversation'
 import AtlasAssistPanel from './AtlasAssistPanel'
 import NoeticAssist from '@/components/vault/NoeticAssist'
@@ -18,7 +19,7 @@ const SECTION_LABEL: Record<AssistSection, string> = {
   other:    'Noetic',
 }
 
-export default function FloatingAssist() {
+export default function FloatingAssist({ tier }: { tier: SubscriptionTier }) {
   const pathname = usePathname()
   const { isOpen, override, open, close, setOverride } = useAssist()
   const prevSection = useRef<AssistSection>(sectionOf(pathname))
@@ -41,14 +42,15 @@ export default function FloatingAssist() {
   function renderBody() {
     switch (context.kind) {
       case 'atlas-topic':
-        return <AtlasAssistPanel subjectId={context.subjectId} topicId={context.topicId} />
+        return <AtlasAssistPanel subjectId={context.subjectId} topicId={context.topicId} tier={tier} />
       case 'atlas-subject':
-        return <AtlasAssistPanel subjectId={context.subjectId} />
+        return <AtlasAssistPanel subjectId={context.subjectId} tier={tier} />
       case 'atlas':
         return (
           <AssistConversation
             pageContext={context}
             introText="Derslerinin ve konularının haritasına bakıyorsun. Bir şey sorabilirsin."
+            tier={tier}
           />
         )
       case 'planner':
@@ -60,6 +62,7 @@ export default function FloatingAssist() {
               { type: 'prompt', label: 'Plan öner', prompt: 'Önümüzdeki 7 gün için bir çalışma planı öner.' },
               { type: 'prompt', label: 'Sınava göre düzenle', prompt: 'Yaklaşan sınavlarıma göre önceliklerimi nasıl düzenlemeliyim?' },
             ]}
+            tier={tier}
           />
         )
       case 'vault-note':
@@ -71,6 +74,7 @@ export default function FloatingAssist() {
             onClose={() => setOverride(null)}
             onFlashcardsSaved={() => window.dispatchEvent(new Event('noetic:flashcards-saved'))}
             embedded
+            tier={tier}
           />
         )
       case 'vault-document':
@@ -82,6 +86,7 @@ export default function FloatingAssist() {
             onClose={() => setOverride(null)}
             onFlashcardsSaved={() => window.dispatchEvent(new Event('noetic:flashcards-saved'))}
             embedded
+            tier={tier}
           />
         )
       case 'vault':
@@ -89,6 +94,7 @@ export default function FloatingAssist() {
           <AssistConversation
             pageContext={context}
             introText="Bir not veya belge aç, üzerinde birlikte çalışalım — ya da bana bir şey sor."
+            tier={tier}
           />
         )
       case 'insights':
@@ -100,6 +106,7 @@ export default function FloatingAssist() {
               { type: 'prompt', label: 'Bu veriyi açıkla', prompt: 'Bu haftaki verilerimi yorumla.' },
               { type: 'prompt', label: 'Ne yapmalıyım?', prompt: 'Bu verilere göre önümüzdeki hafta ne yapmalıyım?' },
             ]}
+            tier={tier}
           />
         )
       default:
@@ -107,6 +114,7 @@ export default function FloatingAssist() {
           <AssistConversation
             pageContext={context}
             introText="Bir sorun mu var? Sorabilirsin."
+            tier={tier}
           />
         )
     }

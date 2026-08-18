@@ -6,18 +6,21 @@ import { motion } from 'framer-motion'
 import { BarChart2, FileText } from 'lucide-react'
 import type { AnalyticsData } from '@/lib/analytics/types'
 import type { LearningScoreResponse } from '@/lib/dashboard/learning-score'
+import type { SubscriptionTier } from '@/lib/subscription'
 import WeekMetrics from './WeekMetrics'
 import LearningScoreCard from './LearningScoreCard'
 import ProductiveHours from './ProductiveHours'
 import NoeticInsight from './NoeticInsight'
+import ProLock from '@/components/subscription/ProLock'
 
 // Recharts is heavy — kept lazy, exactly as the old analytics page did.
 const SubjectDistribution = dynamic(() => import('@/components/analytics/SubjectDistribution'), { ssr: false })
 const FocusHeatmap        = dynamic(() => import('@/components/analytics/FocusHeatmap'),        { ssr: false })
 
-export default function InsightsClient({ data, learningScore }: {
+export default function InsightsClient({ data, learningScore, tier }: {
   data: AnalyticsData
   learningScore: LearningScoreResponse
+  tier: SubscriptionTier
 }) {
   return (
     <div className="space-y-8">
@@ -44,12 +47,23 @@ export default function InsightsClient({ data, learningScore }: {
 
         <LearningScoreCard data={learningScore} />
 
-        <ProductiveHours hourly={data.hourlyStats} />
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <SubjectDistribution subjects={data.subjectStats} />
-          <FocusHeatmap data={data.dailyFocus} />
-        </div>
+        {tier === 'pro' ? (
+          <>
+            <ProductiveHours hourly={data.hourlyStats} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <SubjectDistribution subjects={data.subjectStats} />
+              <FocusHeatmap data={data.dailyFocus} />
+            </div>
+          </>
+        ) : (
+          <ProLock label="Tam analiz — Pro’da açılır">
+            <ProductiveHours hourly={data.hourlyStats} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+              <SubjectDistribution subjects={data.subjectStats} />
+              <FocusHeatmap data={data.dailyFocus} />
+            </div>
+          </ProLock>
+        )}
       </section>
 
       {/* ── Layer 2 — AI commentary ───────────────────────────── */}
@@ -58,7 +72,7 @@ export default function InsightsClient({ data, learningScore }: {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.15 }}
       >
-        <NoeticInsight />
+        <NoeticInsight tier={tier} />
       </motion.section>
     </div>
   )

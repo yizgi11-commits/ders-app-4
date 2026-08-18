@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getCachedWeeklyReview } from '@/lib/weeklyReview'
+import { getUserTier } from '@/lib/subscription'
 import WeeklyReviewClient from '@/components/insights/WeeklyReviewClient'
 
 export const metadata = { title: 'Weekly Review' }
@@ -15,7 +16,10 @@ export default async function WeeklyReviewPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/giris')
 
-  const review = await getCachedWeeklyReview(supabase, user.id)
+  const [review, tier] = await Promise.all([
+    getCachedWeeklyReview(supabase, user.id),
+    getUserTier(supabase, user.id),
+  ])
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
@@ -27,7 +31,7 @@ export default async function WeeklyReviewPage() {
         <p className="text-sm text-muted-foreground mt-0.5">Bu haftanın özeti — tamamen veriden, yorum yok.</p>
       </div>
 
-      <WeeklyReviewClient data={review} />
+      <WeeklyReviewClient data={review} tier={tier} />
     </div>
   )
 }

@@ -72,6 +72,9 @@ export interface RecallQueueResponse {
   groups:     RecallQueueGroup[]
   totalCards: number
   totalTopics: number
+  tier?:           'free' | 'pro'
+  /** null for Pro (unlimited). 0 means today's Free cap is used up. */
+  remainingToday?: number | null
 }
 
 // ── Analytics ──────────────────────────────────────────────────

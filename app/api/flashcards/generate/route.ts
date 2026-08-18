@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getAnthropicClient, AI_MODEL } from '@/lib/ai/client'
 import { logUsage } from '@/lib/ai/usage'
 import { sanitizeString, safeError, MAX } from '@/lib/security'
-import { checkRateLimit } from '@/lib/security/rate-limit'
+import { checkLimit } from '@/lib/subscription'
 
 // POST /api/flashcards/generate
 // Body: { text, subject_id?, source_pdf?, source_pdf_name? }
@@ -12,14 +12,12 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
-  // ── Rate limit: 10 generations per day ────────────────────────
-  const { allowed, remaining } = await checkRateLimit(
-    supabase, user.id, '/api/flashcards/generate', 10, 24
-  )
+  // ── Pro-only: PDF/text → flashcards (AI generation) ──────────────
+  const { allowed } = await checkLimit(supabase, user.id, 'vaultAssist')
   if (!allowed) {
     return NextResponse.json(
-      { error: 'Günlük kart üretme limitine ulaştınız (10/gün). Yarın tekrar deneyin.' },
-      { status: 429, headers: { 'X-RateLimit-Remaining': '0' } }
+      { error: 'AI ile kart oluşturma Pro özelliğidir.', locked: true },
+      { status: 403 },
     )
   }
 
@@ -123,6 +121,5 @@ Format:
   return NextResponse.json({
     flashcards: inserted,
     count:      inserted?.length ?? 0,
-    remaining:  remaining - 1,
   })
 }

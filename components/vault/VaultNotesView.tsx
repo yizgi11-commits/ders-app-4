@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, StickyNote, ArrowLeft, Star, Pin, Sparkles } from 'lucide-react'
+import { Plus, StickyNote, ArrowLeft, Star, Pin, Sparkles, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Note } from '@/lib/notes/types'
 import { relativeTime, atlasLabel } from '@/lib/vault/types'
@@ -20,6 +21,7 @@ export default function VaultNotesView({ search, savedOnly = false, onAssist, re
   const [notes, setNotes]       = useState<Note[]>([])
   const [loading, setLoading]   = useState(true)
   const [selected, setSelected] = useState<Note | null>(null)
+  const [locked, setLocked]     = useState(false)
   const { setOverride } = useAssist()
 
   // Keep the floating Assist's ambient context in sync with the editor,
@@ -49,6 +51,7 @@ export default function VaultNotesView({ search, savedOnly = false, onAssist, re
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: 'Yeni Not', content: '' }),
     })
+    if (res.status === 403) { setLocked(true); return }
     if (!res.ok) return
     const note: Note = await res.json()
     setNotes(prev => [note, ...prev])
@@ -116,6 +119,16 @@ export default function VaultNotesView({ search, savedOnly = false, onAssist, re
 
   return (
     <div className="space-y-4">
+      {locked && (
+        <div className="flex items-center gap-3 bg-gray-900 rounded-2xl px-5 py-3.5 text-white shadow-lg">
+          <Lock className="w-4 h-4 text-indigo-300 shrink-0" />
+          <p className="flex-1 text-sm font-semibold">Free planda not limitine ulaştın (10 not).</p>
+          <Link href="/dashboard/upgrade" className="shrink-0 text-xs font-bold text-indigo-300 hover:text-indigo-200 px-3 py-1.5 rounded-lg border border-white/10">
+            Upgrade
+          </Link>
+        </div>
+      )}
+
       {!savedOnly && (
         <div className="flex justify-end">
           <motion.button

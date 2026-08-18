@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Upload, FileText, Brain, Check, AlertCircle, Sparkles, ChevronDown } from 'lucide-react'
 import type { FlashcardWithSubject } from '@/lib/flashcards/types'
@@ -31,6 +32,7 @@ export default function PDFUploadModal({ onClose, onGenerated }: Props) {
   const [isDragging, setIsDragging] = useState(false)
   const [uploading, setUploading]   = useState(false)
   const [error, setError]           = useState('')
+  const [locked, setLocked]         = useState(false)
   const [extractedText, setExtracted] = useState('')
   const [pdfPath, setPdfPath]       = useState<string | null>(null)
   const [subjects, setSubjects]     = useState<Subject[]>([])
@@ -71,6 +73,7 @@ export default function PDFUploadModal({ onClose, onGenerated }: Props) {
 
       if (!res.ok) {
         setError(data.error ?? 'PDF yüklenemedi.')
+        setLocked(!!data.locked)
         setUploading(false)
         return
       }
@@ -115,6 +118,7 @@ export default function PDFUploadModal({ onClose, onGenerated }: Props) {
 
       if (!res.ok) {
         setError(data.error ?? 'Kartlar oluşturulamadı.')
+        setLocked(!!data.locked)
         setStep('preview')
         setGenerating(false)
         return
@@ -231,7 +235,10 @@ export default function PDFUploadModal({ onClose, onGenerated }: Props) {
                 {error && (
                   <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 border border-red-100 rounded-xl px-3 py-2.5">
                     <AlertCircle className="w-4 h-4 shrink-0" />
-                    {error}
+                    <span className="flex-1">{error}</span>
+                    {locked && (
+                      <Link href="/dashboard/upgrade" className="shrink-0 font-bold underline">Upgrade</Link>
+                    )}
                   </div>
                 )}
               </motion.div>
@@ -291,7 +298,10 @@ export default function PDFUploadModal({ onClose, onGenerated }: Props) {
                 {error && (
                   <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 border border-red-100 rounded-xl px-3 py-2.5">
                     <AlertCircle className="w-4 h-4 shrink-0" />
-                    {error}
+                    <span className="flex-1">{error}</span>
+                    {locked && (
+                      <Link href="/dashboard/upgrade" className="shrink-0 font-bold underline">Upgrade</Link>
+                    )}
                   </div>
                 )}
 

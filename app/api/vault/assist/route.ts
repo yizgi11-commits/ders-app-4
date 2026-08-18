@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getAnthropicClient, AI_MODEL } from '@/lib/ai/client'
 import { logUsage } from '@/lib/ai/usage'
 import { sanitizeString, validateUUID, safeError, MAX } from '@/lib/security'
-import { checkRateLimit } from '@/lib/security/rate-limit'
+import { checkLimit } from '@/lib/subscription'
 import type { AssistAction, AssistSource } from '@/lib/vault/types'
 
 const ACTIONS: AssistAction[] = ['summarize', 'flashcards', 'explain', 'quiz']
@@ -76,14 +76,12 @@ export async function POST(req: NextRequest) {
   if (!ACTIONS.includes(action)) return NextResponse.json({ error: 'Geçersiz işlem' }, { status: 400 })
   if (!validateUUID(id))         return NextResponse.json({ error: 'Geçersiz id' }, { status: 400 })
 
-  // ── Rate limit: 5 assists per day (Free tier) ────────────────────
-  const { allowed, remaining } = await checkRateLimit(
-    supabase, user.id, '/api/vault/assist', 5, 24
-  )
+  // ── Pro-only: Vault Assist (summarize/explain/flashcards/quiz) ───
+  const { allowed } = await checkLimit(supabase, user.id, 'vaultAssist')
   if (!allowed) {
     return NextResponse.json(
-      { error: 'Günlük Noetic Assist limitine ulaştınız (5/gün). Yarın tekrar deneyin.' },
-      { status: 429, headers: { 'X-RateLimit-Remaining': '0' } }
+      { error: 'Noetic Assist (özetle/açıkla/flashcard/quiz) Pro özelliğidir.', locked: true },
+      { status: 403 },
     )
   }
 
@@ -150,7 +148,7 @@ export async function POST(req: NextRequest) {
     const out = parsed as { text?: unknown }
     const value = typeof out?.text === 'string' ? out.text.trim() : ''
     if (!value) return NextResponse.json({ error: 'Boş sonuç döndü.' }, { status: 500 })
-    return NextResponse.json({ result: { text: value }, remaining: remaining - 1 })
+    return NextResponse.json({ result: { text: value } })
   }
 
   if (action === 'flashcards') {
@@ -188,7 +186,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       result: { saved: inserted?.length ?? 0, cards: inserted ?? [] },
-      remaining: remaining - 1,
     })
   }
 
@@ -213,5 +210,5 @@ export async function POST(req: NextRequest) {
 
   if (questions.length === 0) return NextResponse.json({ error: 'Geçerli soru bulunamadı.' }, { status: 500 })
 
-  return NextResponse.json({ result: { questions }, remaining: remaining - 1 })
+  return NextResponse.json({ result: { questions } })
 }

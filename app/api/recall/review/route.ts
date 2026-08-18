@@ -6,6 +6,7 @@ import { checkAndUnlockAchievements } from '@/lib/gamification/check'
 import { updateStreak } from '@/lib/tasks/progression'
 import type { UserStreak } from '@/lib/tasks/types'
 import { invalidateDashboardCaches } from '@/lib/cache'
+import { checkLimit } from '@/lib/subscription'
 
 // POST /api/recall/review
 // Body: { flashcard_id: string, grade: RecallGrade }
@@ -22,6 +23,14 @@ export async function POST(req: NextRequest) {
 
   if (!validateUUID(flashcardId)) return NextResponse.json({ error: 'Geçersiz kart id' }, { status: 400 })
   if (!RECALL_GRADES.includes(grade)) return NextResponse.json({ error: 'Geçersiz değerlendirme' }, { status: 400 })
+
+  const { allowed, limit } = await checkLimit(supabase, user.id, 'recallCardsPerDay')
+  if (!allowed) {
+    return NextResponse.json(
+      { error: `Günlük Recall limitine ulaştın (${limit} kart). Pro ile sınırsız olur.`, locked: true },
+      { status: 403 },
+    )
+  }
 
   const { data: card } = await supabase
     .from('flashcards')

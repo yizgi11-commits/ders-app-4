@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { getAnthropicClient, AI_MODEL } from '@/lib/ai/client'
 import { logUsage } from '@/lib/ai/usage'
-import { checkRateLimit } from '@/lib/security/rate-limit'
+import { checkLimit } from '@/lib/subscription'
 import { sanitizeString, validateUUID, MAX } from '@/lib/security'
 import { getCachedAnalyticsData } from '@/lib/analytics/queries'
 import { buildPlannerReply, buildInsightsReply } from '@/lib/assist/deterministic'
@@ -167,9 +167,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ text: grounded.text })
   }
 
-  const { allowed } = await checkRateLimit(supabase, user.id, ENDPOINT, 10, 24)
+  const { allowed, limit, tier } = await checkLimit(supabase, user.id, 'assistRequestsPerDay')
   if (!allowed) {
-    return NextResponse.json({ error: 'Günlük Noetic Assist limitine ulaştın (10/gün). Yarın tekrar dene.' }, { status: 429 })
+    const hint = tier === 'free' ? ' Pro ile günde 30 istek + serbest metin açılır.' : ' Yarın tekrar dene.'
+    return NextResponse.json({ error: `Günlük Noetic Assist limitine ulaştın (${limit}/gün).${hint}` }, { status: 429 })
   }
 
   try {

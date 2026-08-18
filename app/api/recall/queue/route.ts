@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { safeError } from '@/lib/security'
+import { checkLimit } from '@/lib/subscription'
 import type { RecallCard, RecallQueueGroup } from '@/lib/recall/types'
 
 interface CardRow {
@@ -75,9 +76,13 @@ export async function GET() {
 
   const groups = Array.from(byTopic.values()).sort((a, b) => b.cards.length - a.cards.length)
 
+  const { tier, remaining } = await checkLimit(supabase, user.id, 'recallCardsPerDay')
+
   return NextResponse.json({
     groups,
     totalCards:  rows.length,
     totalTopics: groups.length,
+    tier,
+    remainingToday: remaining === Infinity ? null : remaining,
   })
 }

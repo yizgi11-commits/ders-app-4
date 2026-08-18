@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { X, Brain, Save } from 'lucide-react'
 import type { FlashcardWithSubject } from '@/lib/flashcards/types'
@@ -32,6 +33,7 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
   const [topicId, setTopicId]     = useState<string | null>(initial?.topic_id ?? null)
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState('')
+  const [locked, setLocked]     = useState(false)
 
   async function handleSave() {
     if (!front.trim() || !back.trim()) {
@@ -68,7 +70,7 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
           body: JSON.stringify(payload),
         })
         const data = await res.json()
-        if (!res.ok) { setError(data.error ?? 'Kaydedilemedi'); return }
+        if (!res.ok) { setError(data.error ?? 'Kaydedilemedi'); setLocked(!!data.locked); return }
         onSaved(data)
       }
     } catch {
@@ -170,8 +172,11 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
           )}
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
-              {error}
+            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+              <span>{error}</span>
+              {locked && (
+                <Link href="/dashboard/upgrade" className="shrink-0 font-bold underline">Upgrade</Link>
+              )}
             </p>
           )}
 

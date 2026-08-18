@@ -1,13 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { X, Loader2, Sparkles, Check } from 'lucide-react'
+import { X, Loader2, Sparkles, Check, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   ASSIST_ACTIONS,
   type AssistAction, type AssistSource, type AssistResult, type AssistQuizQuestion,
 } from '@/lib/vault/types'
+import type { SubscriptionTier } from '@/lib/subscription'
 
 interface Props {
   source:   AssistSource
@@ -19,9 +21,10 @@ interface Props {
   /** Renders without its own card chrome/header — for hosting inside the
    *  global Noetic Assist drawer, which already provides both. */
   embedded?: boolean
+  tier:      SubscriptionTier
 }
 
-export default function NoeticAssist({ source, id, title, onClose, onFlashcardsSaved, embedded = false }: Props) {
+export default function NoeticAssist({ source, id, title, onClose, onFlashcardsSaved, embedded = false, tier }: Props) {
   const [loading, setLoading] = useState<AssistAction | null>(null)
   const [results, setResults] = useState<AssistResult>({})
   const [error, setError]     = useState<string | null>(null)
@@ -86,26 +89,41 @@ export default function NoeticAssist({ source, id, title, onClose, onFlashcardsS
       )}
 
       {/* Actions */}
-      <div className="grid grid-cols-2 gap-2 p-3 border-b border-border shrink-0">
-        {ASSIST_ACTIONS.map(a => (
-          <button
-            key={a.id}
-            onClick={() => run(a.id)}
-            disabled={loading !== null}
-            className={cn(
-              'flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl border transition-colors disabled:opacity-50',
-              results[a.id]
-                ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                : 'bg-gray-50/50 border-border text-gray-600 hover:border-indigo-200 hover:bg-indigo-50/40',
-            )}
-          >
-            {loading === a.id
-              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              : <span>{a.emoji}</span>}
-            {a.label}
-          </button>
-        ))}
-      </div>
+      {tier === 'free' ? (
+        <Link
+          href="/dashboard/upgrade"
+          className="flex items-center gap-3 p-4 border-b border-border shrink-0 hover:bg-gray-50 transition-colors"
+        >
+          <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
+            <Lock className="w-4 h-4 text-gray-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-gray-900">Özetle · Açıkla · Flashcard · Quiz</p>
+            <p className="text-[11px] text-indigo-500 font-semibold">Pro’da açılır — yükseltmek için dokun</p>
+          </div>
+        </Link>
+      ) : (
+        <div className="grid grid-cols-2 gap-2 p-3 border-b border-border shrink-0">
+          {ASSIST_ACTIONS.map(a => (
+            <button
+              key={a.id}
+              onClick={() => run(a.id)}
+              disabled={loading !== null}
+              className={cn(
+                'flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl border transition-colors disabled:opacity-50',
+                results[a.id]
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                  : 'bg-gray-50/50 border-border text-gray-600 hover:border-indigo-200 hover:bg-indigo-50/40',
+              )}
+            >
+              {loading === a.id
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <span>{a.emoji}</span>}
+              {a.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Results */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">

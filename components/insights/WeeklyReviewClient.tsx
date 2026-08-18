@@ -7,6 +7,8 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { WeeklyReview } from '@/lib/weeklyReview'
+import type { SubscriptionTier } from '@/lib/subscription'
+import ProLock from '@/components/subscription/ProLock'
 
 function fmtFocus(mins: number): string {
   const h = Math.floor(mins / 60)
@@ -34,48 +36,11 @@ function Divider() {
   return <span className="w-px h-5 bg-border" />
 }
 
-export default function WeeklyReviewClient({ data }: { data: WeeklyReview }) {
+export default function WeeklyReviewClient({ data, tier }: { data: WeeklyReview; tier: SubscriptionTier }) {
   const { totals, learningScore, wentWell, needsAttention, nextWeekFocus } = data
 
-  return (
-    <div className="space-y-5">
-      {/* ── Stat row ─────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-border p-5 shadow-sm">
-        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.14em] mb-3">
-          Your Week
-        </p>
-        <div className="flex items-center gap-4 flex-wrap">
-          <Stat value={fmtFocus(totals.focusMinutes)} label="Focus" />
-          <Divider />
-          <Stat value={String(totals.tasksCompleted)} label={totals.tasksCompleted === 1 ? 'task' : 'tasks'} />
-          <Divider />
-          <Stat value={String(totals.reviewsDone)} label={totals.reviewsDone === 1 ? 'review' : 'reviews'} />
-          <Divider />
-          <Stat value={String(totals.topicsStudied)} label={totals.topicsStudied === 1 ? 'topic' : 'topics'} />
-        </div>
-      </div>
-
-      {/* ── Learning Score before → after ────────────────────── */}
-      <div className="bg-white rounded-2xl border border-border p-5 shadow-sm">
-        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.14em] mb-3">
-          Learning Score
-        </p>
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-xl font-black text-gray-400 tabular-nums">{learningScore.previous}</span>
-          <ArrowRight className="w-4 h-4 text-gray-300" />
-          <span className={cn('text-3xl font-black tabular-nums', scoreTone(learningScore.current))}>{learningScore.current}</span>
-          {learningScore.change !== 0 && (
-            <span className={cn(
-              'inline-flex items-center gap-0.5 text-xs font-bold',
-              learningScore.change > 0 ? 'text-emerald-600' : 'text-red-500',
-            )}>
-              {learningScore.change > 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-              {learningScore.change > 0 ? '+' : ''}{learningScore.change}
-            </span>
-          )}
-        </div>
-      </div>
-
+  const detail = (
+    <>
       {/* ── What went well ───────────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
@@ -139,18 +104,76 @@ export default function WeeklyReviewClient({ data }: { data: WeeklyReview }) {
           <p className="text-sm text-muted-foreground">Gecikmiş tekrar yok — güzel gidiyorsun.</p>
         )}
       </div>
+    </>
+  )
 
-      {/* ── CTA ───────────────────────────────────────────────── */}
-      <Link href="/dashboard/planner">
-        <motion.div
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
-          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm py-3 rounded-xl shadow-lg shadow-indigo-200/50"
-        >
-          Build Next Week
-          <ArrowRight className="w-4 h-4" />
-        </motion.div>
-      </Link>
+  // Plain preview of the CTA — used inside ProLock (Free), which is
+  // itself a Link, so this can't be an interactive <Link> too.
+  const ctaPreview = (
+    <div className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm py-3 rounded-xl shadow-lg shadow-indigo-200/50">
+      Build Next Week
+      <ArrowRight className="w-4 h-4" />
+    </div>
+  )
+
+  return (
+    <div className="space-y-5">
+      {/* ── Stat row ─────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-border p-5 shadow-sm">
+        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.14em] mb-3">
+          Your Week
+        </p>
+        <div className="flex items-center gap-4 flex-wrap">
+          <Stat value={fmtFocus(totals.focusMinutes)} label="Focus" />
+          <Divider />
+          <Stat value={String(totals.tasksCompleted)} label={totals.tasksCompleted === 1 ? 'task' : 'tasks'} />
+          <Divider />
+          <Stat value={String(totals.reviewsDone)} label={totals.reviewsDone === 1 ? 'review' : 'reviews'} />
+          <Divider />
+          <Stat value={String(totals.topicsStudied)} label={totals.topicsStudied === 1 ? 'topic' : 'topics'} />
+        </div>
+      </div>
+
+      {/* ── Learning Score before → after ────────────────────── */}
+      <div className="bg-white rounded-2xl border border-border p-5 shadow-sm">
+        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.14em] mb-3">
+          Learning Score
+        </p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-xl font-black text-gray-400 tabular-nums">{learningScore.previous}</span>
+          <ArrowRight className="w-4 h-4 text-gray-300" />
+          <span className={cn('text-3xl font-black tabular-nums', scoreTone(learningScore.current))}>{learningScore.current}</span>
+          {learningScore.change !== 0 && (
+            <span className={cn(
+              'inline-flex items-center gap-0.5 text-xs font-bold',
+              learningScore.change > 0 ? 'text-emerald-600' : 'text-red-500',
+            )}>
+              {learningScore.change > 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+              {learningScore.change > 0 ? '+' : ''}{learningScore.change}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {tier === 'pro' ? (
+        <>
+          {detail}
+          <Link href="/dashboard/planner">
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm py-3 rounded-xl shadow-lg shadow-indigo-200/50"
+            >
+              Build Next Week
+              <ArrowRight className="w-4 h-4" />
+            </motion.div>
+          </Link>
+        </>
+      ) : (
+        <ProLock label="Detaylı rapor + Next Week Builder — Pro’da açılır">
+          <div className="space-y-5">{detail}{ctaPreview}</div>
+        </ProLock>
+      )}
     </div>
   )
 }
