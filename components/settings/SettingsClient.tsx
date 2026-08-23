@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   User, Mail, Shield, Trash2, ChevronRight,
@@ -14,40 +14,34 @@ import { STUDY_GOALS, PREFERRED_HOURS, FOCUS_OPTIONS } from '@/lib/onboarding/ty
 
 type Section = 'profil' | 'calisma' | 'hesap'
 
-export default function SettingsClient() {
+interface SettingsProfile {
+  study_goal?:           string | null
+  exam_type?:             string | null
+  daily_available_mins?: number | null
+  preferred_hours?:      string | null
+  focus_intensity?:      string | null
+}
+
+interface Props {
+  initial: { ad: string; email: string; profile: SettingsProfile | null }
+}
+
+export default function SettingsClient({ initial }: Props) {
   const router = useRouter()
   const [section, setSection] = useState<Section>('profil')
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteText, setDeleteText] = useState('')
 
-  // Form state
-  const [ad, setAd] = useState('')
-  const [email, setEmail] = useState('')
-  const [studyGoal, setStudyGoal] = useState('ders_basarisi')
-  const [examType, setExamType] = useState('')
-  const [dailyMins, setDailyMins] = useState(120)
-  const [prefHours, setPrefHours] = useState('evening')
-  const [intensity, setIntensity] = useState('normal')
-
-  // Load
-  useEffect(() => {
-    fetch('/api/settings')
-      .then(r => r.json())
-      .then(data => {
-        setAd(data.ad ?? '')
-        setEmail(data.email ?? '')
-        setStudyGoal(data.profile?.study_goal ?? 'ders_basarisi')
-        setExamType(data.profile?.exam_type ?? '')
-        setDailyMins(data.profile?.daily_available_mins ?? 120)
-        setPrefHours(data.profile?.preferred_hours ?? 'evening')
-        setIntensity(data.profile?.focus_intensity ?? 'normal')
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
+  // Form state — seeded from the server-fetched initial profile, no client fetch.
+  const [ad, setAd] = useState(initial.ad)
+  const [email] = useState(initial.email)
+  const [studyGoal, setStudyGoal] = useState(initial.profile?.study_goal ?? 'ders_basarisi')
+  const [examType, setExamType] = useState(initial.profile?.exam_type ?? '')
+  const [dailyMins, setDailyMins] = useState(initial.profile?.daily_available_mins ?? 120)
+  const [prefHours, setPrefHours] = useState(initial.profile?.preferred_hours ?? 'evening')
+  const [intensity, setIntensity] = useState(initial.profile?.focus_intensity ?? 'normal')
 
   async function handleSave() {
     setSaving(true)
@@ -90,15 +84,6 @@ export default function SettingsClient() {
     { key: 'calisma',  label: 'Çalışma Ayarları',  icon: BookOpen },
     { key: 'hesap',    label: 'Hesap & Güvenlik',  icon: Shield },
   ]
-
-  if (loading) {
-    return (
-      <div className="max-w-3xl mx-auto space-y-4 animate-pulse">
-        <div className="h-8 w-48 bg-gray-200 rounded-lg" />
-        <div className="h-64 bg-gray-100 rounded-2xl" />
-      </div>
-    )
-  }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">

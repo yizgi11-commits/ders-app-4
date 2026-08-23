@@ -1,6 +1,18 @@
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { getSubjectsWithProgress, getAtlasExamName } from '@/lib/subjects/progress'
 import AtlasTree from '@/components/atlas/AtlasTree'
 
-export default function AtlasPage() {
+export default async function AtlasPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/giris')
+
+  const [subjects, examName] = await Promise.all([
+    getSubjectsWithProgress(supabase, user.id),
+    getAtlasExamName(supabase, user.id),
+  ])
+
   return (
     <div className="max-w-3xl mx-auto space-y-5">
       <div>
@@ -8,7 +20,7 @@ export default function AtlasPage() {
         <p className="text-sm text-muted-foreground mt-0.5">Öğrenme haritanı görsel olarak takip et.</p>
       </div>
 
-      <AtlasTree />
+      <AtlasTree initialSubjects={subjects} initialExamName={examName} />
     </div>
   )
 }

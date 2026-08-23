@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Flame, Zap, Trophy } from 'lucide-react'
 import type { JourneyResponse } from '@/lib/journey/types'
@@ -8,26 +7,7 @@ import JourneyTimeline from './JourneyTimeline'
 import JourneyCalendar from './JourneyCalendar'
 import JourneyMilestones from './JourneyMilestones'
 
-export default function JourneyClient() {
-  const [data, setData] = useState<JourneyResponse | null>(null)
-
-  useEffect(() => {
-    fetch('/api/journey')
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setData(d) })
-      .catch(() => {})
-  }, [])
-
-  if (!data) {
-    return (
-      <div className="space-y-5">
-        <div className="h-24 bg-white border border-border rounded-2xl animate-pulse" />
-        <div className="h-48 bg-white border border-border rounded-2xl animate-pulse" />
-        <div className="h-64 bg-white border border-border rounded-2xl animate-pulse" />
-      </div>
-    )
-  }
-
+export default function JourneyClient({ data }: { data: JourneyResponse }) {
   return (
     <div className="space-y-8">
       {/* XP / Level / Streak */}

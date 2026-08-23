@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import withBundleAnalyzerInit from '@next/bundle-analyzer'
 
 const nextConfig: NextConfig = {
   devIndicators: false,
@@ -6,8 +7,15 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['pdf-parse'],
   experimental: {
     // Tree-shake large icon + animation libraries — reduces shared JS chunk
-    optimizePackageImports: ['lucide-react', 'framer-motion', 'recharts'],
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
 }
 
-export default nextConfig
+// ANALYZE=true npm run build — opens an interactive treemap of what's in
+// each bundle (client/server/edge) after the build finishes.
+const withBundleAnalyzer = withBundleAnalyzerInit({
+  enabled: process.env.ANALYZE === 'true',
+  openAnalyzer: false,
+})
+
+export default withBundleAnalyzer(nextConfig)

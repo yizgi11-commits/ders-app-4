@@ -82,7 +82,12 @@ export default function WeeklyCalendar() {
                 {new Date(date + 'T00:00:00').getDate()}
               </p>
               <div className="flex-1 space-y-1 overflow-y-auto">
-                {loading ? null : dayTasks.map(task => (
+                {loading ? (
+                  <>
+                    <div className="h-4 rounded-md bg-gray-100 animate-pulse" />
+                    <div className="h-4 rounded-md bg-gray-100 animate-pulse w-2/3" />
+                  </>
+                ) : dayTasks.map(task => (
                   <button
                     key={task.id}
                     onClick={() => setSelected(task)}

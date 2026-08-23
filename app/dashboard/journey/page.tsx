@@ -1,8 +1,17 @@
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { getJourneyData } from '@/lib/journey/queries'
 import JourneyClient from '@/components/journey/JourneyClient'
 
 export const metadata = { title: 'Journey' }
 
-export default function JourneyPage() {
+export default async function JourneyPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/giris')
+
+  const data = await getJourneyData(supabase, user.id)
+
   return (
     <div className="max-w-4xl mx-auto space-y-5">
       <div>
@@ -10,7 +19,7 @@ export default function JourneyPage() {
         <p className="text-sm text-muted-foreground mt-0.5">Öğrenme geçmişin.</p>
       </div>
 
-      <JourneyClient />
+      <JourneyClient data={data} />
     </div>
   )
 }

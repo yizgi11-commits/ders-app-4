@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, ChevronDown, Map, Search } from 'lucide-react'
@@ -8,36 +8,17 @@ import type { SubjectWithProgress } from '@/lib/subjects/types'
 import CreateSubjectModal from '@/components/subjects/CreateSubjectModal'
 import { stagger } from '@/lib/motion'
 
-function TreeSkeleton() {
-  return (
-    <div className="space-y-3">
-      {[1, 2, 3].map(i => (
-        <div key={i} className="bg-white border border-border rounded-2xl p-4 h-20 animate-pulse" />
-      ))}
-    </div>
-  )
+interface Props {
+  initialSubjects: SubjectWithProgress[]
+  initialExamName: string | null
 }
 
-export default function AtlasTree() {
-  const [subjects, setSubjects] = useState<SubjectWithProgress[]>([])
-  const [examName, setExamName] = useState<string | null>(null)
-  const [loading, setLoading]   = useState(true)
+export default function AtlasTree({ initialSubjects, initialExamName }: Props) {
+  const [subjects, setSubjects] = useState<SubjectWithProgress[]>(initialSubjects)
+  const [examName]              = useState<string | null>(initialExamName)
   const [search, setSearch]     = useState('')
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const [showCreate, setShowCreate] = useState(false)
-
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch('/api/atlas')
-      if (!res.ok) throw new Error()
-      const data = await res.json()
-      setSubjects(data.subjects ?? [])
-      setExamName(data.examName ?? null)
-    } catch {}
-    finally { setLoading(false) }
-  }, [])
-
-  useEffect(() => { load() }, [load])
 
   function toggle(id: string) {
     setCollapsed(prev => {
@@ -48,8 +29,6 @@ export default function AtlasTree() {
   }
 
   const filtered = subjects.filter(s => s.name.toLowerCase().includes(search.toLowerCase()))
-
-  if (loading) return <TreeSkeleton />
 
   return (
     <div className="space-y-5">

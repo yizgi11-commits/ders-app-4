@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
     .select('id, user_id, name, storage_path, size_bytes, subject_id, topic_id, is_favorite, created_at, subjects(id, name, icon, color), topics(id, title)')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
+    .limit(200)
 
   if (savedOnly) query = query.eq('is_favorite', true)
 

@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
     `)
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
+    .limit(500)
 
   if (subjectId) query = query.eq('subject_id', subjectId)
   if (topicId)   query = query.eq('topic_id', topicId)

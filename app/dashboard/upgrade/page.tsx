@@ -40,7 +40,7 @@ export default async function UpgradePage() {
 
   const tier = await getUserTier(supabase, user.id)
 
-  const mailtoHref = 'mailto:pro@noeticos.app?subject=' + encodeURIComponent("Noetic Pro'ya geçmek istiyorum")
+  const mailtoHref = 'mailto:yizgi11@gmail.com?subject=' + encodeURIComponent("Noetic Pro'ya geçmek istiyorum")
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
