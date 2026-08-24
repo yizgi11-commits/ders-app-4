@@ -58,8 +58,11 @@ export async function GET(req: NextRequest) {
   }
 
   if (search) {
-    const safeSearch = sanitizeString(search, 200)
-    query = query.or(`title.ilike.%${safeSearch}%,content.ilike.%${safeSearch}%`)
+    // Strip characters meaningful to PostgREST's .or() filter DSL
+    // (comma separates conditions, parens group them) so a search term
+    // can't inject additional filter clauses.
+    const safeSearch = sanitizeString(search, 200).replace(/[,()]/g, '')
+    if (safeSearch) query = query.or(`title.ilike.%${safeSearch}%,content.ilike.%${safeSearch}%`)
   }
 
   const { data, error } = await query

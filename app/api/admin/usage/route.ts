@@ -10,10 +10,8 @@ export async function GET() {
 
   // Check admin access
   const isOwner = user?.email === 'yizgi11@gmail.com'
-  const isTestAdmin = process.env.NODE_ENV === 'development' && 
-                      user?.email === process.env.NEXT_PUBLIC_TEST_ADMIN_EMAIL
 
-  if (!user || (!isOwner && !isTestAdmin)) {
+  if (!user || !isOwner) {
     return NextResponse.json({ error: 'Yetkisiz' }, { status: 403 })
   }
 

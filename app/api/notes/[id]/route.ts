@@ -59,6 +59,16 @@ export async function PATCH(
   // Enforce length limits on text fields
   if ('title' in updates)   updates.title   = sanitizeString(updates.title,   MAX.NOTE_TITLE)
   if ('content' in updates) updates.content = sanitizeString(updates.content, MAX.NOTE_CONTENT)
+  if ('tags' in updates) {
+    updates.tags = Array.isArray(updates.tags)
+      ? (updates.tags as unknown[]).map(t => sanitizeString(t, 50)).filter(Boolean).slice(0, 20)
+      : []
+  }
+  for (const idField of ['folder_id', 'subject_id', 'topic_id'] as const) {
+    if (idField in updates && updates[idField] != null && !validateUUID(String(updates[idField]))) {
+      return NextResponse.json({ error: `Geçersiz ${idField}` }, { status: 400 })
+    }
+  }
 
   // Recompute word counts if content changed
   if ('content' in updates) {

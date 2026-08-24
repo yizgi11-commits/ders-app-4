@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { checkLimit } from '@/lib/subscription'
+import { checkRateLimit } from '@/lib/security/rate-limit'
+import { validateUUID } from '@/lib/security'
 
 // POST /api/pdf/upload
 // Accepts multipart/form-data: file (PDF), subject_id (optional)
@@ -16,6 +18,14 @@ export async function POST(req: NextRequest) {
       { error: `Free planda en fazla ${limit} PDF yükleyebilirsin. Pro ile sınırsız olur.`, locked: true },
       { status: 403 },
     )
+  }
+
+  // Pro tier has no count cap on PDF uploads (each one runs a CPU-bound
+  // pdf-parse pass) — a rolling rate limit still applies to both tiers
+  // as an abuse safety net.
+  const { allowed: withinRate } = await checkRateLimit(supabase, user.id, '/api/pdf/upload', 20, 24)
+  if (!withinRate) {
+    return NextResponse.json({ error: 'Çok fazla PDF yükleme isteği. Daha sonra tekrar dene.' }, { status: 429 })
   }
 
   const formData = await req.formData()
@@ -81,8 +91,10 @@ export async function POST(req: NextRequest) {
 
   // ── Register the document so Vault can list it and Noetic Assist ──
   // ── can work on its text later (storage alone keeps no metadata). ──
-  const subjectId = (formData.get('subject_id') as string | null) || null
-  const topicId   = (formData.get('topic_id')   as string | null) || null
+  const rawSubjectId = (formData.get('subject_id') as string | null) || null
+  const rawTopicId   = (formData.get('topic_id')   as string | null) || null
+  const subjectId = rawSubjectId && validateUUID(rawSubjectId) ? rawSubjectId : null
+  const topicId   = rawTopicId   && validateUUID(rawTopicId)   ? rawTopicId   : null
 
   const { data: doc } = await supabase
     .from('documents')

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getAnthropicClient, AI_MODEL } from '@/lib/ai/client'
 import { logUsage } from '@/lib/ai/usage'
-import { sanitizeString, safeError, MAX } from '@/lib/security'
+import { sanitizeString, validateUUID, safeError, MAX } from '@/lib/security'
 import { checkLimit } from '@/lib/subscription'
 
 // POST /api/flashcards/generate
@@ -22,7 +22,8 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { text, subject_id, source_pdf, source_pdf_name } = body
+  const { text, source_pdf, source_pdf_name } = body
+  const subject_id = body.subject_id && validateUUID(body.subject_id) ? body.subject_id : null
 
   if (!text || text.length < 50) {
     return NextResponse.json({ error: 'Yeterli metin bulunamadı' }, { status: 400 })

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { validateUUID } from '@/lib/security'
+import { checkRateLimit } from '@/lib/security/rate-limit'
 
 // POST /api/pomodoro/start
 // Body: { durationSeconds: number, subjectId?: string, topicId?: string, taskId?: string }
@@ -9,6 +10,9 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
+
+  const { allowed } = await checkRateLimit(supabase, user.id, '/api/pomodoro/start', 100, 24)
+  if (!allowed) return NextResponse.json({ error: 'Çok fazla istek. Daha sonra tekrar dene.' }, { status: 429 })
 
   const body = await req.json()
   const durationSeconds: number = Number(body?.durationSeconds) || 25 * 60

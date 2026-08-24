@@ -43,4 +43,6 @@ export const MAX = {
   TASK_TITLE:       300,
   GOAL_TEXT:        500,
   GENERIC_TEXT:     1_000,
+  DISPLAY_NAME:     100,
+  ENUM_VALUE:       50,
 } as const

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sanitizeString, MAX } from '@/lib/security'
 
 // GET /api/settings — kullanıcı profili + metadata
 export async function GET() {
@@ -32,17 +33,20 @@ export async function PATCH(req: NextRequest) {
   // Update display name in auth metadata
   if (body.ad !== undefined) {
     await supabase.auth.updateUser({
-      data: { ad: body.ad },
+      data: { ad: sanitizeString(body.ad, MAX.DISPLAY_NAME) },
     })
   }
 
   // Update profile
   const profileUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() }
-  if (body.study_goal       !== undefined) profileUpdates.study_goal           = body.study_goal
-  if (body.exam_type        !== undefined) profileUpdates.exam_type             = body.exam_type
-  if (body.daily_available_mins !== undefined) profileUpdates.daily_available_mins = body.daily_available_mins
-  if (body.preferred_hours  !== undefined) profileUpdates.preferred_hours       = body.preferred_hours
-  if (body.focus_intensity  !== undefined) profileUpdates.focus_intensity        = body.focus_intensity
+  if (body.study_goal       !== undefined) profileUpdates.study_goal      = sanitizeString(body.study_goal, MAX.ENUM_VALUE)
+  if (body.exam_type        !== undefined) profileUpdates.exam_type       = sanitizeString(body.exam_type, MAX.ENUM_VALUE)
+  if (body.daily_available_mins !== undefined) {
+    const mins = Number(body.daily_available_mins)
+    profileUpdates.daily_available_mins = Number.isFinite(mins) ? Math.min(Math.max(Math.round(mins), 0), 1440) : 120
+  }
+  if (body.preferred_hours  !== undefined) profileUpdates.preferred_hours = sanitizeString(body.preferred_hours, MAX.ENUM_VALUE)
+  if (body.focus_intensity  !== undefined) profileUpdates.focus_intensity = sanitizeString(body.focus_intensity, MAX.ENUM_VALUE)
 
   await supabase
     .from('user_profiles')

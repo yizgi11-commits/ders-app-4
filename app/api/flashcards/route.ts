@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { sanitizeString, safeError, MAX } from '@/lib/security'
+import { sanitizeString, validateUUID, safeError, MAX } from '@/lib/security'
 import { checkLimit } from '@/lib/subscription'
 
 // GET /api/flashcards?subject_id=&topic_id=&due_today=1
@@ -66,8 +66,8 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
   const front      = sanitizeString(body.front ?? '', MAX.FLASHCARD_SIDE)
   const back       = sanitizeString(body.back  ?? '', MAX.FLASHCARD_SIDE)
-  const subject_id = body.subject_id ?? null
-  const topic_id   = body.topic_id ?? null
+  const subject_id = body.subject_id && validateUUID(body.subject_id) ? body.subject_id : null
+  const topic_id   = body.topic_id && validateUUID(body.topic_id) ? body.topic_id : null
 
   if (!front || !back) {
     return NextResponse.json({ error: 'Ön yüz ve arka yüz zorunludur' }, { status: 400 })

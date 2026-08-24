@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateDaySchedule, generateWeekSchedule } from '@/lib/planner/generate'
+import { checkRateLimit } from '@/lib/security/rate-limit'
 import type { StudyIntensity, ScheduleBlock, StudyPreferences, GenerateInput } from '@/lib/planner/types'
 
 // ─── GET /api/planner?date=YYYY-MM-DD ────────────────────────────
@@ -64,6 +65,9 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
+
+  const { allowed } = await checkRateLimit(supabase, user.id, '/api/planner', 20, 24)
+  if (!allowed) return NextResponse.json({ error: 'Çok fazla istek. Daha sonra tekrar dene.' }, { status: 429 })
 
   const body = await req.json()
   const date           = body.date ?? new Date().toISOString().split('T')[0]

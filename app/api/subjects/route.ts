@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sanitizeString, validateUUID, safeError, MAX } from '@/lib/security'
+import { checkRateLimit } from '@/lib/security/rate-limit'
 
 // GET /api/subjects — list all subjects with topics + analytics
 export async function GET() {
@@ -50,6 +51,9 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
+
+  const { allowed } = await checkRateLimit(supabase, user.id, '/api/subjects', 30, 24)
+  if (!allowed) return NextResponse.json({ error: 'Çok fazla istek. Daha sonra tekrar dene.' }, { status: 429 })
 
   const body = await req.json()
   const name  = sanitizeString(body.name ?? '', MAX.SUBJECT_NAME)

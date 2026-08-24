@@ -21,6 +21,20 @@ interface Props {
 }
 
 // ── Minimal markdown → HTML renderer ─────────────────────────
+// Note content is user-authored free text, not trusted HTML — every
+// line must be entity-escaped before any markdown token is turned
+// into a real tag, otherwise raw <script>/<img onerror> etc in a
+// note would execute when "Önizleme" renders it via
+// dangerouslySetInnerHTML below (stored XSS).
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function parseMarkdown(text: string): string {
   const lines = text.split('\n')
   const html: string[] = []
@@ -35,7 +49,7 @@ function parseMarkdown(text: string): string {
   }
 
   function inlineFormat(line: string): string {
-    return line
+    return escapeHtml(line)
       .replace(/`([^`]+)`/g, '<code class="bg-gray-100 text-indigo-700 px-1 py-0.5 rounded text-sm font-mono">$1</code>')
       .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
       .replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>')

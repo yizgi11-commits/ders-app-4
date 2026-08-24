@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sanitizeString, validateUUID, safeError, MAX } from '@/lib/security'
+import { checkRateLimit } from '@/lib/security/rate-limit'
 
 // GET /api/exams?upcoming=1&limit=5 — list exams (optionally only upcoming, soonest first)
 export async function GET(req: NextRequest) {
@@ -33,6 +34,9 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
+
+  const { allowed } = await checkRateLimit(supabase, user.id, '/api/exams', 50, 24)
+  if (!allowed) return NextResponse.json({ error: 'Çok fazla istek. Daha sonra tekrar dene.' }, { status: 429 })
 
   const body = await req.json()
   const name = sanitizeString(body.name ?? '', MAX.GOAL_TEXT)

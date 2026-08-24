@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sanitizeString, MAX } from '@/lib/security'
 import type { OnboardingData, StudyGoal } from '@/lib/onboarding/types'
 import { DEFAULT_SUBJECTS } from '@/lib/onboarding/types'
 
@@ -30,13 +31,16 @@ export async function POST(req: NextRequest) {
 
   const body: OnboardingData = await req.json()
   const dailyAvailMins = body.dailyGoalHours * 60
+  const displayName = sanitizeString(body.displayName, MAX.DISPLAY_NAME)
+  const studyGoal   = sanitizeString(body.studyGoal, MAX.ENUM_VALUE)
+  const gradeLevel  = sanitizeString(body.gradeLevel, MAX.ENUM_VALUE)
 
   // 1. Save/update profile
   await supabase.from('user_profiles').upsert({
     user_id:              user.id,
-    display_name:         body.displayName || user.user_metadata?.ad || 'Öğrenci',
-    study_goal:           body.studyGoal,
-    grade_level:          body.gradeLevel,
+    display_name:         displayName || user.user_metadata?.ad || 'Öğrenci',
+    study_goal:           studyGoal,
+    grade_level:          gradeLevel,
     daily_available_mins: dailyAvailMins,
     onboarding_completed: true,
     onboarding_step:      6,
@@ -44,7 +48,7 @@ export async function POST(req: NextRequest) {
   }, { onConflict: 'user_id' })
 
   // 2. Create subjects for the ones the user selected (all defaults if none picked)
-  const pool = DEFAULT_SUBJECTS[body.studyGoal as StudyGoal] ?? DEFAULT_SUBJECTS.ders_basarisi
+  const pool = DEFAULT_SUBJECTS[studyGoal as StudyGoal] ?? DEFAULT_SUBJECTS.ders_basarisi
   const chosen = body.subjects.length > 0
     ? pool.filter(s => body.subjects.includes(s.name))
     : pool

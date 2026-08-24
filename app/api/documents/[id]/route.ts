@@ -17,8 +17,18 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const body = await req.json()
   const updates: Record<string, unknown> = {}
   if (typeof body.is_favorite === 'boolean') updates.is_favorite = body.is_favorite
-  if (body.subject_id !== undefined) updates.subject_id = body.subject_id || null
-  if (body.topic_id   !== undefined) updates.topic_id   = body.topic_id || null
+  if (body.subject_id !== undefined) {
+    if (body.subject_id && !validateUUID(body.subject_id)) {
+      return NextResponse.json({ error: 'Geçersiz subject_id' }, { status: 400 })
+    }
+    updates.subject_id = body.subject_id || null
+  }
+  if (body.topic_id !== undefined) {
+    if (body.topic_id && !validateUUID(body.topic_id)) {
+      return NextResponse.json({ error: 'Geçersiz topic_id' }, { status: 400 })
+    }
+    updates.topic_id = body.topic_id || null
+  }
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'Güncellenecek alan yok' }, { status: 400 })
