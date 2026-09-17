@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { nextDifficulty } from "./progression";
+import { trackEvent } from "@/lib/analytics/track";
 import type { Difficulty, TaskTemplate, DailyTaskWithTemplate, UserXP, UserStreak } from "./types";
 
 const DAILY_TASK_LIMIT = 3;
@@ -77,12 +78,21 @@ export async function generateDailyTasks(
     date: today,
   }));
 
+  const { count: existingTaskCount } = await supabase
+    .from("daily_tasks")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId);
+
   const { data: inserted, error: iErr } = await supabase
     .from("daily_tasks")
     .insert(rows)
     .select("id");
 
   if (iErr) throw new Error("Görevler oluşturulamadı: " + iErr.message);
+
+  if ((existingTaskCount ?? 0) === 0 && (inserted?.length ?? 0) > 0) {
+    void trackEvent(supabase, userId, "first_task_created", { source: "system" });
+  }
 
   return (inserted ?? []).map((r: { id: string }) => r.id);
 }

@@ -5,6 +5,7 @@ import { ALL_TASKS_BONUS, streakBonus } from "@/lib/tasks/xp";
 import type { UserXP, UserStreak } from "@/lib/tasks/types";
 import { checkAndUnlockAchievements } from "@/lib/gamification/check";
 import { invalidateDashboardCaches } from "@/lib/cache";
+import { trackEvent } from "@/lib/analytics/track";
 
 // POST /api/tasks/complete
 // Body: { taskId: string }
@@ -44,6 +45,8 @@ export async function POST(req: NextRequest) {
     .from("daily_tasks")
     .update({ completed: true, completed_at: new Date().toISOString(), xp_earned: baseXp })
     .eq("id", taskId);
+
+  void trackEvent(supabase, user.id, "task_completed", { task_id: taskId, source: "command_center" });
 
   // ── Check if ALL tasks are now done ───
   const { data: todayTasks } = await supabase

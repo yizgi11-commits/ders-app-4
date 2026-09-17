@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCachedLearningScore } from '@/lib/dashboard/learning-score'
+import { trackEvent } from '@/lib/analytics/track'
 
 // GET /api/learning-score — the 0-100 Learning Score for the last 7
 // days, plus the change vs the previous 7 days and its breakdown
@@ -13,6 +14,7 @@ export async function GET() {
 
   try {
     const data = await getCachedLearningScore(supabase, user.id)
+    void trackEvent(supabase, user.id, 'learning_score_viewed')
     return NextResponse.json(data)
   } catch {
     return NextResponse.json({ error: 'Learning Score alınamadı' }, { status: 500 })

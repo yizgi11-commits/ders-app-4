@@ -7,6 +7,7 @@ import type { UserXP, UserStreak } from '@/lib/tasks/types'
 import type { StudyStatistics, DailyFocusTime } from '@/lib/pomodoro/types'
 import { checkAndUnlockAchievements } from '@/lib/gamification/check'
 import { invalidateDashboardCaches } from '@/lib/cache'
+import { trackEvent } from '@/lib/analytics/track'
 
 // POST /api/pomodoro/complete
 // Body: { sessionId: string, elapsedSeconds: number }
@@ -81,6 +82,9 @@ export async function POST(req: NextRequest) {
         current_session_streak: 1,
         longest_streak_sessions: 1,
       })
+      // study_statistics only gets created once — this IS the user's
+      // first-ever completed focus session.
+      void trackEvent(supabase, user.id, 'first_focus_completed', { duration_seconds: elapsedSeconds })
     } else {
       const newStreak = stats.current_session_streak + 1
       await supabase.from('study_statistics').update({
@@ -134,6 +138,12 @@ export async function POST(req: NextRequest) {
         updated_at: now,
       }).eq('user_id', user.id)
     }
+
+    void trackEvent(supabase, user.id, 'focus_completed', {
+      duration_seconds: elapsedSeconds,
+      subject_id: session.subject_id,
+      topic_id: session.topic_id,
+    })
   }
 
   // ── Return today's focus total ────────

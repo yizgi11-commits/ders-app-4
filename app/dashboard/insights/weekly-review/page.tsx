@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getCachedWeeklyReview } from '@/lib/weeklyReview'
 import { getUserTier } from '@/lib/subscription'
+import { trackEvent } from '@/lib/analytics/track'
 import WeeklyReviewClient from '@/components/insights/WeeklyReviewClient'
 
 export const metadata = { title: 'Weekly Review' }
@@ -20,6 +21,8 @@ export default async function WeeklyReviewPage() {
     getCachedWeeklyReview(supabase, user.id),
     getUserTier(supabase, user.id),
   ])
+
+  void trackEvent(supabase, user.id, 'weekly_review_viewed')
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">

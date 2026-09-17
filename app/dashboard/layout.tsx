@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getUserTier } from '@/lib/subscription'
+import { trackDailyLogin } from '@/lib/analytics/track'
 import Sidebar from '@/components/dashboard/Sidebar'
 import Header from '@/components/dashboard/Header'
 import PageTransition from '@/components/dashboard/PageTransition'
@@ -32,6 +33,8 @@ export default async function DashboardLayout({
   const ad    = user.user_metadata?.ad ?? user.email?.split('@')[0] ?? 'Öğrenci'
   const email = user.email ?? ''
   const tier  = await getUserTier(supabase, user.id)
+
+  void trackDailyLogin(supabase, user.id)
 
   return (
     <GamificationProvider>

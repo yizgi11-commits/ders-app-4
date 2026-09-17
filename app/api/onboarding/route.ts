@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sanitizeString, MAX } from '@/lib/security'
+import { trackEvent } from '@/lib/analytics/track'
 import type { OnboardingData, StudyGoal } from '@/lib/onboarding/types'
 import { DEFAULT_SUBJECTS } from '@/lib/onboarding/types'
 
@@ -117,6 +118,8 @@ export async function POST(req: NextRequest) {
     pomodoro_goal:       goals.pomodoros,
     tasks_goal:          goals.tasks,
   }, { onConflict: 'user_id,date' })
+
+  void trackEvent(supabase, user.id, 'onboarding_completed', { study_goal: studyGoal })
 
   return NextResponse.json({
     success: true,

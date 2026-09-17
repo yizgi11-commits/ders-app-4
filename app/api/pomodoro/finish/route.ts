@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sanitizeString, validateUUID, MAX } from '@/lib/security'
 import { RATING_REVIEW_DAYS, type SessionRating } from '@/lib/pomodoro/types'
+import { trackEvent } from '@/lib/analytics/track'
 
 const VALID_RATINGS: SessionRating[] = ['poor', 'okay', 'good', 'excellent']
 
@@ -38,6 +39,8 @@ export async function POST(req: NextRequest) {
     .update({ session_rating: rating, recall_text: recallText })
     .eq('id', sessionId)
 
+  void trackEvent(supabase, user.id, 'session_reflection_saved', { rating })
+
   // ── Mark the linked daily task complete ───────────────────────
   let taskCompleted = false
   if (session.task_id) {
@@ -65,6 +68,7 @@ export async function POST(req: NextRequest) {
         }
       }
       taskCompleted = true
+      void trackEvent(supabase, user.id, 'task_completed', { task_id: session.task_id, source: 'focus_reflection' })
     }
   }
 

@@ -48,6 +48,14 @@ export default function RecallSession({ cards, onClose, onFinished }: Props) {
       setRevealed(false)
 
       if (index + 1 >= total) {
+        const finalTally = { ...tally, [g]: tally[g] + 1 }
+        const remembered  = finalTally.good + finalTally.easy
+        const score       = total > 0 ? Math.round((remembered / total) * 100) : 0
+        fetch('/api/recall/session-complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cardsCount: total, score }),
+        }).catch(() => {})
         setDone(true)
         onFinished()
       } else {

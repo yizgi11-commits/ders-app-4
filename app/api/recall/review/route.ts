@@ -7,6 +7,7 @@ import { updateStreak } from '@/lib/tasks/progression'
 import type { UserStreak } from '@/lib/tasks/types'
 import { invalidateDashboardCaches } from '@/lib/cache'
 import { checkLimit } from '@/lib/subscription'
+import { trackEvent } from '@/lib/analytics/track'
 
 // POST /api/recall/review
 // Body: { flashcard_id: string, grade: RecallGrade }
@@ -62,6 +63,11 @@ export async function POST(req: NextRequest) {
 
   if (error) return safeError(error, 'Kart güncellenemedi')
 
+  const { count: priorReviewCount } = await supabase
+    .from('recall_reviews')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+
   await supabase.from('recall_reviews').insert({
     user_id:       user.id,
     flashcard_id:  flashcardId,
@@ -71,6 +77,10 @@ export async function POST(req: NextRequest) {
     interval_days: days,
     reviewed_at:   now,
   })
+
+  if ((priorReviewCount ?? 0) === 0) {
+    void trackEvent(supabase, user.id, 'first_recall_completed', { grade })
+  }
 
   // ── Learning Streak: a completed Recall review keeps it alive ────
   const { data: streakRow } = await supabase
