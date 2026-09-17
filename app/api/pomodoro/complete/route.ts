@@ -8,6 +8,7 @@ import type { StudyStatistics, DailyFocusTime } from '@/lib/pomodoro/types'
 import { checkAndUnlockAchievements } from '@/lib/gamification/check'
 import { invalidateDashboardCaches } from '@/lib/cache'
 import { trackEvent } from '@/lib/analytics/track'
+import { safeError, logWriteError } from '@/lib/security'
 
 // POST /api/pomodoro/complete
 // Body: { sessionId: string, elapsedSeconds: number }
@@ -39,10 +40,12 @@ export async function POST(req: NextRequest) {
   const focusMinutes = isFocus ? Math.max(1, Math.floor(elapsedSeconds / 60)) : 0
 
   // ── Mark session complete ─────────────
-  await supabase
+  const { error: completeError } = await supabase
     .from('pomodoro_sessions')
     .update({ status: 'completed', elapsed_seconds: elapsedSeconds, xp_earned: xpEarned, completed_at: now })
     .eq('id', sessionId)
+
+  if (completeError) return safeError(completeError, 'Oturum tamamlanamadı')
 
   let newTotalXp = 0
   let newLevel = 1
@@ -61,10 +64,12 @@ export async function POST(req: NextRequest) {
       newLevel = levelFromTotalXp(newTotalXp)
       levelUp = newLevel > userXp.level
 
-      await supabase
+      const { error: xpError } = await supabase
         .from('user_xp')
         .update({ total_xp: newTotalXp, level: newLevel, updated_at: now })
         .eq('user_id', user.id)
+
+      if (xpError) return safeError(xpError, 'XP güncellenemedi')
     }
 
     // ── Update study_statistics ─────────
@@ -75,25 +80,30 @@ export async function POST(req: NextRequest) {
       .maybeSingle<StudyStatistics>()
 
     if (!stats) {
-      await supabase.from('study_statistics').insert({
+      const { error } = await supabase.from('study_statistics').insert({
         user_id: user.id,
         total_focus_minutes: focusMinutes,
         total_sessions_completed: 1,
         current_session_streak: 1,
         longest_streak_sessions: 1,
       })
-      // study_statistics only gets created once — this IS the user's
-      // first-ever completed focus session.
-      void trackEvent(supabase, user.id, 'first_focus_completed', { duration_seconds: elapsedSeconds })
+      if (error) {
+        logWriteError('pomodoro/complete study_statistics insert', error)
+      } else {
+        // study_statistics only gets created once — this IS the user's
+        // first-ever completed focus session.
+        void trackEvent(supabase, user.id, 'first_focus_completed', { duration_seconds: elapsedSeconds })
+      }
     } else {
       const newStreak = stats.current_session_streak + 1
-      await supabase.from('study_statistics').update({
+      const { error } = await supabase.from('study_statistics').update({
         total_focus_minutes: stats.total_focus_minutes + focusMinutes,
         total_sessions_completed: stats.total_sessions_completed + 1,
         current_session_streak: newStreak,
         longest_streak_sessions: Math.max(stats.longest_streak_sessions, newStreak),
         updated_at: now,
       }).eq('user_id', user.id)
+      if (error) logWriteError('pomodoro/complete study_statistics update', error)
     }
 
     // ── Update daily_focus_time ─────────
@@ -105,17 +115,19 @@ export async function POST(req: NextRequest) {
       .maybeSingle<DailyFocusTime>()
 
     if (!daily) {
-      await supabase.from('daily_focus_time').insert({
+      const { error } = await supabase.from('daily_focus_time').insert({
         user_id: user.id,
         date: today,
         focus_minutes: focusMinutes,
         sessions_completed: 1,
       })
+      if (error) logWriteError('pomodoro/complete daily_focus_time insert', error)
     } else {
-      await supabase.from('daily_focus_time').update({
+      const { error } = await supabase.from('daily_focus_time').update({
         focus_minutes: daily.focus_minutes + focusMinutes,
         sessions_completed: daily.sessions_completed + 1,
       }).eq('id', daily.id)
+      if (error) logWriteError('pomodoro/complete daily_focus_time update', error)
     }
 
     // ── Learning Streak: a completed Focus session keeps it alive ──
@@ -131,12 +143,13 @@ export async function POST(req: NextRequest) {
         longestStreak: streakRow.longest_streak,
         lastStreakDate: streakRow.last_streak_date,
       })
-      await supabase.from('user_streaks').update({
+      const { error } = await supabase.from('user_streaks').update({
         current_streak: currentStreak,
         longest_streak: longestStreak,
         last_streak_date: today,
         updated_at: now,
       }).eq('user_id', user.id)
+      if (error) logWriteError('pomodoro/complete user_streaks update', error)
     }
 
     void trackEvent(supabase, user.id, 'focus_completed', {

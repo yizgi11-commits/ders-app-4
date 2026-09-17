@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateDaySchedule, generateWeekSchedule } from '@/lib/planner/generate'
 import { checkRateLimit } from '@/lib/security/rate-limit'
+import { safeError, logWriteError } from '@/lib/security'
 import type { StudyIntensity, ScheduleBlock, StudyPreferences, GenerateInput } from '@/lib/planner/types'
 
 // ─── GET /api/planner?date=YYYY-MM-DD ────────────────────────────
@@ -78,8 +79,10 @@ export async function POST(req: NextRequest) {
   const subjectPriorities: string[] = body.subject_priorities ?? []
   const weakSubjects: string[] = body.weak_subjects ?? []
 
-  // Save/update preferences
-  await supabase.from('study_preferences').upsert({
+  // Save/update preferences — best-effort; the actual schedule generation
+  // below uses the values from this request directly, so a failed save
+  // just means next time's defaults won't reflect it.
+  const { error: prefsError } = await supabase.from('study_preferences').upsert({
     user_id:             user.id,
     daily_study_mins:    dailyStudyMins,
     intensity,
@@ -88,6 +91,7 @@ export async function POST(req: NextRequest) {
     weak_subjects:       weakSubjects,
     updated_at:          new Date().toISOString(),
   }, { onConflict: 'user_id' })
+  if (prefsError) logWriteError('planner study_preferences upsert', prefsError)
 
   // Fetch user's subjects with topics
   const { data: dbSubjects } = await supabase
@@ -121,26 +125,29 @@ export async function POST(req: NextRequest) {
     const weekEndStr = weekEnd.toISOString().split('T')[0]
 
     // Delete existing blocks for the week
-    await supabase
+    const { error: deleteError } = await supabase
       .from('schedule_blocks')
       .delete()
       .eq('user_id', user.id)
       .gte('date', weekStartStr)
       .lte('date', weekEndStr)
+    if (deleteError) logWriteError('planner schedule_blocks delete (week)', deleteError)
 
     const weekSchedules = generateWeekSchedule(baseInput, weekStartStr)
 
-    // Insert all blocks
+    // Insert all blocks — if this fails after the delete above already
+    // succeeded, say so instead of reporting an empty week as "generated".
     const allBlocks = weekSchedules.flatMap(day =>
       day.blocks.map(b => ({ ...b, user_id: user.id }))
     )
 
     if (allBlocks.length > 0) {
-      await supabase.from('schedule_blocks').insert(allBlocks)
+      const { error: insertError } = await supabase.from('schedule_blocks').insert(allBlocks)
+      if (insertError) return safeError(insertError, 'Haftalık plan oluşturulamadı')
     }
 
     // Fetch back
-    const { data: freshBlocks } = await supabase
+    const { data: freshBlocks, error: fetchError } = await supabase
       .from('schedule_blocks')
       .select('*')
       .eq('user_id', user.id)
@@ -148,31 +155,35 @@ export async function POST(req: NextRequest) {
       .lte('date', weekEndStr)
       .order('date')
       .order('sort_order')
+    if (fetchError) return safeError(fetchError, 'Plan alınamadı')
 
     return NextResponse.json({ blocks: freshBlocks ?? [], generated: true })
   }
 
   // Single day
-  await supabase
+  const { error: deleteDayError } = await supabase
     .from('schedule_blocks')
     .delete()
     .eq('user_id', user.id)
     .eq('date', date)
+  if (deleteDayError) logWriteError('planner schedule_blocks delete (day)', deleteDayError)
 
   const schedule = generateDaySchedule({ ...baseInput, date })
 
   if (schedule.blocks.length > 0) {
-    await supabase.from('schedule_blocks').insert(
+    const { error: insertDayError } = await supabase.from('schedule_blocks').insert(
       schedule.blocks.map(b => ({ ...b, user_id: user.id }))
     )
+    if (insertDayError) return safeError(insertDayError, 'Plan oluşturulamadı')
   }
 
-  const { data: freshBlocks } = await supabase
+  const { data: freshBlocks, error: fetchDayError } = await supabase
     .from('schedule_blocks')
     .select('*')
     .eq('user_id', user.id)
     .eq('date', date)
     .order('sort_order')
+  if (fetchDayError) return safeError(fetchDayError, 'Plan alınamadı')
 
   return NextResponse.json({ blocks: freshBlocks ?? [], generated: true })
 }

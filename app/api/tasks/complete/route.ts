@@ -6,6 +6,7 @@ import type { UserXP, UserStreak } from "@/lib/tasks/types";
 import { checkAndUnlockAchievements } from "@/lib/gamification/check";
 import { invalidateDashboardCaches } from "@/lib/cache";
 import { trackEvent } from "@/lib/analytics/track";
+import { safeError } from "@/lib/security";
 
 // POST /api/tasks/complete
 // Body: { taskId: string }
@@ -41,10 +42,12 @@ export async function POST(req: NextRequest) {
   if (!userXp || !userStreak) return NextResponse.json({ error: "Kullanıcı verisi bulunamadı" }, { status: 500 });
 
   // ── Mark task complete ────────────────
-  await supabase
+  const { error: completeError } = await supabase
     .from("daily_tasks")
     .update({ completed: true, completed_at: new Date().toISOString(), xp_earned: baseXp })
     .eq("id", taskId);
+
+  if (completeError) return safeError(completeError, "Görev tamamlanamadı");
 
   void trackEvent(supabase, user.id, "task_completed", { task_id: taskId, source: "command_center" });
 
@@ -67,7 +70,7 @@ export async function POST(req: NextRequest) {
   const newLevel   = levelFromTotalXp(newTotalXp);
 
   // ── Update user_xp ────────────────────
-  await supabase
+  const { error: xpError } = await supabase
     .from("user_xp")
     .update({
       total_xp: newTotalXp,
@@ -76,6 +79,8 @@ export async function POST(req: NextRequest) {
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", user.id);
+
+  if (xpError) return safeError(xpError, "XP güncellenemedi");
 
   // Note: completing a task no longer bumps user_streaks — the Learning
   // Streak is now driven by Focus sessions and Recall reviews only (see

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { sanitizeString, validateUUID, safeError, MAX } from '@/lib/security'
+import { sanitizeString, validateUUID, safeError, logWriteError, MAX } from '@/lib/security'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -51,7 +51,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     if (error) return safeError(error, 'Kart güncellenemedi')
 
-    await supabase.from('recall_reviews').insert({
+    const { error: reviewError } = await supabase.from('recall_reviews').insert({
       user_id:       user.id,
       flashcard_id:  id,
       topic_id:      card.topic_id,
@@ -60,6 +60,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       interval_days: daysToAdd,
       reviewed_at:   now,
     })
+    if (reviewError) logWriteError('flashcards/[id] recall_reviews insert', reviewError)
 
     return NextResponse.json({ flashcard: updated, next_review: nextStr })
   }

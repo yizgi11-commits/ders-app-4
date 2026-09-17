@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { sanitizeString, validateUUID, MAX } from '@/lib/security'
+import { sanitizeString, validateUUID, MAX, safeError, logWriteError } from '@/lib/security'
 import { RATING_REVIEW_DAYS, type SessionRating } from '@/lib/pomodoro/types'
 import { trackEvent } from '@/lib/analytics/track'
 
@@ -34,10 +34,12 @@ export async function POST(req: NextRequest) {
 
   if (sErr || !session) return NextResponse.json({ error: 'Oturum bulunamadı' }, { status: 404 })
 
-  await supabase
+  const { error: sessionUpdateError } = await supabase
     .from('pomodoro_sessions')
     .update({ session_rating: rating, recall_text: recallText })
     .eq('id', sessionId)
+
+  if (sessionUpdateError) return safeError(sessionUpdateError, 'Yansıma kaydedilemedi')
 
   void trackEvent(supabase, user.id, 'session_reflection_saved', { rating })
 
@@ -53,22 +55,28 @@ export async function POST(req: NextRequest) {
 
     if (task && !task.completed) {
       const xpReward = task.task_templates?.xp_reward ?? 0
-      await supabase
+      const { error: taskError } = await supabase
         .from('daily_tasks')
         .update({ completed: true, completed_at: new Date().toISOString(), xp_earned: xpReward })
         .eq('id', session.task_id)
 
-      if (xpReward > 0) {
-        const { data: userXp } = await supabase.from('user_xp').select('*').eq('user_id', user.id).maybeSingle()
-        if (userXp) {
-          await supabase.from('user_xp').update({
-            total_xp:   userXp.total_xp + xpReward,
-            updated_at: new Date().toISOString(),
-          }).eq('user_id', user.id)
+      if (taskError) {
+        logWriteError('pomodoro/finish daily_tasks update', taskError)
+      } else {
+        taskCompleted = true
+        void trackEvent(supabase, user.id, 'task_completed', { task_id: session.task_id, source: 'focus_reflection' })
+
+        if (xpReward > 0) {
+          const { data: userXp } = await supabase.from('user_xp').select('*').eq('user_id', user.id).maybeSingle()
+          if (userXp) {
+            const { error: xpError } = await supabase.from('user_xp').update({
+              total_xp:   userXp.total_xp + xpReward,
+              updated_at: new Date().toISOString(),
+            }).eq('user_id', user.id)
+            if (xpError) logWriteError('pomodoro/finish user_xp update', xpError)
+          }
         }
       }
-      taskCompleted = true
-      void trackEvent(supabase, user.id, 'task_completed', { task_id: session.task_id, source: 'focus_reflection' })
     }
   }
 
@@ -78,7 +86,7 @@ export async function POST(req: NextRequest) {
     const days = RATING_REVIEW_DAYS[rating]
     const next = new Date()
     next.setDate(next.getDate() + days)
-    nextReviewDate = next.toISOString().split('T')[0]
+    const scheduledDate = next.toISOString().split('T')[0]
 
     const { data: existingCard } = await supabase
       .from('flashcards')
@@ -88,13 +96,15 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
 
     if (existingCard) {
-      await supabase
+      const { error } = await supabase
         .from('flashcards')
         .update({
-          next_review_date: nextReviewDate,
+          next_review_date: scheduledDate,
           review_count:     existingCard.review_count + 1,
         })
         .eq('id', existingCard.id)
+      if (error) logWriteError('pomodoro/finish flashcards update', error)
+      else nextReviewDate = scheduledDate
     } else {
       const { data: topic } = await supabase
         .from('topics')
@@ -102,14 +112,16 @@ export async function POST(req: NextRequest) {
         .eq('id', session.topic_id)
         .maybeSingle()
 
-      await supabase.from('flashcards').insert({
+      const { error } = await supabase.from('flashcards').insert({
         user_id:          user.id,
         subject_id:       session.subject_id,
         topic_id:         session.topic_id,
         front:            topic?.title ?? 'Konu',
         back:             recallText,
-        next_review_date: nextReviewDate,
+        next_review_date: scheduledDate,
       })
+      if (error) logWriteError('pomodoro/finish flashcards insert', error)
+      else nextReviewDate = scheduledDate
     }
   }
 

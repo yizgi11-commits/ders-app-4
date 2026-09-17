@@ -29,7 +29,7 @@ export async function GET() {
 
   const [
     dailyFocusRes, dueCardsRes, reviewsDoneRes,
-    lastSessionRes, monthFocusRes, monthReviewsRes,
+    lastSessionRes, monthFocusRes, monthReviewsRes, plannerTasksRes,
   ] = await Promise.all([
     supabase.from('daily_focus_time').select('focus_minutes').eq('user_id', user.id).eq('date', today).maybeSingle(),
     supabase.from('flashcards').select('id, topic_id, topics(title)').eq('user_id', user.id).lte('next_review_date', today),
@@ -37,6 +37,12 @@ export async function GET() {
     supabase.from('pomodoro_sessions').select('topic_id, subject_id, started_at').eq('user_id', user.id).eq('status', 'completed').not('topic_id', 'is', null).order('started_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('daily_focus_time').select('focus_minutes').eq('user_id', user.id).gte('date', firstOfMonth),
     supabase.from('recall_reviews').select('topic_id, reviewed_at').eq('user_id', user.id).gte('reviewed_at', `${firstOfMonth}T00:00:00.000Z`),
+    // Planner-created tasks for today — surfaced alongside the system
+    // (gamification) tasks below so Command Center isn't blind to what
+    // the user actually planned.
+    supabase.from('daily_tasks')
+      .select('id, user_id, date, completed, completed_at, duration_minutes, priority, subject_id, topic_id, topic_text, created_at, subjects(id, name, icon, color), topics(id, title)')
+      .eq('user_id', user.id).eq('source', 'planner').eq('date', today),
   ])
 
   const todayMinutes = dailyFocusRes.data?.focus_minutes ?? 0
@@ -118,7 +124,8 @@ export async function GET() {
   const reviewConsistencyPct = Math.round((reviewDays / daysElapsedThisMonth) * 100)
 
   return NextResponse.json({
-    tasks:       systemTasks.tasks,
+    tasks:         systemTasks.tasks,
+    plannerTasks:  plannerTasksRes.data ?? [],
     userStreak:  systemTasks.userStreak,
     todayMinutes,
     reviewsDueToday,

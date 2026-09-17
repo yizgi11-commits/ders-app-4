@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { validateUUID, safeError } from '@/lib/security'
+import { invalidateDashboardCaches } from '@/lib/cache'
+import { trackEvent } from '@/lib/analytics/track'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -35,6 +37,15 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     .single()
 
   if (error) return safeError(error, 'Görev güncellenemedi')
+
+  // Completion feeds Learning Score / Weekly Review / dashboard/weekly's
+  // completion-rate math (all read daily_tasks regardless of source) —
+  // this was previously never invalidated for Planner-sourced tasks.
+  if (body.completed === true) {
+    void invalidateDashboardCaches(supabase, user.id)
+    void trackEvent(supabase, user.id, 'task_completed', { task_id: id, source: 'planner_tab' })
+  }
+
   return NextResponse.json(data)
 }
 

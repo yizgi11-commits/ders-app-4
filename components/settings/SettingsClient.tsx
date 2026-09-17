@@ -33,6 +33,9 @@ export default function SettingsClient({ initial }: Props) {
   const [saved, setSaved] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteText, setDeleteText] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState(false)
 
   // Form state — seeded from the server-fetched initial profile, no client fetch.
   const [ad, setAd] = useState(initial.ad)
@@ -45,8 +48,9 @@ export default function SettingsClient({ initial }: Props) {
 
   async function handleSave() {
     setSaving(true)
+    setSaveError(false)
     try {
-      await fetch('/api/settings', {
+      const res = await fetch('/api/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -58,8 +62,12 @@ export default function SettingsClient({ initial }: Props) {
           focus_intensity: intensity,
         }),
       })
+      if (!res.ok) { setSaveError(true); setTimeout(() => setSaveError(false), 3000); return }
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
+    } catch {
+      setSaveError(true)
+      setTimeout(() => setSaveError(false), 3000)
     } finally {
       setSaving(false)
     }
@@ -73,10 +81,23 @@ export default function SettingsClient({ initial }: Props) {
   }
 
   async function handleDelete() {
-    if (deleteText !== 'SİL') return
-    await fetch('/api/settings', { method: 'DELETE' })
-    router.push('/giris')
-    router.refresh()
+    if (deleteText !== 'SİL' || deleting) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      const res = await fetch('/api/settings', { method: 'DELETE' })
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        setDeleteError(json?.message ?? 'Hesap silinemedi. Tekrar dene.')
+        return
+      }
+      router.push('/giris')
+      router.refresh()
+    } catch {
+      setDeleteError('Bağlantı hatası. Tekrar dene.')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   const navItems: { key: Section; label: string; icon: typeof User }[] = [
@@ -173,7 +194,7 @@ export default function SettingsClient({ initial }: Props) {
                   </div>
                 </div>
 
-                <SaveButton saving={saving} saved={saved} onClick={handleSave} />
+                <SaveButton saving={saving} saved={saved} error={saveError} onClick={handleSave} />
               </motion.div>
             )}
 
@@ -284,7 +305,7 @@ export default function SettingsClient({ initial }: Props) {
                   </div>
                 </div>
 
-                <SaveButton saving={saving} saved={saved} onClick={handleSave} />
+                <SaveButton saving={saving} saved={saved} error={saveError} onClick={handleSave} />
               </motion.div>
             )}
 
@@ -366,19 +387,26 @@ export default function SettingsClient({ initial }: Props) {
                         placeholder="SİL"
                         className="w-full border border-red-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-300"
                       />
+                      {deleteError && (
+                        <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                          {deleteError}
+                        </p>
+                      )}
                       <div className="flex gap-2">
                         <button
-                          onClick={() => { setShowDeleteConfirm(false); setDeleteText('') }}
-                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold py-2 rounded-xl transition-colors"
+                          onClick={() => { setShowDeleteConfirm(false); setDeleteText(''); setDeleteError(null) }}
+                          disabled={deleting}
+                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold py-2 rounded-xl transition-colors disabled:opacity-50"
                         >
                           İptal
                         </button>
                         <button
                           onClick={handleDelete}
-                          disabled={deleteText !== 'SİL'}
-                          className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white text-sm font-semibold py-2 rounded-xl transition-colors"
+                          disabled={deleteText !== 'SİL' || deleting}
+                          className="flex-1 flex items-center justify-center gap-1.5 bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white text-sm font-semibold py-2 rounded-xl transition-colors"
                         >
-                          Kalıcı Olarak Sil
+                          {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                          {deleting ? 'Siliniyor…' : 'Kalıcı Olarak Sil'}
                         </button>
                       </div>
                     </motion.div>
@@ -395,9 +423,9 @@ export default function SettingsClient({ initial }: Props) {
 
 // ── Save button ──────────────────────────────────────────────────
 function SaveButton({
-  saving, saved, onClick,
+  saving, saved, error, onClick,
 }: {
-  saving: boolean; saved: boolean; onClick: () => void
+  saving: boolean; saved: boolean; error?: boolean; onClick: () => void
 }) {
   return (
     <motion.button
@@ -407,13 +435,17 @@ function SaveButton({
       whileTap={!saving ? { scale: 0.97 } : {}}
       className={cn(
         'w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all',
-        saved
+        error
+          ? 'bg-red-500 text-white'
+          : saved
           ? 'bg-emerald-500 text-white'
           : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-200/60'
       )}
     >
       {saving ? (
         <><Loader2 className="w-4 h-4 animate-spin" /> Kaydediliyor…</>
+      ) : error ? (
+        'Kaydedilemedi — tekrar dene'
       ) : saved ? (
         <><Check className="w-4 h-4" /> Kaydedildi!</>
       ) : (

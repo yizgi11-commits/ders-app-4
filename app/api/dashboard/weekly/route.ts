@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCache, setCache, TTL, cacheKey } from '@/lib/cache'
+import { logWriteError } from '@/lib/security'
 
 interface WeeklyData {
   days:     { gun: string; saat: number | null }[]
@@ -70,6 +71,9 @@ export async function GET() {
       .eq('completed', true),
   ])
 
+  const readError = focusRes.error || prevFocusRes.error || weekTasksRes.error || subjectTasksRes.error
+  if (readError) logWriteError('dashboard/weekly reads', readError)
+
   const DAY_NAMES = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
   const focusByDate = new Map<string, number>()
   for (const row of focusRes.data ?? []) focusByDate.set(row.date, row.focus_minutes ?? 0)
@@ -113,7 +117,12 @@ export async function GET() {
     hasData: weekMinutes > 0 || weekTasksDone > 0,
   }
 
-  await setCache(supabase, user.id, weeklyKey, result, TTL.WEEKLY_PROGRESS)
+  // Don't cache a result built from a partial/failed read — a transient
+  // DB hiccup would otherwise get served back as "0 hours this week"
+  // for the full cache TTL.
+  if (!readError) {
+    await setCache(supabase, user.id, weeklyKey, result, TTL.WEEKLY_PROGRESS)
+  }
 
   return NextResponse.json(result)
 }

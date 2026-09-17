@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { sanitizeString, MAX } from '@/lib/security'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { sanitizeString, MAX, safeError, logWriteError } from '@/lib/security'
 
 // GET /api/settings — kullanıcı profili + metadata
 export async function GET() {
@@ -32,9 +33,10 @@ export async function PATCH(req: NextRequest) {
 
   // Update display name in auth metadata
   if (body.ad !== undefined) {
-    await supabase.auth.updateUser({
+    const { error } = await supabase.auth.updateUser({
       data: { ad: sanitizeString(body.ad, MAX.DISPLAY_NAME) },
     })
+    if (error) return safeError(error, 'Ad güncellenemedi')
   }
 
   // Update profile
@@ -48,22 +50,81 @@ export async function PATCH(req: NextRequest) {
   if (body.preferred_hours  !== undefined) profileUpdates.preferred_hours = sanitizeString(body.preferred_hours, MAX.ENUM_VALUE)
   if (body.focus_intensity  !== undefined) profileUpdates.focus_intensity = sanitizeString(body.focus_intensity, MAX.ENUM_VALUE)
 
-  await supabase
+  const { error } = await supabase
     .from('user_profiles')
     .update(profileUpdates)
     .eq('user_id', user.id)
 
+  if (error) return safeError(error, 'Ayarlar kaydedilemedi')
+
   return NextResponse.json({ success: true })
 }
 
+// Deletion order matters: children before parents, so a table without
+// an `on delete cascade` FK back to something earlier in this list
+// doesn't fail with a foreign-key violation (e.g. recall_reviews/
+// flashcards before topics/subjects; account-level rows last).
+const USER_DATA_TABLES = [
+  'user_events', 'recall_reviews', 'flashcards', 'notes', 'note_folders',
+  'documents', 'pomodoro_sessions', 'daily_focus_time', 'study_statistics',
+  'daily_tasks', 'goals', 'exams', 'schedule_blocks', 'subjects', 'topics',
+  'user_xp', 'user_streaks', 'user_achievements', 'daily_goals',
+  'study_preferences', 'app_cache', 'ai_insights', 'user_profiles',
+] as const
+
 // DELETE /api/settings — hesap sil
+// Actually deletes every row the user owns, then (only if a service-role
+// key is configured — this app normally runs on the anon key alone, see
+// lib/supabase/server.ts) removes the auth.users row itself via the
+// Admin API. Without a service-role key the auth account can't be
+// removed this way, so we still fully wipe the user's data and sign
+// them out — there's just an empty, data-less auth row left behind.
 export async function DELETE() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
-  // Sign out first
+  const failedTables: string[] = []
+  for (const table of USER_DATA_TABLES) {
+    const { error } = await supabase.from(table).delete().eq('user_id', user.id)
+    if (error) {
+      logWriteError(`account delete: ${table}`, error)
+      failedTables.push(table)
+    }
+  }
+
+  let authDeleted = false
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const supabaseUrl     = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (serviceRoleKey && supabaseUrl) {
+    try {
+      const admin = createAdminClient(supabaseUrl, serviceRoleKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      })
+      const { error } = await admin.auth.admin.deleteUser(user.id)
+      if (error) logWriteError('account delete: auth.admin.deleteUser', error)
+      else authDeleted = true
+    } catch (err) {
+      logWriteError('account delete: admin client', err)
+    }
+  }
+
   await supabase.auth.signOut()
 
-  return NextResponse.json({ success: true, message: 'Hesap silme talebi alındı.' })
+  if (failedTables.length > 0) {
+    return NextResponse.json({
+      success: false,
+      message: 'Hesabının verilerinin bir kısmı silinemedi. Tekrar dene veya destekle iletişime geç.',
+      failed_tables: failedTables,
+      auth_deleted: authDeleted,
+    }, { status: 500 })
+  }
+
+  return NextResponse.json({
+    success: true,
+    message: authDeleted
+      ? 'Hesabın ve tüm verilerin kalıcı olarak silindi.'
+      : 'Hesabının verileri silindi.',
+    auth_deleted: authDeleted,
+  })
 }

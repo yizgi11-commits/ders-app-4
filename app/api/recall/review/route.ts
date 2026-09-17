@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { validateUUID, safeError } from '@/lib/security'
+import { validateUUID, safeError, logWriteError } from '@/lib/security'
 import { RECALL_GRADES, intervalForGrade, type RecallGrade } from '@/lib/recall/types'
 import { checkAndUnlockAchievements } from '@/lib/gamification/check'
 import { updateStreak } from '@/lib/tasks/progression'
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     .select('id', { count: 'exact', head: true })
     .eq('user_id', user.id)
 
-  await supabase.from('recall_reviews').insert({
+  const { error: reviewInsertError } = await supabase.from('recall_reviews').insert({
     user_id:       user.id,
     flashcard_id:  flashcardId,
     topic_id:      card.topic_id,
@@ -77,6 +77,7 @@ export async function POST(req: NextRequest) {
     interval_days: days,
     reviewed_at:   now,
   })
+  if (reviewInsertError) logWriteError('recall/review recall_reviews insert', reviewInsertError)
 
   if ((priorReviewCount ?? 0) === 0) {
     void trackEvent(supabase, user.id, 'first_recall_completed', { grade })
@@ -96,12 +97,13 @@ export async function POST(req: NextRequest) {
       longestStreak: streakRow.longest_streak,
       lastStreakDate: streakRow.last_streak_date,
     })
-    await supabase.from('user_streaks').update({
+    const { error: streakError } = await supabase.from('user_streaks').update({
       current_streak: currentStreak,
       longest_streak: longestStreak,
       last_streak_date: today,
       updated_at: now,
     }).eq('user_id', user.id)
+    if (streakError) logWriteError('recall/review user_streaks update', streakError)
   }
 
   const [newAchievements] = await Promise.all([

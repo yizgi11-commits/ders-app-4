@@ -11,17 +11,15 @@ import {
 import { cn } from '@/lib/utils'
 import { useGamification } from '@/components/gamification/GamificationProvider'
 import type {
-  DailyTaskWithTemplate, CompleteTaskResponse, UserStreak, Difficulty,
+  DailyTaskWithTemplate, CompleteTaskResponse, UserStreak,
 } from '@/lib/tasks/types'
 import type { FlashcardWithSubject } from '@/lib/flashcards/types'
-import type { Exam } from '@/lib/planner/types'
+import type { Exam, PlannerTask } from '@/lib/planner/types'
 import {
-  computeNextAction, startSessionHref,
-  type NextAction,
+  computeNextAction, startSessionHref, mergeTodayTasks,
+  type NextAction, type TodayTask,
 } from '@/lib/dashboard/command-center'
 import type { LearningScoreResponse } from '@/lib/dashboard/learning-score'
-
-const ESTIMATED_MINUTES: Record<Difficulty, number> = { 1: 25, 2: 45, 3: 60 }
 
 function greetingFor(hour: number) {
   if (hour >= 6 && hour < 12) return 'Good morning'
@@ -40,6 +38,7 @@ interface MonthlyStats { focusMinutes: number; topicsReviewed: number; reviewCon
 
 interface CommandCenterData {
   tasks:             DailyTaskWithTemplate[]
+  plannerTasks:      PlannerTask[]
   streak:            UserStreak
   todayMinutes:      number
   reviewsDueToday:   number
@@ -165,7 +164,7 @@ export default function CommandCenter() {
       ])
       const [ccJson, settingsJson, flashJson, examsJson, scoreJson] = await Promise.all([
         ccRes.ok ? ccRes.json() : {
-          tasks: [], userStreak: null, todayMinutes: 0,
+          tasks: [], plannerTasks: [], userStreak: null, todayMinutes: 0,
           reviewsDueToday: 0, reviewsDoneToday: 0, reviewHint: null, continueLearning: null,
           monthly: { focusMinutes: 0, topicsReviewed: 0, reviewConsistencyPct: 0 },
         },
@@ -177,6 +176,7 @@ export default function CommandCenter() {
 
       setData({
         tasks:            ccJson.tasks ?? [],
+        plannerTasks:     ccJson.plannerTasks ?? [],
         streak:           ccJson.userStreak ?? EMPTY_STREAK,
         todayMinutes:     ccJson.todayMinutes ?? 0,
         reviewsDueToday:  ccJson.reviewsDueToday ?? 0,
@@ -196,26 +196,32 @@ export default function CommandCenter() {
 
   useEffect(() => { load() }, [load])
 
-  async function handleComplete(taskId: string) {
+  async function handleComplete(task: TodayTask) {
     if (completing) return
-    setCompleting(taskId)
+    setCompleting(task.id)
     try {
-      const res = await fetch('/api/tasks/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskId }),
-      })
-      const json: CompleteTaskResponse & { new_achievements?: string[] } = await res.json()
-      if (!res.ok) return
+      if (task.source === 'system') {
+        const res = await fetch('/api/tasks/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ taskId: task.id }),
+        })
+        const json: CompleteTaskResponse & { new_achievements?: string[] } = await res.json()
+        if (res.ok) {
+          setToast(json)
+          notify({ newAchievements: json.new_achievements ?? [], levelUp: json.level_up, newLevel: json.level })
+        }
+      } else {
+        // Planner tasks have no XP/level system of their own (matches
+        // how completing them works from the Planner tab itself).
+        await fetch(`/api/planner/tasks/${task.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ completed: true }),
+        })
+      }
 
-      setData(prev => prev ? {
-        ...prev,
-        tasks: prev.tasks.map(t => t.id === taskId ? { ...t, completed: true, xp_earned: json.xp_earned } : t),
-      } : prev)
-      setToast(json)
-      notify({ newAchievements: json.new_achievements ?? [], levelUp: json.level_up, newLevel: json.level })
-
-      // Refresh everything (streak/score inputs all shift) in the background
+      // Refresh everything (streak/score/merged task list all shift)
       load()
     } finally {
       setCompleting(null)
@@ -225,25 +231,28 @@ export default function CommandCenter() {
   if (loading || !data) return <Skeleton />
 
   const {
-    tasks, streak, todayMinutes, reviewsDueToday, reviewsDoneToday,
+    tasks, plannerTasks, streak, todayMinutes, reviewsDueToday, reviewsDoneToday,
     reviewHint, continueLearning, monthly, displayName, flashcards, exams,
     learningScore,
   } = data
 
-  const done    = tasks.filter(t => t.completed).length
-  const total   = tasks.length
+  const todayTasks = mergeTodayTasks(tasks, plannerTasks)
+  const done    = todayTasks.filter(t => t.completed).length
+  const total   = todayTasks.length
   const hour    = new Date().getHours()
   const firstName = displayName.split(' ')[0] || 'Student'
   const today   = new Date().toISOString().split('T')[0]
 
-  const plannedMinutes = tasks.reduce((sum, t) => sum + ESTIMATED_MINUTES[t.task_templates.difficulty], 0)
+  const plannedMinutes = todayTasks.reduce((sum, t) => sum + t.minutes, 0)
   const showWeeklyReview = new Date().getDay() === 0 || learningScore.breakdown.consistency >= 100
 
-  const firstIncomplete = tasks.find(t => !t.completed) ?? null
+  // todayTasks is already priority-sorted (High Planner task first), so
+  // this naturally surfaces one ahead of a merely-medium system task.
+  const firstIncomplete = todayTasks.find(t => !t.completed) ?? null
   const firstIncompleteForAction = firstIncomplete ? {
     id: firstIncomplete.id,
-    subject: firstIncomplete.task_templates.subject,
-    title: firstIncomplete.task_templates.title,
+    subject: firstIncomplete.subject,
+    title: firstIncomplete.title,
   } : null
 
   const nearestExam = exams.length > 0 ? {
@@ -418,8 +427,7 @@ export default function CommandCenter() {
 
         <ul className="flex flex-col gap-2 mb-4">
           <AnimatePresence mode="popLayout">
-            {tasks.map((task, i) => {
-              const tmpl = task.task_templates
+            {todayTasks.map((task, i) => {
               const busy = completing === task.id
               return (
                 <motion.li
@@ -427,7 +435,7 @@ export default function CommandCenter() {
                   layout
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  onClick={() => !task.completed && !busy && handleComplete(task.id)}
+                  onClick={() => !task.completed && !busy && handleComplete(task)}
                   whileHover={!task.completed ? { x: 2 } : {}}
                   className={cn(
                     'flex items-center gap-3 p-3 rounded-xl border transition-colors',
@@ -451,17 +459,22 @@ export default function CommandCenter() {
                     'flex-1 min-w-0 text-sm font-medium truncate',
                     task.completed ? 'line-through text-muted-foreground' : 'text-gray-900'
                   )}>
-                    {tmpl.title}
+                    {task.title}
                   </span>
+                  {task.source === 'planner' && (
+                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-1.5 py-0.5 shrink-0">
+                      Planner
+                    </span>
+                  )}
                   <span className="text-xs text-muted-foreground shrink-0">
-                    {ESTIMATED_MINUTES[tmpl.difficulty]} min
+                    {task.minutes} min
                   </span>
                 </motion.li>
               )
             })}
           </AnimatePresence>
 
-          {tasks.length === 0 && (
+          {todayTasks.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-4">
               No tasks yet — they&apos;ll appear here automatically.
             </p>

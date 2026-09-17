@@ -30,6 +30,17 @@ export function safeError(
   return NextResponse.json({ error: publicMsg }, { status })
 }
 
+/**
+ * For a write whose failure shouldn't abort the request (a secondary/
+ * best-effort write alongside the primary one) — log it instead of
+ * silently swallowing it, so failures are at least visible server-side.
+ */
+export function logWriteError(context: string, err: unknown): void {
+  if (process.env.NODE_ENV !== 'production') {
+    console.error(`[${context}]`, err)
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────
 // Max lengths (characters)
 // ─────────────────────────────────────────────────────────────────
