@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { resolveTier } from '@/lib/subscription'
+import { getUserTier } from '@/lib/subscription'
 import { trackDailyLogin } from '@/lib/analytics/track'
 import Sidebar from '@/components/dashboard/Sidebar'
 import Header from '@/components/dashboard/Header'
@@ -19,12 +19,17 @@ export default async function DashboardLayout({
 
   if (!user) redirect('/giris')
 
-  // One read for onboarding status + tier — redirect if not completed
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('onboarding_completed, subscription_tier, subscription_expires_at')
-    .eq('user_id', user.id)
-    .maybeSingle()
+  // Onboarding status + tier, read in parallel. They stay separate queries on
+  // purpose: if the subscription columns aren't deployed yet, the tier read
+  // must fall back to 'free' without breaking the onboarding check.
+  const [{ data: profile }, tier] = await Promise.all([
+    supabase
+      .from('user_profiles')
+      .select('onboarding_completed')
+      .eq('user_id', user.id)
+      .maybeSingle(),
+    getUserTier(supabase, user.id),
+  ])
 
   if (!profile?.onboarding_completed) {
     redirect('/onboarding')
@@ -32,7 +37,6 @@ export default async function DashboardLayout({
 
   const ad    = user.user_metadata?.ad ?? user.email?.split('@')[0] ?? 'Öğrenci'
   const email = user.email ?? ''
-  const tier  = resolveTier(profile)
 
   void trackDailyLogin(supabase, user.id)
 
