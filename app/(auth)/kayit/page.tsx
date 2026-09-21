@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { User, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import AuthLeftPanel from '@/components/auth/AuthLeftPanel'
 
 const itemVariant = {
@@ -38,6 +37,8 @@ export default function KayitPage() {
     setHata('')
     if (form.password.length < 6) { setHata('Şifre en az 6 karakter olmalı.'); return }
     setYukleniyor(true)
+    // Lazy-loaded: keeps supabase-js (~60 kB gz) out of the initial page bundle.
+    const { createClient } = await import('@/lib/supabase/client')
     const supabase = createClient()
     const { data, error } = await supabase.auth.signUp({
       email: form.email,

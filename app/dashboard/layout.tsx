@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getUserTier } from '@/lib/subscription'
+import { resolveTier } from '@/lib/subscription'
 import { trackDailyLogin } from '@/lib/analytics/track'
 import Sidebar from '@/components/dashboard/Sidebar'
 import Header from '@/components/dashboard/Header'
@@ -19,10 +19,10 @@ export default async function DashboardLayout({
 
   if (!user) redirect('/giris')
 
-  // Check onboarding status — redirect if not completed
+  // One read for onboarding status + tier — redirect if not completed
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('onboarding_completed')
+    .select('onboarding_completed, subscription_tier, subscription_expires_at')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -32,7 +32,7 @@ export default async function DashboardLayout({
 
   const ad    = user.user_metadata?.ad ?? user.email?.split('@')[0] ?? 'Öğrenci'
   const email = user.email ?? ''
-  const tier  = await getUserTier(supabase, user.id)
+  const tier  = resolveTier(profile)
 
   void trackDailyLogin(supabase, user.id)
 

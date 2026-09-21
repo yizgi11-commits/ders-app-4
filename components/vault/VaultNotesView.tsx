@@ -27,23 +27,31 @@ export default function VaultNotesView({ search, savedOnly = false, onAssist, re
   // Keep the floating Assist's ambient context in sync with the editor,
   // so reopening the drawer without re-clicking "Noetic Assist" still
   // knows which note is open — and forgets it once the editor closes.
+  // Depend on the primitives, not the `selected` object: every autosave
+  // replaces it with a new identity and would re-fire this needlessly.
+  const selectedId    = selected?.id ?? null
+  const selectedTitle = selected?.title ?? ''
   useEffect(() => {
-    setOverride(selected ? { kind: 'vault-note', noteId: selected.id, title: selected.title || 'Başlıksız Not' } : null)
-  }, [selected, setOverride])
+    setOverride(selectedId ? { kind: 'vault-note', noteId: selectedId, title: selectedTitle || 'Başlıksız Not' } : null)
+  }, [selectedId, selectedTitle, setOverride])
 
-  const load = useCallback(async () => {
-    const params = new URLSearchParams()
-    if (search.trim()) params.set('search', search.trim())
-    if (savedOnly) params.set('filter', 'favorites')
-    try {
-      const res = await fetch(`/api/notes?${params.toString()}`)
-      if (!res.ok) return
-      const data = await res.json()
-      setNotes(data.notes ?? [])
-    } finally { setLoading(false) }
-  }, [search, savedOnly])
-
-  useEffect(() => { load() }, [load, refreshKey])
+  // Debounced + stale-safe: typing in search must not fire one request per
+  // keystroke, and a slow older response must never overwrite a newer one.
+  useEffect(() => {
+    let cancelled = false
+    const timer = setTimeout(async () => {
+      const params = new URLSearchParams()
+      if (search.trim()) params.set('search', search.trim())
+      if (savedOnly) params.set('filter', 'favorites')
+      try {
+        const res = await fetch(`/api/notes?${params.toString()}`)
+        if (!res.ok || cancelled) return
+        const data = await res.json()
+        if (!cancelled) setNotes(data.notes ?? [])
+      } finally { if (!cancelled) setLoading(false) }
+    }, search.trim() ? 250 : 0)
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [search, savedOnly, refreshKey])
 
   const handleCreate = useCallback(async () => {
     const res = await fetch('/api/notes', {

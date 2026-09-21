@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { checkLimit } from '@/lib/subscription'
+import { checkLimit, isOverCapAfterInsert } from '@/lib/subscription'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { validateUUID } from '@/lib/security'
 
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
-  const { allowed, limit } = await checkLimit(supabase, user.id, 'vaultPdfs')
+  const { allowed, limit, tier } = await checkLimit(supabase, user.id, 'vaultPdfs')
   if (!allowed) {
     return NextResponse.json(
       { error: `Free planda en fazla ${limit} PDF yükleyebilirsin. Pro ile sınırsız olur.`, locked: true },
@@ -109,6 +109,17 @@ export async function POST(req: NextRequest) {
     })
     .select('id')
     .single()
+
+  // Concurrent uploads can all pass the pre-check above — verify the cap
+  // AFTER inserting and roll this upload (row + stored file) back if over.
+  if (doc && await isOverCapAfterInsert(supabase, user.id, tier, 'vaultPdfs')) {
+    await supabase.from('documents').delete().eq('id', doc.id).eq('user_id', user.id)
+    if (!uploadError) await supabase.storage.from('pdfs').remove([path])
+    return NextResponse.json(
+      { error: `Free planda en fazla ${limit} PDF yükleyebilirsin. Pro ile sınırsız olur.`, locked: true },
+      { status: 403 },
+    )
+  }
 
   return NextResponse.json({
     text:           generationText,

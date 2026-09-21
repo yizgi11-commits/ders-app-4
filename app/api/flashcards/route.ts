@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sanitizeString, validateUUID, safeError, MAX } from '@/lib/security'
-import { checkLimit } from '@/lib/subscription'
+import { checkLimit, isOverCapAfterInsert } from '@/lib/subscription'
 
 // GET /api/flashcards?subject_id=&topic_id=&due_today=1
 export async function GET(req: NextRequest) {
@@ -32,16 +32,18 @@ export async function GET(req: NextRequest) {
   if (dueToday)  query = query.lte('next_review_date', today)
   if (savedOnly) query = query.eq('is_favorite', true)
 
-  const { data, error } = await query
+  // Also return count of cards due today (for dashboard widget) — the
+  // two queries are independent, so run them together.
+  const [{ data, error }, { count: dueCount }] = await Promise.all([
+    query,
+    supabase
+      .from('flashcards')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .lte('next_review_date', today),
+  ])
 
   if (error) return safeError(error, 'Kartlar alınamadı')
-
-  // Also return count of cards due today (for dashboard widget)
-  const { count: dueCount } = await supabase
-    .from('flashcards')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .lte('next_review_date', today)
 
   return NextResponse.json({
     flashcards: data ?? [],
@@ -55,7 +57,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
-  const { allowed, limit } = await checkLimit(supabase, user.id, 'vaultFlashcards')
+  const { allowed, limit, tier } = await checkLimit(supabase, user.id, 'vaultFlashcards')
   if (!allowed) {
     return NextResponse.json(
       { error: `Free planda en fazla ${limit} flashcard oluşturabilirsin. Pro ile sınırsız olur.`, locked: true },
@@ -89,6 +91,16 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) return safeError(error, 'Kart oluşturulamadı')
+
+  // Concurrent creates can all pass the pre-insert count above — verify
+  // the cap AFTER inserting and roll this row back if we went over.
+  if (await isOverCapAfterInsert(supabase, user.id, tier, 'vaultFlashcards')) {
+    await supabase.from('flashcards').delete().eq('id', data.id).eq('user_id', user.id)
+    return NextResponse.json(
+      { error: `Free planda en fazla ${limit} flashcard oluşturabilirsin. Pro ile sınırsız olur.`, locked: true },
+      { status: 403 },
+    )
+  }
 
   return NextResponse.json(data, { status: 201 })
 }

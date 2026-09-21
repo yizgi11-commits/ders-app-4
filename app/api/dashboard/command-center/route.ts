@@ -20,17 +20,19 @@ export async function GET() {
   const todayStartIso = `${today}T00:00:00.000Z`
   const firstOfMonth = `${today.slice(0, 7)}-01`
 
-  let systemTasks
-  try {
-    systemTasks = await getTodaysSystemTasks(supabase, user.id)
-  } catch {
-    return NextResponse.json({ error: 'Görevler alınamadı' }, { status: 500 })
-  }
+  // The task generator (several sequential reads) is independent of the
+  // 7 queries below — run them concurrently instead of back to back.
+  const systemTasksPromise = getTodaysSystemTasks(supabase, user.id).then(
+    (tasks) => ({ ok: true as const, tasks }),
+    ()      => ({ ok: false as const, tasks: null }),
+  )
 
   const [
+    systemTasksResult,
     dailyFocusRes, dueCardsRes, reviewsDoneRes,
     lastSessionRes, monthFocusRes, monthReviewsRes, plannerTasksRes,
   ] = await Promise.all([
+    systemTasksPromise,
     supabase.from('daily_focus_time').select('focus_minutes').eq('user_id', user.id).eq('date', today).maybeSingle(),
     supabase.from('flashcards').select('id, topic_id, topics(title)').eq('user_id', user.id).lte('next_review_date', today),
     supabase.from('recall_reviews').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gte('reviewed_at', todayStartIso),
@@ -44,6 +46,11 @@ export async function GET() {
       .select('id, user_id, date, completed, completed_at, duration_minutes, priority, subject_id, topic_id, topic_text, created_at, subjects(id, name, icon, color), topics(id, title)')
       .eq('user_id', user.id).eq('source', 'planner').eq('date', today),
   ])
+
+  if (!systemTasksResult.ok) {
+    return NextResponse.json({ error: 'Görevler alınamadı' }, { status: 500 })
+  }
+  const systemTasks = systemTasksResult.tasks
 
   const todayMinutes = dailyFocusRes.data?.focus_minutes ?? 0
 

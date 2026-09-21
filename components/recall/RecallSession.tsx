@@ -64,7 +64,7 @@ export default function RecallSession({ cards, onClose, onFinished }: Props) {
     } finally {
       setSaving(false)
     }
-  }, [card, saving, index, total, onFinished])
+  }, [card, saving, index, total, onFinished, tally])
 
   // ── Free daily limit hit mid-session ────────────────────────────
   if (locked) {

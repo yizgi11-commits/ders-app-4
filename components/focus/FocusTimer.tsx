@@ -163,11 +163,13 @@ export default function FocusTimer() {
   const persist = useCallback((overrides: Partial<PersistedFocusState> = {}) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       timerStatus, secondsLeft, totalSeconds: totalSecondsRef.current,
-      activeSessionId, mode, duration, customMinutes,
+      // Read from the ref: the tick interval keeps the `persist` from the
+      // render it started in, where activeSessionId state is still null.
+      activeSessionId: activeIdRef.current, mode, duration, customMinutes,
       subjectId, subjectName, topicId, topicName,
       linkedTaskId, ambientSound: ambient, savedAt: Date.now(), ...overrides,
     } satisfies PersistedFocusState))
-  }, [timerStatus, secondsLeft, activeSessionId, mode, duration, customMinutes, subjectId, subjectName, topicId, topicName, linkedTaskId, ambient])
+  }, [timerStatus, secondsLeft, mode, duration, customMinutes, subjectId, subjectName, topicId, topicName, linkedTaskId, ambient])
 
   // ── Resolve subject/topic: task param → URL params → last selection ──
   useEffect(() => {

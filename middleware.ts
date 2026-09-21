@@ -1,7 +1,37 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+// CSRF defense-in-depth for state-changing API calls. Session cookies are
+// SameSite=Lax already (cross-site POSTs don't carry them), but the routes
+// parse JSON regardless of Content-Type, so also refuse any browser request
+// whose Origin / Sec-Fetch-Site says it came from another site. Requests
+// with neither header (curl, server-to-server) fall through to the normal
+// per-route auth check.
+function isCrossSiteMutation(request: NextRequest): boolean {
+  if (SAFE_METHODS.has(request.method)) return false;
+
+  const origin = request.headers.get("origin");
+  if (origin) {
+    try {
+      return new URL(origin).host !== request.nextUrl.host;
+    } catch {
+      return true; // malformed Origin
+    }
+  }
+
+  return request.headers.get("sec-fetch-site") === "cross-site";
+}
+
 export async function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    if (isCrossSiteMutation(request)) {
+      return NextResponse.json({ error: "Geçersiz istek kaynağı" }, { status: 403 });
+    }
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -53,5 +83,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/onboarding", "/giris", "/kayit"],
+  matcher: ["/dashboard/:path*", "/onboarding", "/giris", "/kayit", "/api/:path*"],
 };

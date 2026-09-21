@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { consumeRateLimit } from '@/lib/security/rate-limit'
 
 // ─────────────────────────────────────────────────────────────────
 // Free/Pro subscription tier. No Stripe yet — tier is a plain column
@@ -51,8 +52,15 @@ export async function getUserTier(
     .eq('user_id', userId)
     .maybeSingle()
 
-  if (!data || data.subscription_tier !== 'pro') return 'free'
-  if (data.subscription_expires_at && new Date(data.subscription_expires_at) < new Date()) return 'free'
+  return resolveTier(data)
+}
+
+/** Pure tier resolution from a user_profiles row (expired Pro counts as free). */
+export function resolveTier(
+  row: { subscription_tier?: string | null; subscription_expires_at?: string | null } | null | undefined,
+): SubscriptionTier {
+  if (!row || row.subscription_tier !== 'pro') return 'free'
+  if (row.subscription_expires_at && new Date(row.subscription_expires_at) < new Date()) return 'free'
   return 'pro'
 }
 
@@ -106,10 +114,39 @@ async function countUsage(
   }
 }
 
+/** Read-only check — never records anything. Use for display (remaining counts). */
 export async function checkLimit(
   supabase: SupabaseClient,
   userId:   string,
   feature:  LimitedFeature,
+): Promise<LimitCheck> {
+  // Count usage concurrently with the tier lookup when the free plan has a
+  // finite cap (the count is simply discarded for unlimited tiers).
+  const freeLimit = LIMITS.free[feature]
+  const [tier, usedEarly] = await Promise.all([
+    getUserTier(supabase, userId),
+    freeLimit !== Infinity && freeLimit !== 0 ? countUsage(supabase, userId, feature) : Promise.resolve(null),
+  ])
+  const limit = LIMITS[tier][feature]
+
+  if (limit === Infinity) return { tier, allowed: true, limit, used: 0, remaining: Infinity }
+  if (limit === 0)        return { tier, allowed: false, limit, used: 0, remaining: 0 }
+
+  const used = usedEarly ?? await countUsage(supabase, userId, feature)
+  return { tier, allowed: used < limit, limit, used, remaining: Math.max(0, limit - used) }
+}
+
+/**
+ * Atomic check-and-consume for the windowed (per-day) features. Unlike
+ * checkLimit, this records the hit in the same DB step as the check, so
+ * concurrent requests can't all pass a limit of 1. Falls back to the
+ * read-only (non-atomic) checkLimit if consume_rate_limit() isn't
+ * deployed yet.
+ */
+export async function consumeLimit(
+  supabase: SupabaseClient,
+  userId:   string,
+  feature:  'assistRequestsPerDay' | 'recallCardsPerDay',
 ): Promise<LimitCheck> {
   const tier  = await getUserTier(supabase, userId)
   const limit = LIMITS[tier][feature]
@@ -117,6 +154,33 @@ export async function checkLimit(
   if (limit === Infinity) return { tier, allowed: true, limit, used: 0, remaining: Infinity }
   if (limit === 0)        return { tier, allowed: false, limit, used: 0, remaining: 0 }
 
-  const used = await countUsage(supabase, userId, feature)
-  return { tier, allowed: used < limit, limit, used, remaining: Math.max(0, limit - used) }
+  const since = new Date()
+  if (feature === 'recallCardsPerDay') since.setHours(0, 0, 0, 0)   // per calendar day
+  else since.setTime(since.getTime() - 24 * 60 * 60 * 1000)          // rolling 24h
+
+  const atomic = await consumeRateLimit(supabase, `feature:${feature}`, limit, since)
+  if (atomic) {
+    return { tier, allowed: atomic.allowed, limit, used: limit - atomic.remaining, remaining: atomic.remaining }
+  }
+
+  return checkLimit(supabase, userId, feature)
+}
+
+/**
+ * Lifetime caps (notes / flashcards / PDFs) are count-then-insert, so
+ * concurrent creates can all pass the pre-insert check. Call this right
+ * AFTER a successful insert: if the user is now over their cap (i.e. a
+ * concurrent request slipped past), the caller should roll its own row
+ * back. Every racer that sees the overshoot rolls back, so the cap can
+ * never end up exceeded (worst case, both racers are refused).
+ */
+export async function isOverCapAfterInsert(
+  supabase: SupabaseClient,
+  userId:   string,
+  tier:     SubscriptionTier,
+  feature:  'vaultNotes' | 'vaultFlashcards' | 'vaultPdfs',
+): Promise<boolean> {
+  const limit = LIMITS[tier][feature]
+  if (limit === Infinity) return false
+  return (await countUsage(supabase, userId, feature)) > limit
 }

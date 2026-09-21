@@ -6,7 +6,7 @@ import { checkAndUnlockAchievements } from '@/lib/gamification/check'
 import { updateStreak } from '@/lib/tasks/progression'
 import type { UserStreak } from '@/lib/tasks/types'
 import { invalidateDashboardCaches } from '@/lib/cache'
-import { checkLimit } from '@/lib/subscription'
+import { consumeLimit } from '@/lib/subscription'
 import { trackEvent } from '@/lib/analytics/track'
 
 // POST /api/recall/review
@@ -25,14 +25,6 @@ export async function POST(req: NextRequest) {
   if (!validateUUID(flashcardId)) return NextResponse.json({ error: 'Geçersiz kart id' }, { status: 400 })
   if (!RECALL_GRADES.includes(grade)) return NextResponse.json({ error: 'Geçersiz değerlendirme' }, { status: 400 })
 
-  const { allowed, limit } = await checkLimit(supabase, user.id, 'recallCardsPerDay')
-  if (!allowed) {
-    return NextResponse.json(
-      { error: `Günlük Recall limitine ulaştın (${limit} kart). Pro ile sınırsız olur.`, locked: true },
-      { status: 403 },
-    )
-  }
-
   const { data: card } = await supabase
     .from('flashcards')
     .select('id, review_count, topic_id, subject_id')
@@ -41,6 +33,16 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
 
   if (!card) return NextResponse.json({ error: 'Kart bulunamadı' }, { status: 404 })
+
+  // Atomic check-and-consume (after the card is validated, so a bad id
+  // doesn't burn a slot). Concurrent reviews can't all pass the last slot.
+  const { allowed, limit } = await consumeLimit(supabase, user.id, 'recallCardsPerDay')
+  if (!allowed) {
+    return NextResponse.json(
+      { error: `Günlük Recall limitine ulaştın (${limit} kart). Pro ile sınırsız olur.`, locked: true },
+      { status: 403 },
+    )
+  }
 
   const newCount = card.review_count + 1
   const days     = intervalForGrade(grade, newCount)
@@ -63,10 +65,13 @@ export async function POST(req: NextRequest) {
 
   if (error) return safeError(error, 'Kart güncellenemedi')
 
-  const { count: priorReviewCount } = await supabase
-    .from('recall_reviews')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
+  // "Has the user ever reviewed?" only needs existence, not an exact count
+  // over their whole history — and the streak read is independent, so both
+  // run together.
+  const [{ data: priorReview }, { data: streakRow }] = await Promise.all([
+    supabase.from('recall_reviews').select('id').eq('user_id', user.id).limit(1),
+    supabase.from('user_streaks').select('*').eq('user_id', user.id).maybeSingle<UserStreak>(),
+  ])
 
   const { error: reviewInsertError } = await supabase.from('recall_reviews').insert({
     user_id:       user.id,
@@ -79,17 +84,11 @@ export async function POST(req: NextRequest) {
   })
   if (reviewInsertError) logWriteError('recall/review recall_reviews insert', reviewInsertError)
 
-  if ((priorReviewCount ?? 0) === 0) {
+  if (!priorReview?.length) {
     void trackEvent(supabase, user.id, 'first_recall_completed', { grade })
   }
 
   // ── Learning Streak: a completed Recall review keeps it alive ────
-  const { data: streakRow } = await supabase
-    .from('user_streaks')
-    .select('*')
-    .eq('user_id', user.id)
-    .maybeSingle<UserStreak>()
-
   if (streakRow) {
     const today = now.split('T')[0]
     const { currentStreak, longestStreak } = updateStreak({

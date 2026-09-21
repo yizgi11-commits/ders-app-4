@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { getAnthropicClient, AI_MODEL } from '@/lib/ai/client'
 import { logUsage } from '@/lib/ai/usage'
-import { checkLimit } from '@/lib/subscription'
+import { consumeLimit } from '@/lib/subscription'
 import { sanitizeString, validateUUID, MAX } from '@/lib/security'
 import { getCachedAnalyticsData } from '@/lib/analytics/queries'
 import { buildPlannerReply, buildInsightsReply } from '@/lib/assist/deterministic'
@@ -167,7 +167,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ text: grounded.text })
   }
 
-  const { allowed, limit, tier } = await checkLimit(supabase, user.id, 'assistRequestsPerDay')
+  // Atomic check-and-consume: the slot is taken BEFORE the Claude call,
+  // so parallel requests can't all pass a nearly-exhausted limit.
+  const { allowed, limit, tier } = await consumeLimit(supabase, user.id, 'assistRequestsPerDay')
   if (!allowed) {
     const hint = tier === 'free' ? ' Pro ile günde 30 istek + serbest metin açılır.' : ' Yarın tekrar dene.'
     return NextResponse.json({ error: `Günlük Noetic Assist limitine ulaştın (${limit}/gün).${hint}` }, { status: 429 })

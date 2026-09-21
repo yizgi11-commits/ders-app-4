@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import AuthLeftPanel from '@/components/auth/AuthLeftPanel'
 
 const itemVariant = {
@@ -25,6 +24,8 @@ export default function GirisPage() {
     setHata('')
     setYukleniyor(true)
 
+    // Lazy-loaded: keeps supabase-js (~60 kB gz) out of the initial page bundle.
+    const { createClient } = await import('@/lib/supabase/client')
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword(form)
     setYukleniyor(false)

@@ -25,12 +25,15 @@ export async function GET() {
 
   const today = new Date().toISOString().split('T')[0]
 
-  const { data, error } = await supabase
-    .from('flashcards')
-    .select('id, front, back, review_count, topic_id, subject_id, last_reviewed_at, subjects(name, icon), topics(title)')
-    .eq('user_id', user.id)
-    .lte('next_review_date', today)
-    .order('next_review_date', { ascending: true })
+  const [{ data, error }, limitInfo] = await Promise.all([
+    supabase
+      .from('flashcards')
+      .select('id, front, back, review_count, topic_id, subject_id, last_reviewed_at, subjects(name, icon), topics(title)')
+      .eq('user_id', user.id)
+      .lte('next_review_date', today)
+      .order('next_review_date', { ascending: true }),
+    checkLimit(supabase, user.id, 'recallCardsPerDay'),
+  ])
 
   if (error) return safeError(error, 'Tekrar kuyruğu alınamadı')
 
@@ -76,7 +79,7 @@ export async function GET() {
 
   const groups = Array.from(byTopic.values()).sort((a, b) => b.cards.length - a.cards.length)
 
-  const { tier, remaining } = await checkLimit(supabase, user.id, 'recallCardsPerDay')
+  const { tier, remaining } = limitInfo
 
   return NextResponse.json({
     groups,

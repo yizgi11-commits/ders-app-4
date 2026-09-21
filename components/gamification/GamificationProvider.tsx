@@ -1,7 +1,7 @@
 'use client'
 
 import {
-  createContext, useCallback, useContext, useRef, useState,
+  createContext, useCallback, useContext, useMemo, useRef, useState,
 } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ACHIEVEMENT_MAP } from '@/lib/gamification/achievements'
@@ -57,8 +57,10 @@ export default function GamificationProvider({ children }: { children: React.Rea
     setToastQueue(prev => prev.filter(a => a.id !== id))
   }, [])
 
+  const ctxValue = useMemo(() => ({ notify }), [notify])
+
   return (
-    <GamificationContext.Provider value={{ notify }}>
+    <GamificationContext.Provider value={ctxValue}>
       {children}
 
       {/* Achievement Toasts — stacked from bottom-right */}

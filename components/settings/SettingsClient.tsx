@@ -8,7 +8,6 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { STUDY_GOALS, PREFERRED_HOURS, FOCUS_OPTIONS } from '@/lib/onboarding/types'
 
@@ -74,6 +73,8 @@ export default function SettingsClient({ initial }: Props) {
   }
 
   async function handleSignOut() {
+    // Lazy-loaded: keeps supabase-js (~60 kB gz) out of the initial page bundle.
+    const { createClient } = await import('@/lib/supabase/client')
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/giris')
