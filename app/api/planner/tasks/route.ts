@@ -44,9 +44,6 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
-  const { allowed } = await checkRateLimit(supabase, user.id, '/api/planner/tasks', 200, 24)
-  if (!allowed) return NextResponse.json({ error: 'Çok fazla istek. Daha sonra tekrar dene.' }, { status: 429 })
-
   const body = await req.json()
   const subjectId = body.subject_id ?? null
   const topicId   = body.topic_id ?? null
@@ -65,13 +62,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Geçersiz süre' }, { status: 400 })
   }
 
-  // Verify subject ownership
-  const { data: subject } = await supabase
-    .from('subjects')
-    .select('id')
-    .eq('id', subjectId)
-    .eq('user_id', user.id)
-    .single()
+  // Rate limit + subject-ownership check are independent — run together.
+  const [{ allowed }, { data: subject }] = await Promise.all([
+    checkRateLimit(supabase, user.id, '/api/planner/tasks', 200, 24),
+    supabase.from('subjects').select('id').eq('id', subjectId).eq('user_id', user.id).single(),
+  ])
+  if (!allowed) return NextResponse.json({ error: 'Çok fazla istek. Daha sonra tekrar dene.' }, { status: 429 })
   if (!subject) return NextResponse.json({ error: 'Ders bulunamadı' }, { status: 404 })
 
   const { data, error } = await supabase

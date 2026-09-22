@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { sanitizeString, validateUUID, MAX, safeError, logWriteError } from '@/lib/security'
 import { RATING_REVIEW_DAYS, type SessionRating } from '@/lib/pomodoro/types'
 import { trackEvent } from '@/lib/analytics/track'
+import { invalidateDashboardCaches } from '@/lib/cache'
 
 const VALID_RATINGS: SessionRating[] = ['poor', 'okay', 'good', 'excellent']
 
@@ -124,6 +125,11 @@ export async function POST(req: NextRequest) {
       else nextReviewDate = scheduledDate
     }
   }
+
+  // Task completion, XP and the next-review schedule all feed Learning
+  // Score / Insights / Weekly Review — invalidate so they don't serve a
+  // stale (6-24h) snapshot right after this reflection is saved.
+  void invalidateDashboardCaches(supabase, user.id)
 
   return NextResponse.json({ next_review_date: nextReviewDate, task_completed: taskCompleted })
 }
