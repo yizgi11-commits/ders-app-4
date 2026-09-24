@@ -1,10 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { Check, Circle, Trophy, Zap } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ACHIEVEMENTS, RARITY_CONFIG } from '@/lib/gamification/achievements'
+import { ACHIEVEMENTS } from '@/lib/gamification/achievements'
 import type { AchievementCategory } from '@/lib/gamification/types'
 
 type Filter = 'all' | AchievementCategory
@@ -24,6 +23,7 @@ interface Props {
   unlocked: { achievement_id: string; unlocked_at: string }[]
 }
 
+// A plain checklist: ✓ done, ○ not yet.
 export default function JourneyMilestones({ unlocked }: Props) {
   const [filter, setFilter] = useState<Filter>('all')
 
@@ -44,93 +44,58 @@ export default function JourneyMilestones({ unlocked }: Props) {
   const pct   = Math.round((done / total) * 100)
 
   return (
-    <div className="bg-white border border-border rounded-2xl shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="p-5 border-b border-border">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <p className="text-sm font-bold text-gray-900 flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-amber-500" />
-            Milestones
-          </p>
-          <span className="text-xs font-bold text-gray-700 tabular-nums">
-            {done}<span className="text-muted-foreground font-normal">/{total}</span>
-          </span>
+    <div>
+      {/* Progress */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-1 rounded-full bg-border overflow-hidden">
+          <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
         </div>
-        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-          <motion.div
-            className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: `${pct}%` }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          />
-        </div>
+        <span className="tabular text-sm text-text-secondary shrink-0">{done} / {total}</span>
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-1.5 px-5 py-3 border-b border-border overflow-x-auto">
+      {/* Filters — plain text */}
+      <div className="flex items-center gap-4 mt-4 overflow-x-auto" role="group" aria-label="Kategori">
         {FILTERS.map(f => (
           <button
             key={f.id}
             onClick={() => setFilter(f.id)}
+            aria-pressed={filter === f.id}
             className={cn(
-              'relative text-[11px] font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-colors shrink-0',
-              filter === f.id ? 'text-white' : 'text-muted-foreground hover:text-gray-700',
+              'text-sm whitespace-nowrap shrink-0 transition-colors duration-[160ms]',
+              filter === f.id ? 'text-accent font-medium' : 'text-text-muted hover:text-text-secondary',
             )}
           >
-            {filter === f.id && (
-              <motion.span
-                layoutId="milestone-filter"
-                className="absolute inset-0 bg-indigo-600 rounded-full"
-                transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-              />
-            )}
-            <span className="relative z-10">{f.label}</span>
+            {f.label}
           </button>
         ))}
       </div>
 
-      {/* List */}
-      <div className="divide-y divide-border/70">
+      {/* Checklist */}
+      <ul className="mt-3 border-t border-border">
         {sorted.map(a => {
-          const at  = unlockedMap.get(a.id)
-          const on  = Boolean(at)
-          const cfg = RARITY_CONFIG[a.rarity]
+          const on = unlockedMap.has(a.id)
           return (
-            <div
-              key={a.id}
-              className={cn('flex items-center gap-3 px-5 py-3', !on && 'opacity-60')}
-            >
-              <span className={cn(
-                'w-5 h-5 rounded-full flex items-center justify-center shrink-0',
-                on ? 'bg-emerald-500' : 'border-2 border-gray-300',
-              )}>
-                {on ? <Check className="w-3 h-3 text-white" /> : <Circle className="w-0 h-0" />}
+            <li key={a.id} className="flex items-center gap-3 py-2.5 border-b border-border">
+              <span
+                aria-label={on ? 'Tamamlandı' : 'Henüz değil'}
+                className={cn(
+                  'size-4 shrink-0 rounded-full flex items-center justify-center',
+                  on ? 'bg-success' : 'border border-border-strong',
+                )}
+              >
+                {on && <Check className="size-2.5 text-white" strokeWidth={3} />}
               </span>
-
-              <span className="text-base shrink-0">{a.icon}</span>
-
               <div className="flex-1 min-w-0">
-                <p className={cn(
-                  'text-sm font-semibold truncate',
-                  on ? 'text-gray-900' : 'text-gray-500',
-                )}>
+                <p className={cn('text-base truncate', on ? 'text-text font-medium' : 'text-text-secondary')}>
                   {a.title}
                 </p>
-                <p className="text-[11px] text-muted-foreground truncate">{a.desc}</p>
+                <p className="text-xs text-text-muted truncate">{a.desc}</p>
               </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <span className={cn('text-[10px] font-bold', cfg.color.replace('400', '600'))}>
-                  {cfg.label}
-                </span>
-                <span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5">
-                  <Zap className="w-2.5 h-2.5" />{a.xpReward}
-                </span>
-              </div>
-            </div>
+              <span className="tabular text-xs text-text-muted shrink-0">+{a.xpReward} XP</span>
+            </li>
           )
         })}
-      </div>
+      </ul>
     </div>
   )
 }

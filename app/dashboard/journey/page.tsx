@@ -13,10 +13,10 @@ export default async function JourneyPage() {
   const data = await getJourneyData(supabase, user.id)
 
   return (
-    <div className="max-w-4xl mx-auto space-y-5">
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">Journey</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Öğrenme geçmişin.</p>
+    <div className="max-w-3xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-text">Journey</h1>
+        <p className="text-base text-text-secondary mt-1">Öğrenme geçmişin.</p>
       </div>
 
       <JourneyClient data={data} />

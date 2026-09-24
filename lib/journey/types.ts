@@ -32,6 +32,14 @@ export interface JourneyResponse {
 /** Contribution-graph intensity buckets, keyed off focus minutes. */
 export type IntensityLevel = 0 | 1 | 2 | 3
 
+/** Focus-minute buckets shared by the Journey calendar and the Insights heatmap. */
+export function intensityForMinutes(m: number): IntensityLevel {
+  if (m <= 0) return 0
+  if (m < 30) return 1
+  if (m < 90) return 2
+  return 3
+}
+
 export function intensityFor(day: JourneyDay | undefined): IntensityLevel {
   if (!day) return 0
   const m = day.focusMinutes
@@ -40,16 +48,15 @@ export function intensityFor(day: JourneyDay | undefined): IntensityLevel {
   if (m === 0) {
     return day.recallCards > 0 || day.tasksCompleted > 0 || day.topicsStudied > 0 ? 1 : 0
   }
-  if (m < 30) return 1
-  if (m < 90) return 2
-  return 3
+  return intensityForMinutes(m)
 }
 
+/** Empty #F0F0EC · light #C7D4FF · medium #7B93FF · dark #315CFF */
 export const INTENSITY_CLASS: Record<IntensityLevel, string> = {
-  0: 'bg-gray-100 border-gray-200',
-  1: 'bg-indigo-200 border-indigo-300',
-  2: 'bg-indigo-400 border-indigo-500',
-  3: 'bg-indigo-600 border-indigo-700',
+  0: 'bg-surface-subtle',
+  1: 'bg-accent-muted',
+  2: 'bg-dark-accent',
+  3: 'bg-accent',
 }
 
 export const INTENSITY_LABEL: Record<IntensityLevel, string> = {

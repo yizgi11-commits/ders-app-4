@@ -1,4 +1,6 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getCachedAnalyticsData } from '@/lib/analytics/queries'
 import { getCachedLearningScore } from '@/lib/dashboard/learning-score'
@@ -23,10 +25,18 @@ export default async function InsightsPage() {
   ])
 
   return (
-    <div className="max-w-5xl mx-auto space-y-5">
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">Insights</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Verilerin ne söylüyor?</p>
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-8 flex items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-text">Insights</h1>
+          <p className="text-base text-text-secondary mt-1">Verilerin ne söylüyor?</p>
+        </div>
+        <Link
+          href="/dashboard/insights/weekly-review"
+          className="inline-flex items-center gap-1.5 shrink-0 text-sm font-medium text-text-secondary hover:text-accent transition-colors duration-[160ms]"
+        >
+          <FileText className="size-3.5" /> Haftalık rapor
+        </Link>
       </div>
 
       <InsightsClient data={analytics} learningScore={learningScore} tier={tier} />

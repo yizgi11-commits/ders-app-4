@@ -1,9 +1,9 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Clock3 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { EASE_CURVE } from '@/lib/motion'
 import type { HourlyStat } from '@/lib/analytics/types'
+import { SectionLabel } from '@/components/ui/section-label'
 
 interface Props {
   hourly: HourlyStat[]
@@ -16,67 +16,62 @@ function fmtMinutes(mins: number): string {
   return m === 0 ? `${h}s` : `${h}s ${m}dk`
 }
 
-export default function ProductiveHours({ hourly }: Props) {
-  const active = hourly.filter(h => h.minutes > 0)
-  const max = Math.max(1, ...active.map(h => h.minutes))
+const pad = (h: number) => String(h).padStart(2, '0')
 
-  // Only the hours the user actually studies in, most productive first,
-  // so the chart doesn't waste rows on 24 mostly-empty slots.
-  const ranked = [...active].sort((a, b) => b.minutes - a.minutes).slice(0, 8)
-  const rows = ranked.sort((a, b) => a.hour - b.hour)
-  const peak = ranked.length > 0 ? [...ranked].sort((a, b) => b.minutes - a.minutes)[0] : null
+// Thin 24-hour bar chart: 4px accent bars, height = share of the busiest hour.
+export default function ProductiveHours({ hourly }: Props) {
+  const byHour = new Map(hourly.map(h => [h.hour, h.minutes]))
+  const hours  = Array.from({ length: 24 }, (_, h) => ({ hour: h, minutes: byHour.get(h) ?? 0 }))
+  const max    = Math.max(1, ...hours.map(h => h.minutes))
+  const peak   = hours.reduce((best, h) => (h.minutes > best.minutes ? h : best), hours[0])
+  const hasData = peak.minutes > 0
 
   return (
-    <div className="bg-white border border-border rounded-2xl p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div>
-          <p className="text-sm font-bold text-gray-900 flex items-center gap-2">
-            <Clock3 className="w-4 h-4 text-indigo-500" />
-            Most Productive Hours
+    <div className="rounded-lg border border-border bg-surface p-5">
+      <div className="flex items-baseline justify-between gap-3">
+        <SectionLabel>PRODUCTIVE HOURS</SectionLabel>
+        {hasData && (
+          <p className="text-xs text-text-muted">
+            Son 30 gün · Zirve <span className="tabular text-text">{pad(peak.hour)}:00</span>
           </p>
-          <p className="text-xs text-muted-foreground mt-0.5">Son 30 günün odak dağılımı</p>
-        </div>
-        {peak && (
-          <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full px-2.5 py-1 shrink-0">
-            Zirve {String(peak.hour).padStart(2, '0')}:00
-          </span>
         )}
       </div>
 
-      {rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-8">
-          Henüz tamamlanmış odak oturumu yok.
-        </p>
+      {!hasData ? (
+        <p className="text-sm text-text-muted py-8">Henüz tamamlanmış odak oturumu yok.</p>
       ) : (
-        <div className="space-y-2">
-          {rows.map((h, i) => {
-            const pct = (h.minutes / max) * 100
-            const isPeak = peak?.hour === h.hour
-            return (
-              <div key={h.hour} className="flex items-center gap-3">
-                <span className={cn(
-                  'text-xs tabular-nums w-12 shrink-0',
-                  isPeak ? 'font-bold text-indigo-600' : 'text-muted-foreground',
-                )}>
-                  {String(h.hour).padStart(2, '0')}:00
-                </span>
-
-                <div className="flex-1 h-5 bg-gray-100 rounded-md overflow-hidden">
+        <>
+          <div className="mt-5 h-28 flex items-end justify-between border-b border-border">
+            {hours.map((h, i) => (
+              <div
+                key={h.hour}
+                className="flex-1 h-full flex items-end justify-center"
+                title={`${pad(h.hour)}:00 — ${fmtMinutes(h.minutes)}`}
+              >
+                {h.minutes > 0 && (
                   <motion.div
-                    className={cn('h-full rounded-md', isPeak ? 'bg-indigo-600' : 'bg-indigo-400')}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${pct}%` }}
-                    transition={{ duration: 0.5, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                    className="w-1 rounded-t-[2px] bg-accent"
+                    initial={{ height: 0 }}
+                    animate={{ height: `${Math.max(3, (h.minutes / max) * 100)}%` }}
+                    transition={{ duration: 0.5, delay: i * 0.015, ease: EASE_CURVE }}
                   />
-                </div>
-
-                <span className="text-xs font-semibold text-gray-700 tabular-nums w-16 text-right shrink-0">
-                  {fmtMinutes(h.minutes)}
-                </span>
+                )}
               </div>
-            )
-          })}
-        </div>
+            ))}
+          </div>
+          {/* Every 3rd hour, centred under its bar — positioned, so narrow screens don't overflow */}
+          <div className="relative mt-1.5 h-4">
+            {hours.filter(h => h.hour % 3 === 0).map(h => (
+              <span
+                key={h.hour}
+                className="absolute -translate-x-1/2 tabular text-xs text-text-muted"
+                style={{ left: `${((h.hour + 0.5) / 24) * 100}%` }}
+              >
+                {pad(h.hour)}
+              </span>
+            ))}
+          </div>
+        </>
       )}
     </div>
   )

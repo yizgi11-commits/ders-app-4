@@ -233,6 +233,7 @@ body {
     --color-border-strong:       var(--border-strong);
     --color-accent-dark:         var(--accent-dark);
     --color-accent-soft:         var(--accent-soft);
+    --color-accent-muted:        var(--accent-muted);
     --color-success:             var(--success);
     --color-success-soft:        var(--success-soft);
     --color-warning:             var(--warning);
@@ -306,6 +307,7 @@ body {
     --accent:         #315CFF;
     --accent-dark:    #2447CC;
     --accent-soft:    #E8EDFF;
+    --accent-muted:   #C7D4FF; /* light heat-map cell */
     --success:        #25845A;
     --success-soft:   #E8F5EE;
     --warning:        #B7791F;

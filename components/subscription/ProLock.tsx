@@ -17,8 +17,8 @@ export default function ProLock({ label = 'Pro’da açılır', children }: {
         {children}
       </div>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="flex items-center gap-1.5 bg-gray-900/90 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-lg group-hover:bg-gray-900 transition-colors">
-          <Lock className="w-3.5 h-3.5 text-indigo-300" /> {label}
+        <span className="flex items-center gap-1.5 bg-dark-base text-dark-text text-sm font-medium px-3.5 py-2 rounded-md shadow-md group-hover:bg-dark-secondary transition-colors duration-[160ms]">
+          <Lock className="size-3.5 text-dark-accent" /> {label}
         </span>
       </div>
     </Link>

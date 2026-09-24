@@ -1,69 +1,63 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Flame, Zap, Trophy } from 'lucide-react'
+import { EASE_CURVE } from '@/lib/motion'
 import type { JourneyResponse } from '@/lib/journey/types'
+import { SectionLabel } from '@/components/ui/section-label'
 import JourneyTimeline from './JourneyTimeline'
 import JourneyCalendar from './JourneyCalendar'
 import JourneyMilestones from './JourneyMilestones'
 
 export default function JourneyClient({ data }: { data: JourneyResponse }) {
   return (
-    <div className="space-y-8">
-      {/* XP / Level / Streak */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="sm:col-span-2 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl p-5 text-white shadow-lg shadow-indigo-200/50">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">Level</p>
-              <p className="text-3xl font-black leading-tight">{data.xp.level}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">Toplam XP</p>
-              <p className="text-xl font-black tabular-nums">{data.xp.totalXp.toLocaleString('tr-TR')}</p>
-            </div>
+    <div className="space-y-12">
+      {/* Level + XP + streak */}
+      <section>
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <SectionLabel>LEVEL</SectionLabel>
+            <p className="mt-1 text-2xl font-semibold text-text">
+              Level <span className="tabular">{data.xp.level}</span>
+            </p>
           </div>
-          <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-white rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${data.xp.pct}%` }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            />
+          <div className="text-right">
+            <p className="text-base font-medium text-text">
+              🔥 <span className="tabular">{data.streak.current}</span> {data.streak.current === 1 ? 'day' : 'days'}
+            </p>
+            <p className="text-xs text-text-muted mt-0.5">
+              Rekor: <span className="tabular">{data.streak.longest}</span> gün
+            </p>
           </div>
-          <p className="text-[11px] text-white/70 mt-1.5 flex items-center gap-1">
-            <Zap className="w-3 h-3" />
-            {data.xp.current} / {data.xp.required} XP — sonraki seviyeye
-          </p>
         </div>
 
-        <div className="bg-white border border-orange-100 rounded-2xl p-5 shadow-sm flex flex-col justify-center">
-          <div className="w-9 h-9 rounded-xl bg-orange-50 ring-1 ring-orange-100 flex items-center justify-center mb-3">
-            <Flame className="w-4 h-4 text-orange-600" />
-          </div>
-          <p className="text-2xl font-black text-gray-900 tabular-nums">{data.streak.current} gün</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Güncel seri</p>
-          <p className="text-[11px] text-muted-foreground/70 mt-0.5">Rekor: {data.streak.longest} gün</p>
+        <div className="mt-4 h-1 rounded-full bg-border overflow-hidden">
+          <motion.div
+            className="h-full rounded-full bg-accent"
+            initial={{ width: 0 }}
+            animate={{ width: `${data.xp.pct}%` }}
+            transition={{ duration: 0.8, ease: EASE_CURVE }}
+          />
         </div>
-      </div>
+        <p className="mt-2 text-sm text-text-muted">
+          <span className="tabular">{data.xp.current} / {data.xp.required}</span> XP — sonraki seviyeye
+          {' · '}Toplam <span className="tabular">{data.xp.totalXp.toLocaleString('tr-TR')}</span> XP
+        </p>
+      </section>
 
-      {/* Contribution graph */}
-      <JourneyCalendar days={data.days} />
+      <section>
+        <SectionLabel className="mb-3">CALENDAR</SectionLabel>
+        <JourneyCalendar days={data.days} />
+      </section>
 
-      {/* Timeline */}
-      <div>
-        <h2 className="text-sm font-bold text-gray-900 mb-4">Timeline</h2>
-        <JourneyTimeline days={data.days} />
-      </div>
+      <section>
+        <SectionLabel className="mb-4">TIMELINE</SectionLabel>
+        <JourneyTimeline days={data.days} unlocked={data.unlocked} />
+      </section>
 
-      {/* Milestones */}
-      <div>
-        <h2 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-amber-500" />
-          Milestones
-        </h2>
+      <section>
+        <SectionLabel className="mb-3">MILESTONES</SectionLabel>
         <JourneyMilestones unlocked={data.unlocked} />
-      </div>
+      </section>
     </div>
   )
 }
