@@ -43,7 +43,7 @@ export default async function DashboardLayout({
   return (
     <GamificationProvider>
       <AssistProvider>
-        <div className="flex min-h-screen bg-[oklch(0.979_0.003_250)]">
+        <div className="flex min-h-screen bg-background">
           <Sidebar tier={tier} />
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             <Header userName={ad} userEmail={email} />

@@ -48,7 +48,7 @@ export default function HowItWorks() {
           <span className="inline-block px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-sm text-violet-300 font-medium mb-4">
             Nasıl Çalışır?
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
             3 adımda{' '}
             <span className="bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent">
               verimli çalışmaya başla
@@ -79,7 +79,7 @@ export default function HowItWorks() {
                 <div className="relative mb-6">
                   {/* Large gradient number in background */}
                   <span
-                    className={`absolute -top-6 -left-4 text-8xl font-black bg-gradient-to-br ${step.gradient} bg-clip-text text-transparent opacity-10 select-none leading-none`}
+                    className={`absolute -top-6 -left-4 text-hero font-black bg-gradient-to-br ${step.gradient} bg-clip-text text-transparent opacity-10 select-none leading-none`}
                   >
                     {step.number}
                   </span>

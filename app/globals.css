@@ -90,6 +90,14 @@
 }
 
 /* ═══════════════════════════════════════════════════
+   TABULAR NUMBERS — XP, timer, stats, streak
+═══════════════════════════════════════════════════ */
+@utility tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════════════════════════════════════════════
    GLASS UTILITIES
 ═══════════════════════════════════════════════════ */
 .glass {
@@ -216,45 +224,123 @@ body {
     --color-foreground:         var(--foreground);
     --color-background:         var(--background);
 
-    --radius-sm:  calc(var(--radius) * 0.6);
-    --radius-md:  calc(var(--radius) * 0.8);
-    --radius-lg:  var(--radius);
-    --radius-xl:  calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
+    /* ── Noetic palette → utilities (bg-surface, text-text-secondary, …) ── */
+    --color-surface:             var(--surface);
+    --color-surface-subtle:      var(--surface-subtle);
+    --color-text:                var(--text);
+    --color-text-secondary:      var(--text-secondary);
+    --color-text-muted:          var(--text-muted);
+    --color-border-strong:       var(--border-strong);
+    --color-accent-dark:         var(--accent-dark);
+    --color-accent-soft:         var(--accent-soft);
+    --color-success:             var(--success);
+    --color-success-soft:        var(--success-soft);
+    --color-warning:             var(--warning);
+    --color-warning-soft:        var(--warning-soft);
+    --color-danger:              var(--danger);
+    --color-danger-soft:         var(--danger-soft);
+
+    /* Dark surfaces — Focus page, sidebar */
+    --color-dark-base:           var(--dark-base);
+    --color-dark-secondary:      var(--dark-secondary);
+    --color-dark-border:         var(--dark-border);
+    --color-dark-text:           var(--dark-text);
+    --color-dark-text-secondary: var(--dark-text-secondary);
+    --color-dark-accent:         var(--dark-accent);
+}
+
+/* ═══════════════════════════════════════════════════
+   DESIGN SYSTEM SCALES (Phase 1)
+   Tailwind v4 has no tailwind.config.ts — this block is its equivalent.
+   Every key here is emitted as a CSS variable on :root
+   (--radius-sm, --shadow-md, --text-base, --ease-out, …).
+   Spacing needs no override: v4's default 4px step already gives
+   1=4px, 2=8px … 16=64px, 20=80px. Font weights 400/500/600/700
+   are the defaults too.
+   `static`: emit every variable even when no utility uses it, so custom
+   CSS can always rely on var(--shadow-md) etc.
+═══════════════════════════════════════════════════ */
+@theme static {
+    /* Radius — capped at 12px. rounded-3xl/4xl collapse to the cap
+       instead of disappearing, so existing markup stays rounded. */
+    --radius-sm:  4px;
+    --radius-md:  6px;
+    --radius-lg:  8px;
+    --radius-xl:  10px;
+    --radius-2xl: 12px;
+    --radius-3xl: 12px;
+    --radius-4xl: 12px;
+
+    /* Type scale — the default scale (incl. 4xl–9xl) is cleared so only
+       these sizes exist. rem = the px values at the default 16px root. */
+    --text-*: initial;
+    --text-xs:   0.75rem;    --text-xs--line-height:   1rem;       /* 12 / 16 */
+    --text-sm:   0.8125rem;  --text-sm--line-height:   1.25rem;    /* 13 / 20 */
+    --text-base: 0.875rem;   --text-base--line-height: 1.3125rem;  /* 14 / 21 */
+    --text-md:   0.9375rem;  --text-md--line-height:   1.375rem;   /* 15 / 22 */
+    --text-lg:   1.125rem;   --text-lg--line-height:   1.625rem;   /* 18 / 26 */
+    --text-xl:   1.375rem;   --text-xl--line-height:   1.875rem;   /* 22 / 30 */
+    --text-2xl:  1.75rem;    --text-2xl--line-height:  2.25rem;    /* 28 / 36 */
+    --text-3xl:  2.125rem;   --text-3xl--line-height:  2.5rem;     /* 34 / 40 */
+    --text-hero: 3.5rem;     --text-hero--line-height: 1.05;       /* 56 */
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.06);
+    --shadow-lg: 0 16px 40px rgba(0,0,0,.12);
+
+    --ease-out: cubic-bezier(.22,1,.36,1);
 }
 
 :root {
-    /* ── Surface ──────────────── */
-    --background:  oklch(0.979 0.003 250);
-    --foreground:  oklch(0.13  0     0);
+    /* ── Noetic palette ───────── */
+    --background:     #F5F5F2;
+    --surface:        #FFFFFF;
+    --surface-subtle: #F0F0EC;
+    --text:           #171717;
+    --text-secondary: #6F6F6A;
+    --text-muted:     #9A9A94;
+    --border:         #E4E4DE;
+    --border-strong:  #D7D7D0;
+    --accent:         #315CFF;
+    --accent-dark:    #2447CC;
+    --accent-soft:    #E8EDFF;
+    --success:        #25845A;
+    --success-soft:   #E8F5EE;
+    --warning:        #B7791F;
+    --warning-soft:   #FBF1DD;
+    --danger:         #C94A4A;
+    --danger-soft:    #FBEAEA;
 
-    /* ── Card / Popover ───────── */
-    --card:              oklch(1 0 0);
-    --card-foreground:   oklch(0.13 0 0);
-    --popover:           oklch(1 0 0);
-    --popover-foreground:oklch(0.13 0 0);
+    /* ── Dark surfaces ────────── */
+    --dark-base:           #111318;
+    --dark-secondary:      #181A20;
+    --dark-border:         #2A2D34;
+    --dark-text:           #F5F5F2;
+    --dark-text-secondary: #A4A6AD;
+    --dark-accent:         #7B93FF;
 
-    /* ── Brand primary ────────── */
-    --primary:           oklch(0.205 0 0);
-    --primary-foreground:oklch(0.985 0 0);
+    /* ── Motion ───────────────── */
+    --motion-fast:     120ms;
+    --motion-normal:   180ms;
+    --motion-slow:     300ms;
+    --motion-emphasis: 700ms;
 
-    /* ── Neutrals ─────────────── */
-    --secondary:            oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted:                oklch(0.97 0 0);
-    --muted-foreground:     oklch(0.52 0 0);
-    --accent:               oklch(0.97 0 0);
-    --accent-foreground:    oklch(0.205 0 0);
-
-    /* ── Status ───────────────── */
-    --destructive: oklch(0.577 0.245 27.325);
-
-    /* ── Borders / Inputs ─────── */
-    --border: oklch(0.915 0.003 250);
-    --input:  oklch(0.915 0.003 250);
-    --ring:   oklch(0.65  0     0);
+    /* ── shadcn semantic aliases → palette ── */
+    --foreground:          var(--text);
+    --card:                var(--surface);
+    --card-foreground:     var(--text);
+    --popover:             var(--surface);
+    --popover-foreground:  var(--text);
+    --primary:             var(--text);
+    --primary-foreground:  var(--surface);
+    --secondary:           var(--surface-subtle);
+    --secondary-foreground:var(--text);
+    --muted:               var(--surface-subtle);
+    --muted-foreground:    var(--text-secondary);
+    --accent-foreground:   #FFFFFF;
+    --destructive:         var(--danger);
+    --input:               var(--border);
+    --ring:                var(--accent);
 
     /* ── Charts ───────────────── */
     --chart-1: oklch(0.55 0.18 264);
@@ -263,17 +349,17 @@ body {
     --chart-4: oklch(0.65 0.12 210);
     --chart-5: oklch(0.45 0.14 264);
 
-    --radius: 0.625rem;
+    --radius: 8px;
 
     /* ── Sidebar (dark) ───────── */
-    --sidebar:                    oklch(0.09 0.01 260);
-    --sidebar-foreground:         oklch(0.96 0 0);
-    --sidebar-primary:            oklch(0.57 0.22 264);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent:             oklch(1 0 0 / 8%);
-    --sidebar-accent-foreground:  oklch(0.96 0 0);
-    --sidebar-border:             oklch(1 0 0 / 6%);
-    --sidebar-ring:               oklch(0.57 0.22 264);
+    --sidebar:                    var(--dark-base);
+    --sidebar-foreground:         var(--dark-text);
+    --sidebar-primary:            var(--dark-accent);
+    --sidebar-primary-foreground: var(--dark-base);
+    --sidebar-accent:             rgb(255 255 255 / 6%);
+    --sidebar-accent-foreground:  var(--dark-text);
+    --sidebar-border:             var(--dark-border);
+    --sidebar-ring:               var(--dark-accent);
 }
 
 .dark {
@@ -316,6 +402,8 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    font-size: var(--text-base);
+    line-height: 1.5;
   }
   html {
     @apply font-sans;

@@ -80,7 +80,7 @@ export default function PlannerHub() {
             <motion.div
               initial={{ opacity: 0, y: 16, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }}
               onClick={e => e.stopPropagation()}
-              className="bg-[oklch(0.979_0.003_250)] rounded-2xl max-w-5xl mx-auto p-5 relative shadow-2xl"
+              className="bg-background rounded-2xl max-w-5xl mx-auto p-5 relative shadow-2xl"
             >
               <button
                 onClick={() => setShowAiPlanner(false)}

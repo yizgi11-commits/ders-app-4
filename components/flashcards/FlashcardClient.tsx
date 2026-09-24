@@ -349,7 +349,7 @@ function EmptyState({ tab, onUpload, onCreate }: {
       <motion.div
         animate={{ y: [0, -8, 0] }}
         transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-        className="w-20 h-20 bg-indigo-50 rounded-2xl flex items-center justify-center text-4xl mb-5"
+        className="w-20 h-20 bg-indigo-50 rounded-2xl flex items-center justify-center text-3xl mb-5"
       >
         🧠
       </motion.div>

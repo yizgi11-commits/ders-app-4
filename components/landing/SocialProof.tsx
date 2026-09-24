@@ -91,7 +91,7 @@ export default function SocialProof() {
           <span className="inline-block px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-sm text-indigo-300 font-medium mb-4">
             Öğrenci Yorumları
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
             Binlerce öğrenci{' '}
             <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
               güveniyor
@@ -115,7 +115,7 @@ export default function SocialProof() {
               key={stat.label}
               className="rounded-2xl bg-white/[0.03] border border-white/[0.08] p-6 text-center"
             >
-              <div className="text-3xl md:text-4xl font-black bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent mb-1">
+              <div className="text-2xl md:text-3xl font-black bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent mb-1">
                 {stat.value}
               </div>
               <div className="text-white/50 text-sm font-medium">{stat.label}</div>

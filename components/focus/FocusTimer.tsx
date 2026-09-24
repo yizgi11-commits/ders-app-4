@@ -473,7 +473,7 @@ export default function FocusTimer() {
                 initial={{ opacity: 0, scale: 0.85 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 26 }}
-                className={cn('text-7xl font-black tabular-nums tracking-[-0.04em]', cfg.color)}
+                className={cn('text-hero font-black tabular tracking-[-0.04em]', cfg.color)}
               >
                 {fmt(secondsLeft)}
               </motion.span>

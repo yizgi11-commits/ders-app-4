@@ -48,7 +48,7 @@ export default function Hero() {
         {/* Headline */}
         <motion.h1
           variants={fadeUp}
-          className="text-5xl sm:text-6xl lg:text-[76px] font-black text-white leading-[1.04] tracking-tight mb-6"
+          className="text-3xl sm:text-hero font-black text-white leading-[1.04] tracking-tight mb-6"
         >
           Daha fazla çalış değil.
           <br />

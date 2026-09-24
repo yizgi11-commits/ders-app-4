@@ -69,7 +69,7 @@ export default function Pricing() {
           <span className="inline-block px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-sm text-violet-300 font-medium mb-4">
             Fiyatlandırma
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
             Sana uygun{' '}
             <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
               planı seç
@@ -109,7 +109,7 @@ export default function Pricing() {
               <div>
                 <div className="text-white/60 text-sm font-medium mb-1">{plan.name}</div>
                 <div className="flex items-end gap-1 mb-2">
-                  <span className="text-4xl font-black text-white">{plan.price}</span>
+                  <span className="text-3xl font-black text-white">{plan.price}</span>
                   {plan.period && (
                     <span className="text-white/40 text-sm mb-1.5">{plan.period}</span>
                   )}

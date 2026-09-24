@@ -54,7 +54,7 @@ export default function AuthLeftPanel() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
-          <h1 className="text-4xl xl:text-5xl font-black text-white leading-[1.08] mb-4">
+          <h1 className="text-2xl xl:text-3xl font-black text-white leading-[1.08] mb-4">
             Çalışmak bir
             <br />
             <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
@@ -101,7 +101,7 @@ export default function AuthLeftPanel() {
           animate="show"
           className="flex flex-wrap gap-2"
         >
-          {floatingCards.map(({ label, value, color, border }) => (
+          {floatingCards.map(({ label, value, color, border }, i) => (
             <motion.div
               key={label}
               variants={{
@@ -109,7 +109,9 @@ export default function AuthLeftPanel() {
                 show:   { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 360, damping: 24 } },
               }}
               className={`bg-gradient-to-br ${color} border ${border} rounded-xl px-3.5 py-2.5 animate-float-slow`}
-              style={{ animationDelay: `${Math.random() * 2}s` }}
+              // Deterministic stagger — Math.random() here differed between
+              // server and client render (hydration mismatch).
+              style={{ animationDelay: `${i * 0.6}s` }}
             >
               <p className="text-[10px] text-white/40 font-medium">{label}</p>
               <p className="text-xs font-bold text-white mt-0.5">{value}</p>
