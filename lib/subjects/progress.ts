@@ -21,7 +21,7 @@ export async function getSubjectsWithProgress(
         .order('sort_order', { referencedTable: 'topics' }),
       supabase
         .from('pomodoro_sessions')
-        .select('topic_id, started_at')
+        .select('topic_id, started_at, elapsed_seconds')
         .eq('user_id', userId)
         .eq('status', 'completed')
         .not('topic_id', 'is', null),
@@ -37,21 +37,29 @@ export async function getSubjectsWithProgress(
         .not('topic_id', 'is', null),
     ])
 
-  const focusLast = new Map<string, string>()
-  for (const s of (sessions ?? []) as { topic_id: string; started_at: string }[]) {
+  const bump = (m: Map<string, number>, k: string, by: number) => m.set(k, (m.get(k) ?? 0) + by)
+
+  const focusLast    = new Map<string, string>()
+  const focusSeconds = new Map<string, number>()
+  for (const s of (sessions ?? []) as { topic_id: string; started_at: string; elapsed_seconds: number | null }[]) {
     const prev = focusLast.get(s.topic_id)
     if (!prev || s.started_at > prev) focusLast.set(s.topic_id, s.started_at)
+    bump(focusSeconds, s.topic_id, s.elapsed_seconds ?? 0)
   }
 
-  const recallDone = new Set<string>()
+  const recallDone    = new Set<string>()
+  const recallReviews = new Map<string, number>()
   for (const f of (flashcards ?? []) as { topic_id: string; review_count: number }[]) {
     if (f.review_count > 0) recallDone.add(f.topic_id)
+    bump(recallReviews, f.topic_id, f.review_count)
   }
 
-  const noteLast = new Map<string, string>()
+  const noteLast  = new Map<string, string>()
+  const noteCount = new Map<string, number>()
   for (const n of (notes ?? []) as { topic_id: string; updated_at: string }[]) {
     const prev = noteLast.get(n.topic_id)
     if (!prev || n.updated_at > prev) noteLast.set(n.topic_id, n.updated_at)
+    bump(noteCount, n.topic_id, 1)
   }
 
   return ((subjectsRaw ?? []) as ({ topics: unknown[] } & Record<string, unknown>)[]).map(s => {
@@ -75,6 +83,9 @@ export async function getSubjectsWithProgress(
         has_recall: hasRecall,
         has_note:   hasNote,
         last_studied_at,
+        focus_minutes: Math.round((focusSeconds.get(id) ?? 0) / 60),
+        recall_count:  recallReviews.get(id) ?? 0,
+        note_count:    noteCount.get(id) ?? 0,
       }
     })
 

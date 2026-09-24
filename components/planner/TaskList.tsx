@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { CheckCircle2, Circle, Loader2, Timer, Trash2 } from 'lucide-react'
+import { Check, Loader2, Timer, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { TASK_PRIORITY_CONFIG, type PlannerTask } from '@/lib/planner/types'
+import { PRIORITY_DOT, SectionLabel } from './ui'
 
 interface Props {
   tasks: PlannerTask[]
@@ -47,12 +47,7 @@ export default function TaskList({ tasks, onChange }: Props) {
   }
 
   if (tasks.length === 0) {
-    return (
-      <div className="text-center py-14 bg-white border border-dashed border-border rounded-2xl">
-        <p className="text-3xl mb-3">🗓️</p>
-        <p className="text-sm text-muted-foreground">No tasks yet — add one above.</p>
-      </div>
-    )
+    return <p className="text-sm text-text-muted py-4 border-y border-border">No tasks yet — add one above.</p>
   }
 
   const groups = new Map<string, PlannerTask[]>()
@@ -63,76 +58,84 @@ export default function TaskList({ tasks, onChange }: Props) {
   const sortedDates = Array.from(groups.keys()).sort()
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       {sortedDates.map(date => {
         const dayTasks = groups.get(date)!
         const pending = dayTasks.filter(t => !t.completed)
         const done = dayTasks.filter(t => t.completed)
         return (
-          <div key={date}>
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{fmtDateGroup(date)}</p>
-            <div className="space-y-2">
+          <section key={date}>
+            <div className="flex items-center justify-between pb-2 border-b border-border">
+              <SectionLabel>{fmtDateGroup(date).toLocaleUpperCase('en-US')}</SectionLabel>
+              <span className="tabular text-sm text-text-secondary">{done.length} / {dayTasks.length}</span>
+            </div>
+            <ul>
               {[...pending, ...done].map(task => {
                 const busy = busyId === task.id
                 const topicLabel = task.topics?.title ?? task.topic_text
-                const prioCfg = task.priority ? TASK_PRIORITY_CONFIG[task.priority] : null
+                const title = topicLabel ?? task.subjects?.name ?? 'Task'
                 return (
-                  <motion.div
-                    key={task.id}
-                    layout
-                    className={cn(
-                      'flex items-center gap-3 bg-white border border-border rounded-2xl p-3.5 shadow-sm',
-                      task.completed && 'opacity-60',
-                    )}
-                  >
-                    <button onClick={() => toggleComplete(task)} disabled={busy} className="shrink-0">
-                      {busy ? (
-                        <Loader2 className="w-5 h-5 text-indigo-400 animate-spin" />
-                      ) : task.completed ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                      ) : (
-                        <Circle className="w-5 h-5 text-gray-300" />
+                  <li key={task.id} className="group h-12 flex items-center gap-3 border-b border-border">
+                    {task.priority ? (
+                      <span
+                        className={cn('size-1.5 rounded-full shrink-0', PRIORITY_DOT[task.priority])}
+                        title={`${TASK_PRIORITY_CONFIG[task.priority].label} priority`}
+                      />
+                    ) : <span className="size-1.5 shrink-0" />}
+
+                    <button
+                      onClick={() => toggleComplete(task)}
+                      disabled={busy}
+                      role="checkbox"
+                      aria-checked={task.completed}
+                      aria-label={`${title} — ${task.completed ? 'tamamlanmadı olarak işaretle' : 'tamamlandı olarak işaretle'}`}
+                      className={cn(
+                        'size-4 shrink-0 rounded-sm border flex items-center justify-center transition-colors duration-200',
+                        task.completed ? 'bg-accent border-accent' : 'bg-surface border-border-strong hover:border-accent',
                       )}
+                    >
+                      {busy
+                        ? <Loader2 className="size-3 text-accent animate-spin" />
+                        : task.completed && <Check className="size-3 text-white" strokeWidth={3} />}
                     </button>
 
-                    <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
-                      style={{ background: `${task.subjects?.color ?? '#6366f1'}15` }}
-                    >
-                      {task.subjects?.icon ?? '📚'}
-                    </div>
+                    <span className={cn(
+                      'flex-1 min-w-0 truncate text-base font-medium transition-colors duration-200',
+                      task.completed ? 'line-through text-text-muted' : 'text-text',
+                    )}>
+                      {title}
+                    </span>
 
-                    <div className="flex-1 min-w-0">
-                      <p className={cn('text-sm font-semibold text-gray-900 truncate', task.completed && 'line-through text-muted-foreground')}>
-                        {task.subjects?.name ?? 'Subject'}{topicLabel ? ` — ${topicLabel}` : ''}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {task.duration_minutes} min
-                        {prioCfg && <span className={cn('ml-2 font-semibold', prioCfg.color)}>{prioCfg.label}</span>}
-                      </p>
-                    </div>
+                    {topicLabel && task.subjects?.name && (
+                      <span className="shrink-0 max-w-[140px] truncate rounded-sm bg-accent-soft text-accent text-[11px] font-medium px-1.5 py-0.5">
+                        {task.subjects.name}
+                      </span>
+                    )}
+
+                    <span className="tabular text-sm text-text-muted shrink-0">{task.duration_minutes} min</span>
 
                     {!task.completed && (
                       <Link
                         href={`/dashboard/focus?task=${task.id}`}
-                        className="flex items-center gap-1.5 text-xs font-semibold text-white bg-gray-900 hover:bg-gray-800 px-3 py-2 rounded-xl transition-colors shrink-0"
+                        className="shrink-0 inline-flex items-center gap-1 text-sm font-medium text-text-secondary hover:text-accent transition-colors duration-[160ms]"
                       >
-                        <Timer className="w-3.5 h-3.5" /> Start Focus
+                        <Timer className="size-3.5" /> Focus
                       </Link>
                     )}
 
                     <button
                       onClick={() => handleDelete(task.id)}
                       disabled={busy}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors shrink-0"
+                      aria-label={`${title} görevini sil`}
+                      className="shrink-0 p-1 rounded-sm text-text-muted hover:text-danger transition-[color,opacity] duration-[160ms] sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
                     >
-                      <Trash2 className="w-3.5 h-3.5 text-red-400/60 hover:text-red-500" />
+                      <Trash2 className="size-3.5" />
                     </button>
-                  </motion.div>
+                  </li>
                 )
               })}
-            </div>
-          </div>
+            </ul>
+          </section>
         )
       })}
     </div>

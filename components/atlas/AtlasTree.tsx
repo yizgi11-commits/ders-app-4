@@ -3,14 +3,34 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, ChevronDown, Map, Search } from 'lucide-react'
+import { Plus, ChevronDown, Search } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { EASE_CURVE } from '@/lib/motion'
 import type { SubjectWithProgress } from '@/lib/subjects/types'
 import CreateSubjectModal from '@/components/subjects/CreateSubjectModal'
-import { stagger } from '@/lib/motion'
 
 interface Props {
   initialSubjects: SubjectWithProgress[]
   initialExamName: string | null
+}
+
+/** 0 → "0h", 45 → "45m", 90 → "1.5h" */
+function fmtFocus(minutes: number): string {
+  if (minutes <= 0) return '0h'
+  if (minutes < 60) return `${minutes}m`
+  const h = minutes / 60
+  return `${Number.isInteger(h) ? h : h.toFixed(1)}h`
+}
+
+function AddSubjectButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-accent transition-colors duration-[160ms]"
+    >
+      <Plus className="size-3.5" /> Add subject
+    </button>
+  )
 }
 
 export default function AtlasTree({ initialSubjects, initialExamName }: Props) {
@@ -31,166 +51,123 @@ export default function AtlasTree({ initialSubjects, initialExamName }: Props) {
   const filtered = subjects.filter(s => s.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
-    <div className="space-y-5">
+    <div>
       {/* Toolbar */}
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search subjects…"
-            className="text-sm bg-white border border-border rounded-xl pl-9 pr-4 py-2.5 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-all"
-          />
+      <div className="flex items-center justify-between gap-4 pb-3 border-b border-border">
+        <p className="text-[11px] font-medium tracking-[0.08em] text-text-muted truncate">
+          {(examName || 'My Atlas').toLocaleUpperCase('tr-TR')}
+        </p>
+        <div className="flex items-center gap-4 shrink-0">
+          {subjects.length > 0 && (
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-text-muted" />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search subjects…"
+                aria-label="Ders ara"
+                className="w-44 h-8 rounded-md bg-surface border border-border pl-8 pr-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors duration-[160ms]"
+              />
+            </div>
+          )}
+          <AddSubjectButton onClick={() => setShowCreate(true)} />
         </div>
-        <motion.button
-          onClick={() => setShowCreate(true)}
-          whileHover={{ scale: 1.03, y: -1 }}
-          whileTap={{ scale: 0.97 }}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-200/50 shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          Add Subject
-        </motion.button>
-      </div>
-
-      {/* Root node */}
-      <div className="flex items-center gap-2.5 px-1">
-        <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0">
-          <Map className="w-4 h-4 text-white" />
-        </div>
-        <h2 className="text-base font-black text-gray-900 tracking-tight uppercase">
-          {examName || 'My Atlas'}
-        </h2>
       </div>
 
       {subjects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center bg-white border border-dashed border-border rounded-2xl">
-          <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-3xl mb-4">🗺️</div>
-          <h3 className="text-base font-bold text-gray-900 mb-1">Your Atlas is empty</h3>
-          <p className="text-sm text-muted-foreground max-w-sm mb-5">
-            Add a subject to start mapping what you're learning.
-          </p>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-200/50"
-          >
-            <Plus className="w-4 h-4" /> Add your first subject
-          </button>
+        <div className="py-16 text-center">
+          <p className="text-base font-medium text-text">Your Atlas is empty</p>
+          <p className="text-sm text-text-secondary mt-1 mb-4">Add a subject to start mapping what you&apos;re learning.</p>
+          <AddSubjectButton onClick={() => setShowCreate(true)} />
         </div>
+      ) : filtered.length === 0 ? (
+        <p className="py-10 text-sm text-text-muted">No subjects match “{search}”.</p>
       ) : (
-        <motion.div variants={stagger(0.05)} initial="hidden" animate="show" className="relative pl-4 space-y-2">
-          {/* Trunk line */}
-          <div className="absolute left-[7px] top-2 bottom-6 w-px bg-border" />
-
+        <div className="mt-6 space-y-8">
           {filtered.map(subject => {
             const isCollapsed = collapsed.has(subject.id)
             const topics = subject.topics ?? []
 
             return (
-              <motion.div
-                key={subject.id}
-                variants={{ hidden: { opacity: 0, x: -8 }, show: { opacity: 1, x: 0 } }}
-                className="relative"
-              >
-                {/* Branch connector */}
-                <div className="absolute left-[-9px] top-5 w-3 h-px bg-border" />
+              <section key={subject.id}>
+                {/* Subject */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggle(subject.id)}
+                    aria-expanded={!isCollapsed}
+                    aria-label={isCollapsed ? `${subject.name} konularını aç` : `${subject.name} konularını kapat`}
+                    className="p-0.5 -ml-0.5 rounded-sm text-text-muted hover:text-text transition-colors duration-[160ms]"
+                  >
+                    <ChevronDown className={cn('size-4 transition-transform duration-200', isCollapsed && '-rotate-90')} />
+                  </button>
+                  <Link
+                    href={`/dashboard/atlas/${subject.id}`}
+                    className="flex-1 min-w-0 truncate text-[16px] leading-6 font-semibold text-text hover:text-accent transition-colors duration-[160ms]"
+                  >
+                    <span className="mr-1.5">{subject.icon}</span>{subject.name}
+                  </Link>
+                  <span className="shrink-0 tabular text-sm text-text-muted">{subject.subjectPct}%</span>
+                </div>
 
-                {/* Subject row */}
-                <div className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
-                  <div className="flex items-center gap-3 px-4 py-3.5">
-                    <button
-                      onClick={() => toggle(subject.id)}
-                      className="shrink-0 p-0.5 -m-0.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                <div className="mt-2 h-1 rounded-full bg-border overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full bg-accent"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${subject.subjectPct}%` }}
+                    transition={{ duration: 0.6, ease: EASE_CURVE }}
+                  />
+                </div>
+
+                {/* Topics — indented, hanging off a 1px tree line */}
+                <AnimatePresence initial={false}>
+                  {!isCollapsed && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: EASE_CURVE }}
+                      className="overflow-hidden"
                     >
-                      <motion.div animate={{ rotate: isCollapsed ? -90 : 0 }} transition={{ duration: 0.2 }}>
-                        <ChevronDown className="w-4 h-4" />
-                      </motion.div>
-                    </button>
-
-                    <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
-                      style={{ background: `${subject.color}15` }}
-                    >
-                      {subject.icon}
-                    </div>
-
-                    <Link href={`/dashboard/atlas/${subject.id}`} className="flex-1 min-w-0 group">
-                      <p className="text-sm font-bold text-gray-900 group-hover:text-indigo-600 transition-colors truncate">
-                        {subject.name}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {subject.completedTopics}/{subject.totalTopics} topics · {subject.subjectPct}%
-                      </p>
-                    </Link>
-
-                    <div className="w-24 shrink-0 hidden sm:block">
-                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full bg-indigo-500 rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${subject.subjectPct}%` }}
-                          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Topics */}
-                  <AnimatePresence initial={false}>
-                    {!isCollapsed && topics.length > 0 && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                        className="overflow-hidden border-t border-border/70"
-                      >
-                        {topics.map((topic, i) => (
+                      <div className="ml-2 pl-4 border-l border-border mt-2">
+                        {topics.length === 0 ? (
+                          <p className="h-10 flex items-center text-sm text-text-muted">No topics yet.</p>
+                        ) : topics.map(topic => (
                           <Link
                             key={topic.id}
                             href={`/dashboard/atlas/${subject.id}/${topic.id}`}
-                            className="flex items-center gap-3 pl-14 pr-4 py-2.5 hover:bg-gray-50/80 transition-colors group relative"
+                            className="relative h-10 -ml-4 pl-4 pr-2 flex items-center gap-4 border-b border-border hover:bg-surface-subtle transition-colors duration-[160ms]"
                           >
-                            <span className="absolute left-9 top-0 bottom-0 w-px bg-border" />
-                            <span className="absolute left-9 top-1/2 w-3.5 h-px bg-border" />
-                            <span className={`text-sm flex-1 min-w-0 truncate ${
-                              topic.progress_pct >= 100 ? 'text-muted-foreground line-through' : 'text-gray-700'
-                            } group-hover:text-indigo-600 transition-colors`}>
+                            <span aria-hidden className="absolute left-0 top-1/2 w-2.5 h-px bg-border" />
+                            <span className={cn(
+                              'flex-1 min-w-0 truncate text-base font-medium',
+                              topic.progress_pct >= 100 ? 'text-text-secondary' : 'text-text',
+                            )}>
                               {topic.title}
                             </span>
-                            <span className="text-xs font-semibold text-gray-500 tabular-nums w-9 text-right shrink-0">
-                              {topic.progress_pct}%
+                            <span className="hidden sm:flex items-center gap-3 shrink-0 text-xs text-text-muted">
+                              <span>Focus: <span className="tabular">{fmtFocus(topic.focus_minutes)}</span></span>
+                              <span>Recall: <span className="tabular">{topic.recall_count}</span></span>
+                              <span>Notes: <span className="tabular">{topic.note_count}</span></span>
                             </span>
-                            <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden shrink-0 hidden sm:block">
-                              <div
-                                className="h-full rounded-full"
-                                style={{
-                                  width: `${topic.progress_pct}%`,
-                                  background: topic.progress_pct >= 100 ? '#10b981' : subject.color,
-                                }}
+                            <span
+                              className="w-20 h-[3px] rounded-full bg-border overflow-hidden shrink-0"
+                              title={`${topic.progress_pct}%`}
+                            >
+                              <span
+                                className={cn('block h-full rounded-full', topic.progress_pct >= 100 ? 'bg-success' : 'bg-accent')}
+                                style={{ width: `${topic.progress_pct}%` }}
                               />
-                            </div>
+                            </span>
                           </Link>
                         ))}
-                      </motion.div>
-                    )}
-                    {!isCollapsed && topics.length === 0 && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden border-t border-border/70"
-                      >
-                        <p className="pl-14 pr-4 py-2.5 text-xs text-muted-foreground">No topics yet.</p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </motion.div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </section>
             )
           })}
-        </motion.div>
+        </div>
       )}
 
       <AnimatePresence>

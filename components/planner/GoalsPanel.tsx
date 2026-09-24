@@ -2,25 +2,20 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Loader2, Target, Trash2 } from 'lucide-react'
+import { Plus, Loader2, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Goal } from '@/lib/planner/types'
 import type { SubjectWithTopics } from '@/lib/subjects/types'
+import { fieldClass, primaryButtonClass, textButtonClass, SectionLabel, daysFromToday, shortDate } from './ui'
 
-function daysUntil(dateStr: string): number {
-  const today = new Date().toISOString().split('T')[0]
-  const d1 = new Date(today + 'T00:00:00')
-  const d2 = new Date(dateStr + 'T00:00:00')
-  return Math.round((d2.getTime() - d1.getTime()) / 86400000)
-}
-
+/** "Aug 20 (12 days)" */
 function fmtDeadline(dateStr: string | null): string {
   if (!dateStr) return 'No deadline'
-  const days = daysUntil(dateStr)
-  const label = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const days = daysFromToday(dateStr)
+  const label = shortDate(dateStr)
   if (days < 0) return `${label} (overdue)`
   if (days === 0) return `${label} (today)`
-  return `${label} (${days} day${days !== 1 ? 's' : ''} away)`
+  return `${label} (${days} day${days !== 1 ? 's' : ''})`
 }
 
 export default function GoalsPanel() {
@@ -76,89 +71,91 @@ export default function GoalsPanel() {
     })
   }
 
-  if (loading) return <div className="h-40 bg-white border border-border rounded-2xl animate-pulse" />
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[0, 1].map(i => <div key={i} className="h-16 rounded-md skeleton-shimmer" />)}
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-bold text-gray-900">Goals</p>
-        <button onClick={() => setShowForm(v => !v)} className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700">
-          <Plus className="w-3.5 h-3.5" /> New Goal
+    <div>
+      <div className="flex items-center justify-between pb-2 border-b border-border">
+        <SectionLabel>GOALS</SectionLabel>
+        <button onClick={() => setShowForm(v => !v)} className={textButtonClass}>
+          <Plus className="size-3.5" /> New goal
         </button>
       </div>
 
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {showForm && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-            <div className="bg-white border border-border rounded-2xl p-4 shadow-sm space-y-2.5">
+            <div className="mt-4 rounded-lg border border-border bg-surface p-3 space-y-2">
               <input
                 value={title} onChange={e => setTitle(e.target.value)}
                 placeholder='Goal title — e.g. "Finish TYT Functions"'
-                className="w-full text-sm bg-gray-50/50 border border-border rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+                aria-label="Hedef başlığı"
+                className={fieldClass}
               />
-              <div className="grid grid-cols-2 gap-2.5">
-                <select
-                  value={subjectId} onChange={e => setSubjectId(e.target.value)}
-                  className="text-sm bg-gray-50/50 border border-border rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
-                >
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px_auto] gap-2">
+                <select value={subjectId} onChange={e => setSubjectId(e.target.value)} aria-label="Ders" className={fieldClass}>
                   <option value="">— Subject (optional)</option>
                   {subjects.map(s => <option key={s.id} value={s.id}>{s.icon} {s.name}</option>)}
                 </select>
                 <input
                   type="date" value={deadline} onChange={e => setDeadline(e.target.value)}
-                  className="text-sm bg-gray-50/50 border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+                  aria-label="Son tarih"
+                  className={cn(fieldClass, 'tabular-nums')}
                 />
+                <button onClick={handleCreate} disabled={!title.trim() || saving} className={primaryButtonClass}>
+                  {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />} Add goal
+                </button>
               </div>
-              <button
-                onClick={handleCreate}
-                disabled={!title.trim() || saving}
-                className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors"
-              >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Add Goal
-              </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       {goals.length === 0 ? (
-        <div className="text-center py-14 bg-white border border-dashed border-border rounded-2xl">
-          <Target className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">No goals yet.</p>
-        </div>
+        <p className="text-sm text-text-muted py-4 border-b border-border">No goals yet.</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <ul>
           {goals.map(goal => {
             const pct = goal.progress_pct ?? goal.manual_progress_pct
             return (
-              <div key={goal.id} className="bg-white border border-border rounded-2xl p-4 shadow-sm">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Goal: <span className="text-gray-900 normal-case">{goal.title}</span>
-                  </p>
-                  <button onClick={() => handleDelete(goal.id)} className="shrink-0 w-6 h-6 rounded-lg flex items-center justify-center hover:bg-red-50">
-                    <Trash2 className="w-3 h-3 text-red-400/60 hover:text-red-500" />
-                  </button>
+              <li key={goal.id} className="group py-4 border-b border-border">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-md font-semibold text-text truncate">{goal.title}</p>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {!goal.topic_id && (
+                      <>
+                        <button onClick={() => adjustProgress(goal, -10)} aria-label="İlerlemeyi %10 azalt"
+                          className="size-6 rounded-md border border-border text-sm text-text-secondary hover:text-text hover:border-border-strong">−</button>
+                        <button onClick={() => adjustProgress(goal, 10)} aria-label="İlerlemeyi %10 artır"
+                          className="size-6 rounded-md border border-border text-sm text-text-secondary hover:text-text hover:border-border-strong">+</button>
+                      </>
+                    )}
+                    <button onClick={() => handleDelete(goal.id)} aria-label={`${goal.title} hedefini sil`}
+                      className="ml-1 p-1 rounded-sm text-text-muted hover:text-danger transition-[color,opacity] duration-[160ms] sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100">
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
                 </div>
 
-                <p className="text-sm font-semibold text-gray-700 mb-2">Progress: {pct}%</p>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
-                  <div className={cn('h-full rounded-full', pct >= 100 ? 'bg-emerald-500' : 'bg-indigo-500')} style={{ width: `${pct}%` }} />
+                <div className="mt-2.5 h-1 rounded-full bg-border overflow-hidden">
+                  <div className={cn('h-full rounded-full', pct >= 100 ? 'bg-success' : 'bg-accent')} style={{ width: `${pct}%` }} />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">Deadline: {fmtDeadline(goal.deadline)}</p>
-                  {!goal.topic_id && (
-                    <div className="flex gap-1">
-                      <button onClick={() => adjustProgress(goal, -10)} className="w-6 h-6 rounded-md bg-gray-50 hover:bg-gray-100 text-xs font-bold text-gray-500">−</button>
-                      <button onClick={() => adjustProgress(goal, 10)} className="w-6 h-6 rounded-md bg-gray-50 hover:bg-gray-100 text-xs font-bold text-gray-500">+</button>
-                    </div>
-                  )}
-                </div>
-              </div>
+                <p className="mt-2 text-sm text-text-muted">
+                  <span className="tabular">{pct}%</span>
+                  {goal.subjects?.name && <> · {goal.subjects.name}</>}
+                  {' · '}<span className="tabular-nums">{fmtDeadline(goal.deadline)}</span>
+                </p>
+              </li>
             )
           })}
-        </div>
+        </ul>
       )}
     </div>
   )

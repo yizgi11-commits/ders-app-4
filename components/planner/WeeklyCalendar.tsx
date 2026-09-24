@@ -2,31 +2,19 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, X, Timer } from 'lucide-react'
+import { X, Timer } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { TASK_PRIORITY_CONFIG, type PlannerTask } from '@/lib/planner/types'
+import { TASK_PRIORITY_CONFIG, type Exam, type PlannerTask } from '@/lib/planner/types'
+import { PRIORITY_DOT, primaryButtonClass } from './ui'
+import { addDays, todayStr } from './week'
 
-function getWeekStart(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00')
-  const day = d.getDay()
-  const diff = day === 0 ? 6 : day - 1
-  d.setDate(d.getDate() - diff)
-  return d.toISOString().split('T')[0]
-}
+const DAY_LABELS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 
-function addDays(dateStr: string, n: number): string {
-  const d = new Date(dateStr + 'T00:00:00')
-  d.setDate(d.getDate() + n)
-  return d.toISOString().split('T')[0]
-}
-
-const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-
-export default function WeeklyCalendar() {
-  const today = new Date().toISOString().split('T')[0]
-  const [weekStart, setWeekStart] = useState(getWeekStart(today))
+export default function WeeklyCalendar({ weekStart }: { weekStart: string }) {
+  const today = todayStr()
   const [tasks, setTasks] = useState<PlannerTask[]>([])
+  const [exams, setExams] = useState<Exam[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<PlannerTask | null>(null)
 
@@ -43,66 +31,71 @@ export default function WeeklyCalendar() {
 
   useEffect(() => { load() }, [load])
 
+  // Exam dates for the day-column markers (read-only; same endpoint as the Exams tab).
+  useEffect(() => {
+    fetch('/api/exams')
+      .then(r => (r.ok ? r.json() : { exams: [] }))
+      .then(d => setExams(d.exams ?? []))
+      .catch(() => {})
+  }, [])
+
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
 
   return (
-    <div className="space-y-3">
-      {/* Week nav */}
-      <div className="flex items-center justify-between">
-        <button onClick={() => setWeekStart(addDays(weekStart, -7))} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-          <ChevronLeft className="w-4 h-4 text-gray-500" />
-        </button>
-        <p className="text-sm font-semibold text-gray-700">
-          {new Date(weekStart + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          {' – '}
-          {new Date(addDays(weekStart, 6) + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-        </p>
-        <button onClick={() => setWeekStart(addDays(weekStart, 7))} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-          <ChevronRight className="w-4 h-4 text-gray-500" />
-        </button>
-      </div>
+    <div>
+      {/* 7 columns; scrolls sideways on narrow screens rather than crushing the chips */}
+      <div className="overflow-x-auto">
+        <div className="min-w-[640px] grid grid-cols-7 rounded-lg border border-border bg-surface overflow-hidden">
+          {days.map((date, i) => {
+            const dayTasks = tasks.filter(t => t.date === date)
+            const dayExams = exams.filter(e => e.exam_date === date)
+            const isToday = date === today
+            return (
+              <div
+                key={date}
+                className={cn(
+                  'min-h-[180px] p-2 flex flex-col gap-1 border-r border-border last:border-r-0',
+                  dayExams.length > 0 && 'shadow-[inset_0_2px_0_0_var(--danger)]',
+                )}
+              >
+                <div className="flex items-baseline justify-between mb-1">
+                  <span className={cn('text-[11px] font-medium tracking-[0.08em]', isToday ? 'text-accent' : 'text-text-muted')}>
+                    {DAY_LABELS[i]}
+                  </span>
+                  <span className={cn('tabular text-sm', isToday ? 'text-accent font-semibold' : 'text-text-secondary')}>
+                    {new Date(date + 'T00:00:00').getDate()}
+                  </span>
+                </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-7 gap-2">
-        {days.map((date, i) => {
-          const dayTasks = tasks.filter(t => t.date === date)
-          const isToday = date === today
-          return (
-            <div
-              key={date}
-              className={cn(
-                'bg-white border rounded-xl p-2 min-h-[130px] flex flex-col gap-1.5',
-                isToday ? 'border-indigo-300 ring-1 ring-indigo-100' : 'border-border',
-              )}
-            >
-              <p className={cn('text-[10px] font-bold uppercase tracking-wide', isToday ? 'text-indigo-600' : 'text-muted-foreground')}>
-                {DAY_LABELS[i]}
-              </p>
-              <p className={cn('text-sm font-black', isToday ? 'text-indigo-600' : 'text-gray-800')}>
-                {new Date(date + 'T00:00:00').getDate()}
-              </p>
-              <div className="flex-1 space-y-1 overflow-y-auto">
+                {dayExams.map(exam => (
+                  <p key={exam.id} className="text-[11px] leading-4 font-medium text-danger truncate" title={exam.name}>
+                    {exam.name}
+                  </p>
+                ))}
+
                 {loading ? (
                   <>
-                    <div className="h-4 rounded-md bg-gray-100 animate-pulse" />
-                    <div className="h-4 rounded-md bg-gray-100 animate-pulse w-2/3" />
+                    <div className="h-5 rounded-sm skeleton-shimmer" />
+                    <div className="h-5 w-2/3 rounded-sm skeleton-shimmer" />
                   </>
                 ) : dayTasks.map(task => (
                   <button
                     key={task.id}
                     onClick={() => setSelected(task)}
                     className={cn(
-                      'w-full text-left text-[10px] font-medium px-1.5 py-1 rounded-md truncate transition-opacity',
-                      task.completed ? 'bg-gray-100 text-muted-foreground line-through opacity-70' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100',
+                      'w-full text-left text-[11px] leading-4 px-1.5 py-0.5 rounded-sm border-l-2 truncate transition-colors duration-[160ms]',
+                      task.completed
+                        ? 'border-l-border-strong text-text-muted line-through'
+                        : 'border-l-accent bg-surface-subtle text-text hover:bg-accent-soft',
                     )}
                   >
-                    {task.subjects?.icon} {task.subjects?.name ?? 'Task'}
+                    {task.topics?.title ?? task.topic_text ?? task.subjects?.name ?? 'Task'}
                   </button>
                 ))}
               </div>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
 
       {/* Detail popover */}
@@ -110,35 +103,34 @@ export default function WeeklyCalendar() {
         {selected && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4"
             onClick={() => setSelected(null)}
           >
             <motion.div
-              initial={{ opacity: 0, y: 12, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.97 }}
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
+              transition={{ duration: 0.18 }}
               onClick={e => e.stopPropagation()}
-              className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl"
+              className="bg-surface border border-border rounded-lg p-5 w-full max-w-sm shadow-lg"
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style={{ background: `${selected.subjects?.color ?? '#6366f1'}15` }}>
-                    {selected.subjects?.icon ?? '📚'}
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-900">{selected.subjects?.name}</p>
-                    {(selected.topics?.title ?? selected.topic_text) && (
-                      <p className="text-xs text-muted-foreground">{selected.topics?.title ?? selected.topic_text}</p>
-                    )}
-                  </div>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="min-w-0">
+                  <p className="text-md font-semibold text-text truncate">
+                    {selected.subjects?.icon} {selected.subjects?.name}
+                  </p>
+                  {(selected.topics?.title ?? selected.topic_text) && (
+                    <p className="text-sm text-text-secondary truncate">{selected.topics?.title ?? selected.topic_text}</p>
+                  )}
                 </div>
-                <button onClick={() => setSelected(null)} className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center">
-                  <X className="w-3.5 h-3.5 text-gray-400" />
+                <button onClick={() => setSelected(null)} aria-label="Kapat" className="p-1 rounded-md text-text-muted hover:text-text hover:bg-surface-subtle">
+                  <X className="size-4" />
                 </button>
               </div>
 
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-                <span>{selected.duration_minutes} min</span>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-secondary mb-4">
+                <span className="tabular">{selected.duration_minutes} min</span>
                 {selected.priority && (
-                  <span className={cn('font-semibold px-2 py-0.5 rounded-full border', TASK_PRIORITY_CONFIG[selected.priority].bg, TASK_PRIORITY_CONFIG[selected.priority].border, TASK_PRIORITY_CONFIG[selected.priority].color)}>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className={cn('size-1.5 rounded-full', PRIORITY_DOT[selected.priority])} />
                     {TASK_PRIORITY_CONFIG[selected.priority].label}
                   </span>
                 )}
@@ -146,11 +138,8 @@ export default function WeeklyCalendar() {
               </div>
 
               {!selected.completed && (
-                <Link
-                  href={`/dashboard/focus?task=${selected.id}`}
-                  className="flex items-center justify-center gap-2 w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors"
-                >
-                  <Timer className="w-4 h-4" /> Start Focus
+                <Link href={`/dashboard/focus?task=${selected.id}`} className={cn(primaryButtonClass, 'w-full')}>
+                  <Timer className="size-4" /> Start Focus
                 </Link>
               )}
             </motion.div>

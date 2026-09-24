@@ -111,6 +111,9 @@ export interface TopicProgress extends Topic {
   has_recall:      boolean        // at least one reviewed Recall card
   has_note:        boolean        // at least one Vault note
   last_studied_at: string | null  // ISO date, most recent activity
+  focus_minutes:   number         // total completed Focus time on this topic
+  recall_count:    number         // Recall reviews done on this topic's cards
+  note_count:      number         // Vault notes linked to this topic
 }
 
 export interface SubjectWithProgress extends Subject {

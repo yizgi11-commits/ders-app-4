@@ -24,14 +24,14 @@ export default function TasksPanel() {
   if (loading) {
     return (
       <div className="space-y-3">
-        <div className="h-48 bg-white border border-border rounded-2xl animate-pulse" />
-        <div className="h-24 bg-white border border-border rounded-2xl animate-pulse" />
+        <div className="h-[104px] rounded-lg skeleton-shimmer" />
+        {[0, 1, 2].map(i => <div key={i} className="h-9 rounded-md skeleton-shimmer" />)}
       </div>
     )
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       <TaskForm onCreated={task => setTasks(prev => [...prev, task])} />
       <TaskList tasks={tasks} onChange={setTasks} />
     </div>
