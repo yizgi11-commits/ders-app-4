@@ -2,7 +2,8 @@
 
 import { usePathname } from 'next/navigation'
 import { Bell, Search } from 'lucide-react'
-import { pageTitle, initialsOf } from './nav'
+import { cn } from '@/lib/utils'
+import { pageTitle, initialsOf, isDarkRoute } from './nav'
 
 interface HeaderProps {
   userName: string
@@ -10,18 +11,29 @@ interface HeaderProps {
 
 export default function Header({ userName }: HeaderProps) {
   const pathname = usePathname()
+  const dark = isDarkRoute(pathname)
 
   return (
-    <header className="sticky top-0 z-30 h-14 shrink-0 bg-surface border-b border-border flex items-center gap-3 px-4 lg:px-6">
+    <header className={cn(
+      'sticky top-0 z-30 h-14 shrink-0 border-b flex items-center gap-3 px-4 lg:px-6',
+      dark ? 'bg-dark-canvas border-dark-border' : 'bg-surface border-border',
+    )}>
       {/* Page title */}
-      <p className="text-md font-semibold text-text truncate">{pageTitle(pathname)}</p>
+      <p className={cn('text-md font-semibold truncate', dark ? 'text-dark-text' : 'text-text')}>
+        {pageTitle(pathname)}
+      </p>
 
       <div className="flex-1" />
 
       {/* Search */}
       <button
         type="button"
-        className="hidden sm:flex items-center justify-between w-[140px] px-2.5 py-1 rounded-md bg-surface-subtle border border-border text-sm text-text-muted hover:border-border-strong transition-colors duration-[160ms]"
+        className={cn(
+          'hidden sm:flex items-center justify-between w-[140px] px-2.5 py-1 rounded-md border text-sm transition-colors duration-[160ms]',
+          dark
+            ? 'bg-dark-secondary border-dark-border text-dark-text-muted hover:border-dark-text-muted'
+            : 'bg-surface-subtle border-border text-text-muted hover:border-border-strong',
+        )}
       >
         <span className="flex items-center gap-1.5">
           <Search className="size-3.5" />
@@ -34,7 +46,12 @@ export default function Header({ userName }: HeaderProps) {
       <button
         type="button"
         aria-label="Bildirimler"
-        className="p-2 rounded-md text-text-secondary hover:text-text hover:bg-surface-subtle transition-colors duration-[160ms]"
+        className={cn(
+          'p-2 rounded-md transition-colors duration-[160ms]',
+          dark
+            ? 'text-dark-text-secondary hover:text-dark-text hover:bg-white/[0.06]'
+            : 'text-text-secondary hover:text-text hover:bg-surface-subtle',
+        )}
       >
         <Bell className="size-4" />
       </button>
@@ -42,7 +59,10 @@ export default function Header({ userName }: HeaderProps) {
       {/* Avatar */}
       <div
         title={userName}
-        className="size-7 shrink-0 rounded-full bg-accent-soft text-accent flex items-center justify-center text-[11px] font-semibold"
+        className={cn(
+          'size-7 shrink-0 rounded-full flex items-center justify-center text-[11px] font-semibold',
+          dark ? 'bg-dark-secondary text-dark-text' : 'bg-accent-soft text-accent',
+        )}
       >
         {initialsOf(userName)}
       </div>

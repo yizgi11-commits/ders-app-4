@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ArrowRight, Loader2, PartyPopper } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { EASE_CURVE } from '@/lib/motion'
 import { SESSION_RATING_LABELS, type SessionRating } from '@/lib/pomodoro/types'
 
 export interface OverlaySession {
@@ -12,14 +13,14 @@ export interface OverlaySession {
   subjectName:     string | null
   topicName:       string | null
   durationSeconds: number
+  /** XP from /api/pomodoro/complete — unknown when the overlay is restored after a reload. */
+  xpEarned?:       number
 }
 
 const RATINGS: SessionRating[] = ['poor', 'okay', 'good', 'excellent']
 
-function fmtDuration(seconds: number) {
-  const mins = Math.max(1, Math.round(seconds / 60))
-  return `${mins} min`
-}
+/** "+XP" float after saving — dims, rises 20px, fades out. */
+const XP_FLOAT_MS = 700
 
 export default function SessionCompleteOverlay({
   session, onSaved,
@@ -32,8 +33,16 @@ export default function SessionCompleteOverlay({
   const [recallText, setRecallText] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [celebrating, setCelebrating] = useState(false)
 
   const canSave = recallText.trim().length >= 1 && !saving
+  const minutes = Math.max(1, Math.round(session.durationSeconds / 60))
+
+  function leave() {
+    onSaved?.()
+    router.push('/dashboard')
+    router.refresh()
+  }
 
   async function handleSave() {
     if (!canSave) return
@@ -46,9 +55,12 @@ export default function SessionCompleteOverlay({
         body: JSON.stringify({ sessionId: session.sessionId, rating, recallText: recallText.trim() }),
       })
       if (!res.ok) throw new Error()
-      onSaved?.()
-      router.push('/dashboard')
-      router.refresh()
+      if (session.xpEarned && session.xpEarned > 0) {
+        setCelebrating(true)
+        setTimeout(leave, XP_FLOAT_MS)
+      } else {
+        leave()
+      }
     } catch {
       setError('Could not save — please try again.')
       setSaving(false)
@@ -59,92 +71,100 @@ export default function SessionCompleteOverlay({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+      transition={{ duration: 0.2 }}
+      className="fixed inset-0 z-[100] bg-[rgba(13,15,19,0.96)] flex items-center justify-center p-6 overflow-y-auto"
     >
       <motion.div
-        initial={{ opacity: 0, y: 24, scale: 0.96 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 340, damping: 30 }}
-        className="w-full max-w-md bg-gray-950 border border-white/10 rounded-2xl p-6 shadow-2xl shadow-black/60"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: celebrating ? 0.25 : 1, y: 0 }}
+        transition={{ duration: celebrating ? 0.2 : 0.35, ease: EASE_CURVE }}
+        className="w-full max-w-md"
       >
         {/* Header */}
-        <div className="flex flex-col items-center text-center mb-6">
-          <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: 'spring', stiffness: 220, damping: 16, delay: 0.05 }}
-            className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-xl shadow-emerald-900/40 mb-4"
-          >
-            <PartyPopper className="w-7 h-7 text-white" />
-          </motion.div>
-          <p className="text-xs font-bold text-white/40 uppercase tracking-[0.15em] mb-2">Session Complete</p>
-          <p className="text-lg font-black text-white leading-snug">
-            {session.subjectName ?? 'Free session'}
-            {session.topicName && <span className="text-white/50"> — {session.topicName}</span>}
+        <div className="text-center">
+          <p className="text-[13px] font-medium tracking-[0.12em] text-dark-text-muted">SESSION COMPLETE</p>
+          <p className="mt-3 tabular text-[48px] leading-none font-light tracking-[-0.02em] text-white">
+            {minutes} min focused
           </p>
-          <p className="text-sm text-white/35 mt-1">{fmtDuration(session.durationSeconds)}</p>
+          {(session.subjectName || session.topicName) && (
+            <p className="mt-3 text-base text-dark-text-secondary truncate">
+              {session.subjectName ?? 'Free session'}
+              {session.topicName && <span className="text-dark-text-muted"> — {session.topicName}</span>}
+            </p>
+          )}
         </div>
 
-        {/* Rating */}
-        <div className="mb-5">
-          <p className="text-xs font-semibold text-white/50 mb-2.5">How did it go?</p>
-          <div className="flex items-center justify-between gap-2">
-            {RATINGS.map(r => (
-              <button
-                key={r}
-                onClick={() => setRating(r)}
-                className="flex-1 flex flex-col items-center gap-1.5 py-2 rounded-xl transition-colors"
-              >
-                <span className={cn(
-                  'w-4 h-4 rounded-full border-2 transition-all',
-                  rating === r ? 'bg-indigo-500 border-indigo-400 scale-110' : 'border-white/20',
-                )} />
-                <span className={cn('text-[11px] font-medium', rating === r ? 'text-indigo-300' : 'text-white/35')}>
-                  {SESSION_RATING_LABELS[r]}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
+        <div className="my-8 h-px bg-dark-border" />
 
         {/* Recall */}
-        <div className="mb-6">
-          <p className="text-xs font-semibold text-white/50 mb-2">What did you learn?</p>
-          <textarea
-            value={recallText}
-            onChange={e => setRecallText(e.target.value)}
-            rows={4}
-            placeholder="Write a quick summary of what you studied…"
-            className="w-full text-sm bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-white placeholder:text-white/20 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-          />
+        <label htmlFor="session-recall" className="block text-base text-dark-text-secondary mb-2">
+          What did you learn?
+        </label>
+        <textarea
+          id="session-recall"
+          value={recallText}
+          onChange={e => setRecallText(e.target.value)}
+          placeholder="Write a quick summary of what you studied…"
+          className="w-full min-h-[100px] resize-none rounded-lg bg-dark-secondary border border-dark-border p-3 text-base text-dark-text placeholder:text-dark-text-muted focus:outline-none focus:border-accent transition-colors duration-[160ms]"
+        />
+
+        {/* Rating */}
+        <p className="mt-6 mb-3 text-base text-dark-text-secondary" id="session-rating-label">How focused were you?</p>
+        <div className="flex items-center gap-3" role="radiogroup" aria-labelledby="session-rating-label">
+          {RATINGS.map((r, i) => (
+            <button
+              key={r}
+              type="button"
+              role="radio"
+              aria-checked={rating === r}
+              aria-label={SESSION_RATING_LABELS[r]}
+              title={SESSION_RATING_LABELS[r]}
+              onClick={() => setRating(r)}
+              className={cn(
+                'size-9 rounded-full border tabular text-sm transition-colors duration-[160ms]',
+                rating === r
+                  ? 'bg-accent border-accent text-white'
+                  : 'border-dark-border text-dark-text-secondary hover:border-dark-text-muted',
+              )}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <span className="ml-1 text-sm text-dark-text-muted">{SESSION_RATING_LABELS[rating]}</span>
         </div>
 
         {error && (
-          <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 mb-4 text-center">
-            {error}
-          </p>
+          <p className="mt-5 text-sm text-danger text-center">{error}</p>
         )}
 
         {/* Save */}
-        <motion.button
+        <button
+          type="button"
           onClick={handleSave}
           disabled={!canSave}
-          whileHover={canSave ? { scale: 1.02 } : {}}
-          whileTap={canSave ? { scale: 0.98 } : {}}
           className={cn(
-            'w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all',
-            canSave
-              ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-900/40'
-              : 'bg-white/[0.06] text-white/25 cursor-not-allowed',
+            'mt-8 w-full h-11 rounded-md flex items-center justify-center gap-2 text-base font-medium transition-colors duration-[160ms]',
+            canSave || saving
+              ? 'bg-accent hover:bg-accent-dark text-white'
+              : 'bg-dark-secondary text-dark-text-muted cursor-not-allowed',
           )}
         >
-          {saving ? (
-            <><Loader2 className="w-4 h-4 animate-spin" />Saving…</>
-          ) : (
-            <>Save &amp; Continue<ArrowRight className="w-4 h-4" /></>
-          )}
-        </motion.button>
+          {saving ? <><Loader2 className="size-4 animate-spin" /> Saving…</> : 'Save & Continue'}
+        </button>
       </motion.div>
+
+      {/* +XP float — plain text, no confetti */}
+      {celebrating && session.xpEarned !== undefined && (
+        <motion.p
+          aria-live="polite"
+          initial={{ opacity: 0, y: 0 }}
+          animate={{ opacity: [0, 1, 1, 0], y: -20 }}
+          transition={{ duration: XP_FLOAT_MS / 1000, times: [0, 0.2, 0.7, 1], ease: 'easeOut' }}
+          className="pointer-events-none absolute inset-0 flex items-center justify-center tabular text-[40px] font-light text-white"
+        >
+          +{session.xpEarned} XP
+        </motion.p>
+      )}
     </motion.div>
   )
 }

@@ -3,10 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Play, Pause, Square, Target, Brain, BookOpen, Wind,
-  CloudRain, Volume2, Library, VolumeX, Zap, Star,
-} from 'lucide-react'
+import { Play, Pause, Square, CloudRain, Volume2, Library, VolumeX } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   FOCUS_DURATION_OPTIONS, FOCUS_MODE_LABELS, AMBIENT_SOUND_LABELS,
@@ -20,28 +17,6 @@ import SessionCompleteOverlay, { type OverlaySession } from './SessionCompleteOv
 
 const STORAGE_KEY = 'noetic_focus'
 
-const MODE_CONFIG: Record<FocusMode, {
-  icon: typeof Target; color: string; glow: string; ring: string
-  btnClass: string; bg: string
-}> = {
-  focus: {
-    icon: Target, color: 'text-indigo-400', glow: 'rgba(99,102,241,0.55)', ring: '#6366f1',
-    btnClass: 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-900/40', bg: 'from-indigo-950/40 to-violet-950/30',
-  },
-  deep_focus: {
-    icon: Brain, color: 'text-violet-400', glow: 'rgba(139,92,246,0.55)', ring: '#8b5cf6',
-    btnClass: 'bg-violet-600 hover:bg-violet-500 shadow-violet-900/40', bg: 'from-violet-950/40 to-purple-950/30',
-  },
-  study: {
-    icon: BookOpen, color: 'text-blue-400', glow: 'rgba(59,130,246,0.55)', ring: '#3b82f6',
-    btnClass: 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/40', bg: 'from-blue-950/40 to-sky-950/30',
-  },
-  ambient: {
-    icon: Wind, color: 'text-emerald-400', glow: 'rgba(16,185,129,0.55)', ring: '#10b981',
-    btnClass: 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-900/40', bg: 'from-emerald-950/40 to-teal-950/30',
-  },
-}
-
 const AMBIENT_ICONS: Record<AmbientSound, typeof CloudRain> = {
   rain: CloudRain, white_noise: Volume2, library: Library, none: VolumeX,
 }
@@ -49,77 +24,31 @@ const AMBIENT_ICONS: Record<AmbientSound, typeof CloudRain> = {
 function pad(n: number) { return String(n).padStart(2, '0') }
 function fmt(s: number) { return `${pad(Math.floor(s / 60))}:${pad(s % 60)}` }
 
-function CircularProgress({
-  progress, color, glow, size = 240, strokeWidth = 8, isRunning,
-}: {
-  progress: number; color: string; glow: string
-  size?: number; strokeWidth?: number; isRunning: boolean
-}) {
-  const r = (size - strokeWidth * 2) / 2
-  const circ = 2 * Math.PI * r
-  const offset = circ * (1 - Math.max(0, Math.min(1, progress)))
-  const cx = size / 2
+const RING_SIZE   = 260
+const RING_STROKE = 2
+const RING_R      = 125
 
+/** Thin progress ring — accent on a dark track. No glow. */
+function Ring({ progress }: { progress: number }) {
+  const circ   = 2 * Math.PI * RING_R
+  const offset = circ * (1 - Math.max(0, Math.min(1, progress)))
+  const c      = RING_SIZE / 2
   return (
-    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <defs>
-        <filter id="focus-ring-glow" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-      {isRunning && (
-        <circle
-          cx={cx} cy={cx} r={r + strokeWidth + 4}
-          fill="none" stroke={color} strokeWidth={1.5} opacity={0.2}
-          style={{ animation: 'ring-pulse 2s ease-in-out infinite' }}
-        />
-      )}
-      <circle cx={cx} cy={cx} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={strokeWidth} />
+    <svg width={RING_SIZE} height={RING_SIZE} className="-rotate-90" aria-hidden>
+      <circle cx={c} cy={c} r={RING_R} fill="none" strokeWidth={RING_STROKE} className="stroke-dark-border" />
       <circle
-        cx={cx} cy={cx} r={r}
-        fill="none" stroke={color} strokeWidth={strokeWidth}
-        strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
-        filter={isRunning ? 'url(#focus-ring-glow)' : undefined}
-        style={{
-          transition: 'stroke-dashoffset 0.4s linear, stroke 0.5s ease',
-          filter: `drop-shadow(0 0 ${isRunning ? 8 : 3}px ${glow})`,
-        }}
+        cx={c} cy={c} r={RING_R}
+        fill="none" strokeWidth={RING_STROKE} strokeLinecap="round"
+        strokeDasharray={circ} strokeDashoffset={offset}
+        className="stroke-accent transition-[stroke-dashoffset] duration-[400ms] ease-linear"
       />
     </svg>
   )
 }
 
-function XpToast({ xp, levelUp, onClose }: { xp: number; levelUp: boolean; onClose: () => void }) {
-  useEffect(() => { const t = setTimeout(onClose, 4000); return () => clearTimeout(t) }, [onClose])
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 48, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 24, scale: 0.95 }}
-      transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-      className="fixed bottom-6 right-6 z-40"
-    >
-      <div className="bg-gray-950 border border-white/10 text-white rounded-2xl px-5 py-4 shadow-2xl shadow-black/60 flex items-center gap-3 min-w-[220px]">
-        <motion.div
-          initial={{ scale: 0, rotate: -30 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 20, delay: 0.1 }}
-          className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-yellow-900/40"
-        >
-          {levelUp ? <Star className="w-5 h-5 text-yellow-900" /> : <Zap className="w-5 h-5 text-yellow-900" />}
-        </motion.div>
-        <div>
-          {levelUp && <p className="text-[10px] text-yellow-400 font-bold uppercase tracking-wider mb-0.5">Level up! 🎉</p>}
-          <p className="text-sm font-bold">+{xp} XP earned</p>
-        </div>
-      </div>
-    </motion.div>
-  )
-}
+const selectClass =
+  'h-9 w-full rounded-md bg-dark-secondary border border-dark-border px-3 text-sm text-dark-text [color-scheme:dark] ' +
+  'focus:outline-none focus:border-accent disabled:opacity-50 disabled:cursor-not-allowed'
 
 export default function FocusTimer() {
   const { notify } = useGamification()
@@ -142,7 +71,6 @@ export default function FocusTimer() {
   const [tasks, setTasks]             = useState<DailyTaskWithTemplate[]>([])
   const [linkedTaskId, setLinkedTaskId] = useState<string | null>(null)
 
-  const [toast, setToast]             = useState<{ xp: number; levelUp: boolean } | null>(null)
   const [overlaySession, setOverlaySession] = useState<OverlaySession | null>(null)
   const [hydrated, setHydrated]       = useState(false)
 
@@ -298,6 +226,7 @@ export default function FocusTimer() {
     const sessionId = activeIdRef.current
     if (!sessionId) return
 
+    let xpEarned: number | undefined
     try {
       const res = await fetch('/api/pomodoro/complete', {
         method: 'POST',
@@ -306,11 +235,11 @@ export default function FocusTimer() {
       })
       if (res.ok) {
         const data: CompleteSessionResponse & { new_achievements?: string[] } = await res.json()
-        setToast({ xp: data.xp_earned, levelUp: data.level_up })
+        xpEarned = data.xp_earned
         notify({ newAchievements: data.new_achievements ?? [], levelUp: data.level_up, newLevel: data.level })
       }
     } finally {
-      setOverlaySession({ sessionId, subjectName, topicName, durationSeconds: elapsedSeconds })
+      setOverlaySession({ sessionId, subjectName, topicName, durationSeconds: elapsedSeconds, xpEarned })
     }
   }, [persist, notify, subjectName, topicName])
 
@@ -415,249 +344,198 @@ export default function FocusTimer() {
 
   const total    = totalSecondsRef.current
   const progress = total > 0 ? secondsLeft / total : 0
-  const cfg      = MODE_CONFIG[mode]
   const isRunning = timerStatus === 'running'
   const isPaused  = timerStatus === 'paused'
   const isIdle    = timerStatus === 'idle'
   const locked    = !isIdle
   const currentSubject = subjects.find(s => s.id === subjectId)
 
+  const ghostBtn = 'inline-flex items-center gap-2 h-10 px-5 rounded-md text-base font-medium transition-colors duration-[160ms]'
+
   return (
     <>
-      <div className="flex flex-col gap-4 max-w-xl mx-auto">
-        {/* ── Main timer card ────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 340, damping: 30 }}
-          className="relative overflow-hidden rounded-2xl border border-white/[0.08] p-6 flex flex-col items-center gap-6 bg-gradient-to-br from-gray-950 to-gray-900"
-        >
-          <div className={cn('absolute inset-0 bg-gradient-to-br opacity-40 pointer-events-none', cfg.bg)} />
+      <div className="max-w-md mx-auto flex flex-col items-center">
+        {/* ── Mode ───────────────────────────────────────────── */}
+        <div className="inline-flex gap-0.5 rounded-md bg-dark-secondary p-1" role="tablist" aria-label="Mod">
+          {(Object.keys(FOCUS_MODE_LABELS) as FocusMode[]).map(m => (
+            <button
+              key={m}
+              role="tab"
+              aria-selected={mode === m}
+              onClick={() => changeMode(m)}
+              disabled={locked}
+              className={cn(
+                'px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-[160ms] disabled:cursor-not-allowed',
+                mode === m ? 'bg-dark-border text-white' : 'text-dark-text-muted hover:text-dark-text-secondary',
+              )}
+            >
+              {FOCUS_MODE_LABELS[m]}
+            </button>
+          ))}
+        </div>
 
-          {/* Mode tabs — the selected mode shown at the top of the screen */}
-          <div className="relative z-10 flex bg-white/[0.06] rounded-xl p-1 gap-0.5 w-full border border-white/[0.07]">
-            {(Object.keys(FOCUS_MODE_LABELS) as FocusMode[]).map(m => {
-              const Icon = MODE_CONFIG[m].icon
-              return (
-                <button
-                  key={m}
-                  onClick={() => changeMode(m)}
-                  disabled={locked}
-                  className={cn(
-                    'relative flex-1 flex items-center justify-center gap-1.5 text-[11px] font-semibold py-2.5 rounded-lg transition-all duration-200 z-10',
-                    mode === m ? 'text-white' : 'text-white/30 hover:text-white/55 disabled:cursor-not-allowed'
-                  )}
-                >
-                  {mode === m && (
-                    <motion.div
-                      layoutId="focus-mode-tab"
-                      className="absolute inset-0 bg-white/10 rounded-lg border border-white/10"
-                      transition={{ type: 'spring', stiffness: 420, damping: 36 }}
-                    />
-                  )}
-                  <Icon className="w-3.5 h-3.5 relative z-10" />
-                  <span className="relative z-10">{FOCUS_MODE_LABELS[m]}</span>
-                </button>
-              )
-            })}
+        {/* ── Timer ──────────────────────────────────────────── */}
+        <div className="relative mt-10">
+          <Ring progress={progress} />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span
+              className={cn(
+                'tabular font-light leading-none tracking-[-0.02em] text-dark-text',
+                // 100+ minute custom sessions have a 3-digit minute field
+                secondsLeft >= 6000 ? 'text-[56px]' : 'text-[72px]',
+              )}
+            >
+              {fmt(secondsLeft)}
+            </span>
           </div>
+        </div>
 
-          <div className="relative z-10">
-            <CircularProgress
-              progress={progress} color={cfg.ring} glow={cfg.glow}
-              size={240} strokeWidth={7} isRunning={isRunning}
-            />
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
-              <motion.span
-                key={secondsLeft > total ? total : undefined}
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 26 }}
-                className={cn('text-hero font-black tabular tracking-[-0.04em]', cfg.color)}
-              >
-                {fmt(secondsLeft)}
-              </motion.span>
-              <span className="text-xs text-white/40 font-medium text-center px-4 max-w-[220px] truncate">
-                {topicName ? `${subjectName ?? ''}${subjectName ? ' — ' : ''}${topicName}` : subjectName ?? 'No subject selected'}
-              </span>
-              {isRunning && (
-                <div className="flex gap-1.5 mt-1">
-                  {[0, 150, 300].map(delay => (
-                    <span
-                      key={delay}
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{ background: cfg.ring, animation: `bounce 1s ease-in-out ${delay}ms infinite` }}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Controls */}
-          <div className="relative z-10 flex items-center gap-3">
-            <AnimatePresence mode="wait">
-              {isIdle && (
-                <motion.button key="start"
-                  initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
-                  whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.95 }}
-                  transition={{ type: 'spring', stiffness: 420, damping: 24 }}
-                  onClick={handleStart}
-                  className={cn('flex items-center gap-2.5 px-10 py-3.5 rounded-xl text-white font-bold text-sm shadow-lg transition-all', cfg.btnClass)}
-                >
-                  <Play className="w-4 h-4 fill-current" />START
-                </motion.button>
-              )}
-              {isRunning && (
-                <motion.div key="running-controls" className="flex items-center gap-3"
-                  initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ type: 'spring', stiffness: 420, damping: 24 }}
-                >
-                  <button onClick={handlePause}
-                    className="flex items-center gap-2.5 px-8 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 shadow-lg shadow-amber-900/40 text-white font-bold text-sm transition-all"
-                  >
-                    <Pause className="w-4 h-4 fill-current" />PAUSE
-                  </button>
-                  <button onClick={handleFinish}
-                    className="flex items-center gap-2.5 px-8 py-3.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-white font-bold text-sm transition-all"
-                  >
-                    <Square className="w-3.5 h-3.5 fill-current" />FINISH
-                  </button>
-                </motion.div>
-              )}
-              {isPaused && (
-                <motion.div key="paused-controls" className="flex items-center gap-3"
-                  initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ type: 'spring', stiffness: 420, damping: 24 }}
-                >
-                  <button onClick={handleResume}
-                    className={cn('flex items-center gap-2.5 px-8 py-3.5 rounded-xl text-white font-bold text-sm shadow-lg transition-all', cfg.btnClass)}
-                  >
-                    <Play className="w-4 h-4 fill-current" />RESUME
-                  </button>
-                  <button onClick={handleFinish}
-                    className="flex items-center gap-2.5 px-8 py-3.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-white font-bold text-sm transition-all"
-                  >
-                    <Square className="w-3.5 h-3.5 fill-current" />FINISH
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
+        <div className="mt-5 text-center min-h-[42px] max-w-full">
+          <p className="text-[16px] leading-6 font-medium text-dark-text-secondary truncate">
+            {subjectName ?? 'No subject selected'}
+          </p>
+          {topicName && <p className="text-base text-dark-text-muted truncate">{topicName}</p>}
+        </div>
 
         {/* ── Duration ───────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-border p-4 shadow-sm">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">Duration</p>
-          <div className="flex gap-2">
-            {FOCUS_DURATION_OPTIONS.map(opt => (
+        <div className="mt-6 flex items-center gap-2 text-base" aria-label="Süre">
+          {FOCUS_DURATION_OPTIONS.map((opt, i) => (
+            <span key={String(opt.value)} className="flex items-center gap-2">
+              {i > 0 && <span aria-hidden className="text-dark-border">/</span>}
               <button
-                key={String(opt.value)}
                 onClick={() => changeDuration(opt.value)}
                 disabled={locked}
+                aria-pressed={duration === opt.value}
                 className={cn(
-                  'flex-1 text-center py-2.5 rounded-xl border text-xs font-bold transition-all disabled:cursor-not-allowed disabled:opacity-50',
+                  'transition-colors duration-[160ms] disabled:cursor-not-allowed',
+                  opt.value !== 'custom' && 'tabular',
                   duration === opt.value
-                    ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                    : 'bg-gray-50/50 border-border text-gray-500 hover:border-gray-300',
+                    ? 'text-dark-accent'
+                    : 'text-dark-text-muted hover:text-dark-text-secondary disabled:hover:text-dark-text-muted',
                 )}
               >
-                {opt.label}
+                {opt.value === 'custom' ? 'Custom' : opt.value}
               </button>
-            ))}
-          </div>
+            </span>
+          ))}
           {duration === 'custom' && (
-            <div className="flex items-center gap-2 mt-3">
+            <span className="flex items-center gap-1.5 ml-2">
               <input
                 type="number" min={5} max={180}
                 value={customMinutes}
                 disabled={locked}
+                aria-label="Özel süre (dakika)"
                 onChange={e => changeCustomMinutes(Math.max(5, Math.min(180, Number(e.target.value) || 5)))}
-                className="w-24 text-sm bg-gray-50/50 border border-border rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 disabled:opacity-50"
+                className="w-16 h-8 rounded-md bg-dark-secondary border border-dark-border px-2 text-sm tabular text-dark-text focus:outline-none focus:border-accent disabled:opacity-50"
               />
-              <span className="text-xs text-muted-foreground">minutes</span>
-            </div>
+              <span className="text-sm text-dark-text-muted">min</span>
+            </span>
           )}
         </div>
 
-        {/* ── Subject / Topic ────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-border p-4 shadow-sm">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">Subject &amp; Topic</p>
-          <div className="grid grid-cols-2 gap-2">
-            <select
-              value={subjectId ?? ''}
-              onChange={e => changeSubject(e.target.value || null)}
-              disabled={locked}
-              className="text-sm bg-gray-50/50 border border-border rounded-lg px-3 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 disabled:opacity-50"
-            >
-              <option value="">— Subject</option>
-              {subjects.map(s => (
-                <option key={s.id} value={s.id}>{s.icon} {s.name}</option>
-              ))}
-            </select>
-            <select
-              value={topicId ?? ''}
-              onChange={e => changeTopic(e.target.value || null)}
-              disabled={locked || !subjectId}
-              className="text-sm bg-gray-50/50 border border-border rounded-lg px-3 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 disabled:opacity-50"
-            >
-              <option value="">— Topic</option>
-              {(currentSubject?.topics ?? []).map(t => (
-                <option key={t.id} value={t.id}>{t.title}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* ── Ambient sound ──────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-border p-4 shadow-sm">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">Ambient Sound</p>
-          <div className="flex gap-2">
-            {(Object.keys(AMBIENT_SOUND_LABELS) as AmbientSound[]).map(a => {
-              const Icon = AMBIENT_ICONS[a]
-              return (
-                <button
-                  key={a}
-                  onClick={() => changeAmbient(a)}
-                  className={cn(
-                    'flex-1 flex flex-col items-center gap-1.5 py-2.5 rounded-xl border text-[10px] font-semibold transition-all',
-                    ambient === a
-                      ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                      : 'bg-gray-50/50 border-border text-gray-500 hover:border-gray-300',
-                  )}
-                >
-                  <Icon className="w-4 h-4" />
-                  {AMBIENT_SOUND_LABELS[a]}
+        {/* ── Controls ───────────────────────────────────────── */}
+        <div className="mt-8 flex items-center gap-3 min-h-10">
+          <AnimatePresence mode="wait" initial={false}>
+            {isIdle && (
+              <motion.button
+                key="start"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.12 }}
+                onClick={handleStart}
+                className={cn(ghostBtn, 'px-6 bg-accent hover:bg-accent-dark text-white')}
+              >
+                <Play className="size-4 fill-current" /> Start
+              </motion.button>
+            )}
+            {(isRunning || isPaused) && (
+              <motion.div
+                key={isRunning ? 'running' : 'paused'}
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.12 }}
+                className="flex items-center gap-3"
+              >
+                {isRunning ? (
+                  <button onClick={handlePause} className={cn(ghostBtn, 'border border-dark-border text-dark-text hover:bg-white/[0.06]')}>
+                    <Pause className="size-4" /> Pause
+                  </button>
+                ) : (
+                  <button onClick={handleResume} className={cn(ghostBtn, 'bg-accent hover:bg-accent-dark text-white')}>
+                    <Play className="size-4 fill-current" /> Resume
+                  </button>
+                )}
+                <button onClick={handleFinish} className={cn(ghostBtn, 'text-dark-text-secondary hover:text-danger hover:bg-white/[0.04]')}>
+                  <Square className="size-3.5" /> Finish
                 </button>
-              )
-            })}
-          </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* ── Optional task link ─────────────────────────────── */}
-        {tasks.length > 0 && (
-          <div className="bg-white rounded-2xl border border-border p-4 shadow-sm">
-            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">Link a Task (optional)</p>
+        {/* ── Subject / topic / task ─────────────────────────── */}
+        <div className="mt-10 w-full grid grid-cols-2 gap-2">
+          <select
+            value={subjectId ?? ''}
+            onChange={e => changeSubject(e.target.value || null)}
+            disabled={locked}
+            aria-label="Ders"
+            className={selectClass}
+          >
+            <option value="">— Subject</option>
+            {subjects.map(s => (
+              <option key={s.id} value={s.id}>{s.icon} {s.name}</option>
+            ))}
+          </select>
+          <select
+            value={topicId ?? ''}
+            onChange={e => changeTopic(e.target.value || null)}
+            disabled={locked || !subjectId}
+            aria-label="Konu"
+            className={selectClass}
+          >
+            <option value="">— Topic</option>
+            {(currentSubject?.topics ?? []).map(t => (
+              <option key={t.id} value={t.id}>{t.title}</option>
+            ))}
+          </select>
+          {tasks.length > 0 && (
             <select
               value={linkedTaskId ?? ''}
               onChange={e => { setLinkedTaskId(e.target.value || null); persist({ linkedTaskId: e.target.value || null }) }}
               disabled={locked}
-              className="w-full text-sm bg-gray-50/50 border border-border rounded-lg px-3 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 disabled:opacity-50"
+              aria-label="Görev bağla (isteğe bağlı)"
+              className={cn(selectClass, 'col-span-2')}
             >
-              <option value="">— None</option>
+              <option value="">— Link a task (optional)</option>
               {tasks.map(t => (
                 <option key={t.id} value={t.id}>
                   {t.task_templates.subject} — {t.task_templates.title}
                 </option>
               ))}
             </select>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      <AnimatePresence>
-        {toast && <XpToast xp={toast.xp} levelUp={toast.levelUp} onClose={() => setToast(null)} />}
-      </AnimatePresence>
+        {/* ── Ambient sound ──────────────────────────────────── */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2" aria-label="Ortam sesi">
+          {(Object.keys(AMBIENT_SOUND_LABELS) as AmbientSound[]).map(a => {
+            const Icon = AMBIENT_ICONS[a]
+            return (
+              <button
+                key={a}
+                onClick={() => changeAmbient(a)}
+                aria-pressed={ambient === a}
+                className={cn(
+                  'flex items-center gap-1.5 text-xs font-medium transition-colors duration-[160ms]',
+                  ambient === a ? 'text-dark-text' : 'text-dark-text-muted hover:text-dark-text-secondary',
+                )}
+              >
+                <Icon className="size-3.5" />
+                {AMBIENT_SOUND_LABELS[a]}
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
       {overlaySession && (
         <SessionCompleteOverlay

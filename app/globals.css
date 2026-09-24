@@ -247,6 +247,8 @@ body {
     --color-dark-text:           var(--dark-text);
     --color-dark-text-secondary: var(--dark-text-secondary);
     --color-dark-accent:         var(--dark-accent);
+    --color-dark-canvas:         var(--dark-canvas);
+    --color-dark-text-muted:     var(--dark-text-muted);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -318,6 +320,8 @@ body {
     --dark-text:           #F5F5F2;
     --dark-text-secondary: #A4A6AD;
     --dark-accent:         #7B93FF;
+    --dark-canvas:         #0D0F13; /* Focus Lab page */
+    --dark-text-muted:     #6B6E78;
 
     /* ── Motion ───────────────── */
     --motion-fast:     120ms;

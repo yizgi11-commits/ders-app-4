@@ -52,6 +52,11 @@ export function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
+/** Pages that render on the dark canvas — the header and mobile tab bar switch to dark there too. */
+export function isDarkRoute(pathname: string): boolean {
+  return isActive(pathname, '/dashboard/focus')
+}
+
 const EXTRA_TITLES: { href: string; label: string }[] = [
   { href: '/dashboard/insights/weekly-review', label: 'Weekly Review' },
   { href: '/dashboard/upgrade',                label: 'Upgrade' },

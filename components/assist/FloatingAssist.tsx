@@ -139,7 +139,7 @@ export default function FloatingAssist({ tier }: { tier: SubscriptionTier }) {
             onClick={() => open()}
             aria-label="Noetic Assist'i aç"
             title="Noetic Assist"
-            className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-40 size-10 rounded-full bg-dark-base text-white shadow-md flex items-center justify-center transition-transform duration-[160ms] hover:scale-105"
+            className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-40 size-10 rounded-full bg-dark-base text-white shadow-md ring-1 ring-white/10 flex items-center justify-center transition-transform duration-[160ms] hover:scale-105"
           >
             <Sparkles className="size-4" />
           </motion.button>

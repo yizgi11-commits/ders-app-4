@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MoreHorizontal, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { EASE_CURVE } from '@/lib/motion'
-import { MOBILE_PRIMARY, MOBILE_MORE, isActive } from './nav'
+import { MOBILE_PRIMARY, MOBILE_MORE, isActive, isDarkRoute } from './nav'
 
 // Bottom tab bar (below lg). Four primary destinations + "More", which
 // opens a sheet with the remaining pages.
@@ -25,14 +25,20 @@ export default function MobileNav() {
   }, [moreOpen])
 
   const moreActive = MOBILE_MORE.some(i => isActive(pathname, i.href))
+  const dark = isDarkRoute(pathname)
   const tabClass = (active: boolean) => cn(
     'flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors duration-[160ms]',
-    active ? 'text-accent' : 'text-text-muted',
+    dark
+      ? (active ? 'text-dark-accent' : 'text-dark-text-muted')
+      : (active ? 'text-accent' : 'text-text-muted'),
   )
 
   return (
     <>
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-border pb-[env(safe-area-inset-bottom)]">
+      <nav className={cn(
+        'lg:hidden fixed bottom-0 inset-x-0 z-40 border-t pb-[env(safe-area-inset-bottom)]',
+        dark ? 'bg-dark-canvas border-dark-border' : 'bg-surface border-border',
+      )}>
         <div className="h-14 grid grid-cols-5">
           {MOBILE_PRIMARY.map(({ href, label, icon: Icon }) => {
             const active = isActive(pathname, href)
