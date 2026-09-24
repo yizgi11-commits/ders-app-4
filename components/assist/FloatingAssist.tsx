@@ -1,28 +1,24 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, X } from 'lucide-react'
 import { useAssist } from './AssistProvider'
 import { contextFromPathname, sectionOf, type AssistSection } from '@/lib/assist/types'
+import { pageTitle } from '@/components/dashboard/nav'
 import type { SubscriptionTier } from '@/lib/subscription'
 import AssistConversation from './AssistConversation'
 import AtlasAssistPanel from './AtlasAssistPanel'
 import NoeticAssist from '@/components/vault/NoeticAssist'
 
-const SECTION_LABEL: Record<AssistSection, string> = {
-  atlas:    'Atlas',
-  planner:  'Planner',
-  vault:    'Vault',
-  insights: 'Insights',
-  other:    'Noetic',
-}
-
 export default function FloatingAssist({ tier }: { tier: SubscriptionTier }) {
   const pathname = usePathname()
   const { isOpen, override, open, close, setOverride } = useAssist()
   const prevSection = useRef<AssistSection>(sectionOf(pathname))
+  // "Subject / Topic" reported by AtlasAssistPanel once it has loaded the names.
+  const [atlasLabel, setAtlasLabel] = useState<string | null>(null)
+  useEffect(() => { setAtlasLabel(null) }, [pathname])
 
   // Drop a stale Vault override (open note/document) once the user leaves Vault.
   useEffect(() => {
@@ -39,12 +35,22 @@ export default function FloatingAssist({ tier }: { tier: SubscriptionTier }) {
   // only honored while the user is still somewhere under /dashboard/vault.
   const context = (override && section === 'vault') ? override : contextFromPathname(pathname)
 
+  function contextLabel(): string {
+    switch (context.kind) {
+      case 'atlas-topic':
+      case 'atlas-subject':  return atlasLabel ?? 'Atlas'
+      case 'vault-note':
+      case 'vault-document': return `Vault / ${context.title}`
+      default:               return pageTitle(pathname)
+    }
+  }
+
   function renderBody() {
     switch (context.kind) {
       case 'atlas-topic':
-        return <AtlasAssistPanel subjectId={context.subjectId} topicId={context.topicId} tier={tier} />
+        return <AtlasAssistPanel subjectId={context.subjectId} topicId={context.topicId} tier={tier} onContextLabel={setAtlasLabel} />
       case 'atlas-subject':
-        return <AtlasAssistPanel subjectId={context.subjectId} tier={tier} />
+        return <AtlasAssistPanel subjectId={context.subjectId} tier={tier} onContextLabel={setAtlasLabel} />
       case 'atlas':
         return (
           <AssistConversation
@@ -113,7 +119,7 @@ export default function FloatingAssist({ tier }: { tier: SubscriptionTier }) {
         return (
           <AssistConversation
             pageContext={context}
-            introText="Bir sorun mu var? Sorabilirsin."
+            introText="Assist bulunduğun sayfaya göre çalışır: Atlas'ta konuyu açıklar, Planner'da plan önerir, Vault'ta notlarını özetler."
             tier={tier}
           />
         )
@@ -122,20 +128,20 @@ export default function FloatingAssist({ tier }: { tier: SubscriptionTier }) {
 
   return (
     <>
-      {/* Floating trigger */}
+      {/* Floating trigger — sits above the mobile tab bar below lg */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
-            initial={{ opacity: 0, scale: 0.8, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 12 }}
-            whileHover={{ scale: 1.04, y: -2 }}
-            whileTap={{ scale: 0.96 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16 }}
             onClick={() => open()}
-            className="fixed bottom-5 right-5 z-40 flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold text-sm pl-3.5 pr-4 py-3 rounded-full shadow-xl shadow-black/20"
+            aria-label="Noetic Assist'i aç"
+            title="Noetic Assist"
+            className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-40 size-10 rounded-full bg-dark-base text-white shadow-md flex items-center justify-center transition-transform duration-[160ms] hover:scale-105"
           >
-            <Sparkles className="w-4 h-4 text-indigo-300" />
-            Assist
+            <Sparkles className="size-4" />
           </motion.button>
         )}
       </AnimatePresence>
@@ -156,21 +162,20 @@ export default function FloatingAssist({ tier }: { tier: SubscriptionTier }) {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', stiffness: 380, damping: 38 }}
-              className="fixed top-0 right-0 bottom-0 z-50 w-full sm:w-[380px] bg-white shadow-2xl flex flex-col"
+              className="fixed top-0 right-0 bottom-0 z-50 w-full sm:w-[360px] bg-surface border-l border-border shadow-lg flex flex-col"
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3.5 border-b border-border shrink-0">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-7 h-7 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center shrink-0">
-                    <Sparkles className="w-3.5 h-3.5 text-white" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-gray-900 leading-tight">Noetic Assist</p>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{SECTION_LABEL[section]}</p>
-                  </div>
+              <div className="flex items-start justify-between gap-3 px-4 py-3.5 border-b border-border shrink-0">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium tracking-[0.08em] text-text">NOETIC ASSIST</p>
+                  <p className="text-sm text-text-muted truncate mt-0.5">Bağlam: {contextLabel()}</p>
                 </div>
-                <button onClick={close} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors shrink-0">
-                  <X className="w-4 h-4 text-gray-400" />
+                <button
+                  onClick={close}
+                  aria-label="Kapat"
+                  className="p-1.5 -mr-1.5 rounded-md text-text-secondary hover:text-text hover:bg-surface-subtle transition-colors duration-[160ms] shrink-0"
+                >
+                  <X className="size-4" />
                 </button>
               </div>
 

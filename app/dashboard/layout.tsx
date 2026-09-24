@@ -4,6 +4,7 @@ import { getUserTier } from '@/lib/subscription'
 import { trackDailyLogin } from '@/lib/analytics/track'
 import Sidebar from '@/components/dashboard/Sidebar'
 import Header from '@/components/dashboard/Header'
+import MobileNav from '@/components/dashboard/MobileNav'
 import PageTransition from '@/components/dashboard/PageTransition'
 import GamificationProvider from '@/components/gamification/GamificationProvider'
 import AssistProvider from '@/components/assist/AssistProvider'
@@ -35,8 +36,7 @@ export default async function DashboardLayout({
     redirect('/onboarding')
   }
 
-  const ad    = user.user_metadata?.ad ?? user.email?.split('@')[0] ?? 'Öğrenci'
-  const email = user.email ?? ''
+  const ad = user.user_metadata?.ad ?? user.email?.split('@')[0] ?? 'Öğrenci'
 
   void trackDailyLogin(supabase, user.id)
 
@@ -44,14 +44,17 @@ export default async function DashboardLayout({
     <GamificationProvider>
       <AssistProvider>
         <div className="flex min-h-screen bg-background">
-          <Sidebar tier={tier} />
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <Header userName={ad} userEmail={email} />
-            <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
+          <Sidebar tier={tier} userName={ad} />
+          {/* overflow-x-clip (not hidden) so the sticky header still sticks to the window */}
+          <div className="flex-1 flex flex-col min-w-0 overflow-x-clip">
+            <Header userName={ad} />
+            {/* Extra bottom padding below lg clears the fixed mobile tab bar */}
+            <main className="flex-1 p-4 pb-24 lg:p-6">
               <PageTransition>{children}</PageTransition>
             </main>
           </div>
         </div>
+        <MobileNav />
         <FloatingAssist tier={tier} />
       </AssistProvider>
     </GamificationProvider>

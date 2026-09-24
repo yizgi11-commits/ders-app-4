@@ -91,8 +91,36 @@ export default function AssistConversation({
     <div className="flex flex-col h-full">
       {/* Thread / intro */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        {/* Contextual actions come first — before any intro copy */}
+        {!hasThread && quickActions.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {quickActions.map((qa, i) => (
+              qa.type === 'prompt' ? (
+                <button
+                  key={i}
+                  onClick={() => send(qa.prompt)}
+                  disabled={loading}
+                  className="w-full text-left text-base font-medium text-text bg-surface hover:bg-surface-subtle border border-border rounded-md px-3 py-2.5 transition-colors duration-[160ms] disabled:opacity-50"
+                >
+                  {qa.label}
+                </button>
+              ) : (
+                <button
+                  key={i}
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="w-full flex items-center gap-1.5 text-left text-base font-medium text-text-secondary bg-surface hover:bg-surface-subtle border border-border rounded-md px-3 py-2.5 transition-colors duration-[160ms] disabled:opacity-50"
+                >
+                  {saving ? <Loader2 className="size-3.5 animate-spin" /> : <BookmarkPlus className="size-3.5" />}
+                  {qa.label}
+                </button>
+              )
+            ))}
+          </div>
+        )}
+
         {!hasThread && (
-          <p className="text-sm text-gray-600 leading-relaxed">{introText}</p>
+          <p className="text-sm text-text-secondary leading-relaxed">{introText}</p>
         )}
 
         {messages.map(m => (
@@ -121,34 +149,6 @@ export default function AssistConversation({
           <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">{error}</p>
         )}
       </div>
-
-      {/* Quick actions — only before the thread starts */}
-      {!hasThread && quickActions.length > 0 && (
-        <div className="px-4 pb-3 flex flex-col gap-2">
-          {quickActions.map((qa, i) => (
-            qa.type === 'prompt' ? (
-              <button
-                key={i}
-                onClick={() => send(qa.prompt)}
-                disabled={loading}
-                className="w-full text-left text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-xl px-3.5 py-2.5 transition-colors disabled:opacity-50"
-              >
-                {qa.label}
-              </button>
-            ) : (
-              <button
-                key={i}
-                onClick={handleSave}
-                disabled={saving}
-                className="w-full flex items-center justify-center gap-1.5 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-border rounded-xl px-3.5 py-2.5 transition-colors disabled:opacity-50"
-              >
-                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
-                {qa.label}
-              </button>
-            )
-          ))}
-        </div>
-      )}
 
       {/* Post-thread actions: reset + save-last-answer */}
       {hasThread && (

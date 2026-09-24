@@ -10,10 +10,16 @@ interface Props {
   subjectId: string
   topicId?:  string
   tier:      SubscriptionTier
+  /** Reports "Subject / Topic" once names load — shown in the drawer header. */
+  onContextLabel?: (label: string) => void
 }
 
-export default function AtlasAssistPanel({ subjectId, topicId, tier }: Props) {
+export default function AtlasAssistPanel({ subjectId, topicId, tier, onContextLabel }: Props) {
   const [names, setNames] = useState<{ subjectName: string; topicTitle: string | null } | null>(null)
+
+  useEffect(() => {
+    if (names) onContextLabel?.(names.topicTitle ? `${names.subjectName} / ${names.topicTitle}` : names.subjectName)
+  }, [names, onContextLabel])
 
   useEffect(() => {
     let cancelled = false
