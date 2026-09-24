@@ -48,8 +48,8 @@ export default async function DashboardLayout({
           {/* overflow-x-clip (not hidden) so the sticky header still sticks to the window */}
           <div className="flex-1 flex flex-col min-w-0 overflow-x-clip">
             <Header userName={ad} />
-            {/* Extra bottom padding below lg clears the fixed mobile tab bar */}
-            <main className="flex-1 p-4 pb-24 lg:p-6">
+            {/* Extra bottom padding clears the fixed mobile tab bar (below lg) and the Assist button */}
+            <main className="flex-1 p-4 pb-24 lg:p-6 lg:pb-20">
               <PageTransition>{children}</PageTransition>
             </main>
           </div>

@@ -3,12 +3,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Flame, CheckCircle2, Circle, Loader2, Zap, PartyPopper, Star,
-  Timer, Plus, Brain, CalendarClock, ArrowRight, GraduationCap,
-  BookOpen, CalendarDays, Sparkles,
-} from 'lucide-react'
+import { Check, Loader2, Zap, Star, PartyPopper, ArrowRight, Plus, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { fadeIn, EASE_CURVE } from '@/lib/motion'
 import { useGamification } from '@/components/gamification/GamificationProvider'
 import type {
   DailyTaskWithTemplate, CompleteTaskResponse, UserStreak,
@@ -16,7 +13,7 @@ import type {
 import type { FlashcardWithSubject } from '@/lib/flashcards/types'
 import type { Exam, PlannerTask } from '@/lib/planner/types'
 import {
-  computeNextAction, startSessionHref, mergeTodayTasks,
+  computeNextAction, mergeTodayTasks,
   type NextAction, type TodayTask,
 } from '@/lib/dashboard/command-center'
 import type { LearningScoreResponse } from '@/lib/dashboard/learning-score'
@@ -61,31 +58,81 @@ const EMPTY_STREAK: UserStreak = {
   user_id: '', current_streak: 0, longest_streak: 0, last_streak_date: null, updated_at: '',
 }
 
+// ── Presentation helpers ──────────────────
+const plural = (n: number, one: string, many: string) => (n === 1 ? one : many)
+
+function relativeDays(days: number): string {
+  if (days <= 0) return 'Today'
+  if (days === 1) return 'Tomorrow'
+  return `${days} days`
+}
+
+/**
+ * Splits the chosen next action into a title + "subject · duration" line.
+ * Which action wins is still decided by computeNextAction().
+ */
+function nextActionDisplay(
+  action: NextAction,
+  ctx: {
+    reviewsDue:  number
+    reviewHint:  ReviewHint | null
+    nearestExam: { name: string; daysAway: number } | null
+    task:        TodayTask | null
+  },
+): { title: string; meta: string } {
+  switch (action.kind) {
+    case 'review': {
+      const minutes = ctx.reviewHint?.estimatedMinutes ?? 10
+      return {
+        title: ctx.reviewHint?.topicTitle ? `Review ${ctx.reviewHint.topicTitle}` : 'Review your cards',
+        meta:  `Recall · ${ctx.reviewsDue} ${plural(ctx.reviewsDue, 'card', 'cards')} · ~${minutes} min`,
+      }
+    }
+    case 'exam':
+      return {
+        title: `Prepare for ${ctx.nearestExam?.name ?? 'your exam'}`,
+        meta:  `Exam · ${relativeDays(ctx.nearestExam?.daysAway ?? 0)}`,
+      }
+    case 'task':
+      return ctx.task
+        ? { title: ctx.task.title, meta: `${ctx.task.subject} · ${ctx.task.minutes} min` }
+        : { title: action.text, meta: '' }
+    case 'focus':
+      return { title: 'Start a focus session', meta: 'Nothing studied yet today' }
+    case 'plan':
+      return { title: 'Plan tomorrow', meta: 'Today’s work is done' }
+  }
+}
+
+/** Written uppercase on purpose — CSS `uppercase` under lang="tr" turns i into İ. */
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <p className="text-[11px] font-medium tracking-[0.08em] text-text-muted">{children}</p>
+}
+
 // ── XP Toast ──────────────────────────────
+// Sits above the Assist button (and the mobile tab bar) instead of on top of it.
 function XpToast({ data, onClose }: { data: CompleteTaskResponse; onClose: () => void }) {
   useEffect(() => { const t = setTimeout(onClose, 3200); return () => clearTimeout(t) }, [onClose])
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 20, scale: 0.95 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-      className="fixed bottom-6 right-6 z-50"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 8 }}
+      transition={{ duration: 0.2, ease: EASE_CURVE }}
+      className="fixed bottom-36 right-4 lg:bottom-20 lg:right-6 z-50"
     >
-      <div className="bg-gray-900 text-white rounded-2xl px-5 py-4 shadow-2xl flex items-center gap-3 min-w-[220px] border border-white/10">
-        <motion.div
-          initial={{ scale: 0 }} animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 20, delay: 0.1 }}
-          className="w-9 h-9 bg-yellow-400 rounded-xl flex items-center justify-center shrink-0"
-        >
-          {data.level_up ? <Star className="w-5 h-5 text-yellow-900" /> : <Zap className="w-5 h-5 text-yellow-900" />}
-        </motion.div>
+      <div className="bg-dark-base text-dark-text border border-dark-border rounded-lg px-4 py-3 shadow-lg flex items-center gap-3 min-w-[220px]">
+        <div className="size-8 rounded-md bg-white/[0.08] flex items-center justify-center shrink-0">
+          {data.level_up ? <Star className="size-4 text-dark-accent" /> : <Zap className="size-4 text-dark-accent" />}
+        </div>
         <div>
-          {data.level_up && <p className="text-xs text-yellow-400 font-bold">SEVİYE ATLADI! 🎉</p>}
-          <p className="text-sm font-bold">+{data.xp_earned + data.bonus_xp} XP kazandın</p>
+          {data.level_up && <p className="text-xs font-semibold text-dark-accent">SEVİYE ATLADI!</p>}
+          <p className="text-base font-medium">
+            +<span className="tabular">{data.xp_earned + data.bonus_xp}</span> XP kazandın
+          </p>
           {data.all_completed && (
-            <p className="text-xs text-green-400 font-semibold flex items-center gap-1 mt-0.5">
-              <PartyPopper className="w-3 h-3" /> Tüm görevler tamam!
+            <p className="text-xs text-dark-text-secondary flex items-center gap-1 mt-0.5">
+              <PartyPopper className="size-3" /> Tüm görevler tamam!
             </p>
           )}
         </div>
@@ -94,53 +141,17 @@ function XpToast({ data, onClose }: { data: CompleteTaskResponse; onClose: () =>
   )
 }
 
-// ── Quick action button ───────────────────
-function QuickAction({ href, icon: Icon, label, primary }: {
-  href: string; icon: React.ElementType; label: string; primary?: boolean
-}) {
-  return (
-    <Link href={href}>
-      <motion.div
-        whileHover={{ y: -2 }}
-        whileTap={{ scale: 0.98 }}
-        className={cn(
-          'flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold border transition-colors',
-          primary
-            ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white border-transparent shadow-md shadow-indigo-200/50'
-            : 'bg-white text-gray-700 border-border hover:border-indigo-200 hover:bg-indigo-50/30'
-        )}
-      >
-        <Icon className="w-4 h-4" />
-        {label}
-      </motion.div>
-    </Link>
-  )
-}
-
-const NEXT_ACTION_ICON: Record<NextAction['kind'], React.ElementType> = {
-  review: Brain, exam: GraduationCap, task: BookOpen, focus: Timer, plan: CalendarDays,
-}
-
-function scoreTone(score: number) {
-  if (score >= 75) return 'text-emerald-300'
-  if (score >= 40) return 'text-amber-300'
-  return 'text-white/70'
-}
-
 // ── Skeleton ──────────────────────────────
 function Skeleton() {
   return (
-    <div className="max-w-5xl mx-auto space-y-5">
-      <div className="h-10 rounded-2xl skeleton-shimmer" />
-      <div className="h-40 rounded-2xl skeleton-shimmer" />
-      <div className="h-24 rounded-2xl skeleton-shimmer" />
-      <div className="h-32 rounded-2xl skeleton-shimmer" />
-      <div className="h-56 rounded-2xl skeleton-shimmer" />
-      <div className="h-24 rounded-2xl skeleton-shimmer" />
-      <div className="grid grid-cols-3 gap-3">
-        {[0, 1, 2].map(i => <div key={i} className="h-12 rounded-xl skeleton-shimmer" />)}
+    <div className="max-w-3xl mx-auto">
+      <div className="h-8 w-64 rounded-md skeleton-shimmer" />
+      <div className="h-4 w-80 max-w-full rounded-md skeleton-shimmer mt-2 mb-8" />
+      <div className="h-[76px] rounded-lg skeleton-shimmer" />
+      <div className="h-4 w-96 max-w-full rounded-md skeleton-shimmer my-5" />
+      <div className="mt-8 space-y-3">
+        {[0, 1, 2].map(i => <div key={i} className="h-9 rounded-md skeleton-shimmer" />)}
       </div>
-      <div className="h-32 rounded-2xl skeleton-shimmer" />
     </div>
   )
 }
@@ -231,7 +242,7 @@ export default function CommandCenter() {
   if (loading || !data) return <Skeleton />
 
   const {
-    tasks, plannerTasks, streak, todayMinutes, reviewsDueToday, reviewsDoneToday,
+    tasks, plannerTasks, streak, todayMinutes, reviewsDueToday,
     reviewHint, continueLearning, monthly, displayName, flashcards, exams,
     learningScore,
   } = data
@@ -239,12 +250,13 @@ export default function CommandCenter() {
   const todayTasks = mergeTodayTasks(tasks, plannerTasks)
   const done    = todayTasks.filter(t => t.completed).length
   const total   = todayTasks.length
-  const hour    = new Date().getHours()
+  const now     = new Date()
+  const hour    = now.getHours()
   const firstName = displayName.split(' ')[0] || 'Student'
-  const today   = new Date().toISOString().split('T')[0]
+  const today   = now.toISOString().split('T')[0]
 
   const plannedMinutes = todayTasks.reduce((sum, t) => sum + t.minutes, 0)
-  const showWeeklyReview = new Date().getDay() === 0 || learningScore.breakdown.consistency >= 100
+  const showWeeklyReview = now.getDay() === 0 || learningScore.breakdown.consistency >= 100
 
   // todayTasks is already priority-sorted (High Planner task first), so
   // this naturally surfaces one ahead of a merely-medium system task.
@@ -255,11 +267,12 @@ export default function CommandCenter() {
     title: firstIncomplete.title,
   } : null
 
+  const daysUntil = (date: string) =>
+    Math.round((new Date(date + 'T00:00:00').getTime() - new Date(today + 'T00:00:00').getTime()) / 86_400_000)
+
   const nearestExam = exams.length > 0 ? {
     name: exams[0].name,
-    daysAway: Math.round(
-      (new Date(exams[0].exam_date + 'T00:00:00').getTime() - new Date(today + 'T00:00:00').getTime()) / 86_400_000
-    ),
+    daysAway: daysUntil(exams[0].exam_date),
   } : null
 
   const nextAction = computeNextAction({
@@ -269,9 +282,9 @@ export default function CommandCenter() {
     firstIncompleteTask: firstIncompleteForAction,
     todayMinutes,
   })
-  const NextActionIcon = NEXT_ACTION_ICON[nextAction.kind]
-
-  const startHref = startSessionHref(reviewsDueToday, firstIncomplete?.id ?? null)
+  const action = nextActionDisplay(nextAction, {
+    reviewsDue: reviewsDueToday, reviewHint, nearestExam, task: firstIncomplete,
+  })
 
   const monthH = Math.floor(monthly.focusMinutes / 60)
   const monthM = monthly.focusMinutes % 60
@@ -280,332 +293,221 @@ export default function CommandCenter() {
     .slice()
     .sort((a, b) => a.next_review_date.localeCompare(b.next_review_date))
     .slice(0, 3)
+  const hasUpcoming = exams.length > 0 || upcomingCards.length > 0
+
+  const dateLabel = `${now.toLocaleDateString('en-GB', { weekday: 'long' })}, ${now.getDate()} ${now.toLocaleDateString('en-GB', { month: 'long' })}`
 
   return (
-    <div className="max-w-5xl mx-auto space-y-5">
-      {/* HEADER */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <h1 className="text-2xl font-black text-gray-900 tracking-tight">
+    <motion.div {...fadeIn} className="max-w-3xl mx-auto">
+      {/* 1. GREETING — plain text on the page background */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-text">
           {greetingFor(hour)}, {firstName}.
         </h1>
-      </motion.div>
-
-      {/* 1. TODAY'S LEARNING */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.05 }}
-        className="relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-950 rounded-2xl p-5 shadow-lg"
-      >
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
-
-        <p className="relative text-[11px] font-bold uppercase tracking-[0.14em] text-white/50 mb-3">
-          Today&apos;s Learning
+        <p className="text-base text-text-secondary mt-1">
+          {dateLabel} · Here&apos;s what matters today.
         </p>
-
-        <div className="relative flex items-center gap-5 flex-wrap mb-4">
-          <Stat value={total} label={total === 1 ? 'task' : 'tasks'} />
-          <Divider />
-          <Stat value={reviewsDueToday} label={reviewsDueToday === 1 ? 'review' : 'reviews'} />
-          <Divider />
-          <Stat value={plannedMinutes} label="min planned" />
-        </div>
-
-        <div className="relative flex items-center justify-between gap-4 pt-4 border-t border-white/10">
-          <p className="text-sm font-semibold text-white/80">
-            Learning Score: <span className={cn('font-black text-base', scoreTone(learningScore.score))}>{learningScore.score}</span>
-            {learningScore.change !== 0 && (
-              <span className={cn('ml-1.5 text-xs font-bold', learningScore.change > 0 ? 'text-emerald-300' : 'text-red-300')}>
-                {learningScore.change > 0 ? '+' : ''}{learningScore.change}
-              </span>
-            )}
-          </p>
-          <Link href={startHref}>
-            <motion.div
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className="flex items-center gap-2 bg-white text-gray-900 font-bold text-sm px-4 py-2.5 rounded-xl shadow-lg"
-            >
-              Start Today&apos;s Session
-              <ArrowRight className="w-3.5 h-3.5" />
-            </motion.div>
-          </Link>
-        </div>
-      </motion.div>
+      </div>
 
       {/* 2. NEXT ACTION */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.08 }}
-        className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 shadow-lg shadow-indigo-200/50"
-      >
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-3">
-          Next Action
-        </p>
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
-              <NextActionIcon className="w-5 h-5 text-white" />
-            </div>
-            <p className="text-white font-bold text-base leading-snug min-w-0 truncate">
-              {nextAction.text}
-            </p>
-          </div>
-          <Link href={nextAction.href}>
-            <motion.div
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white font-bold text-sm px-4 py-2 rounded-xl transition-colors shrink-0"
-            >
-              Start <ArrowRight className="w-3.5 h-3.5" />
-            </motion.div>
-          </Link>
+      <div className="flex items-center justify-between gap-4 rounded-lg bg-accent-soft border border-[rgba(49,92,255,0.15)] border-l-[3px] border-l-accent px-5 py-4">
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium tracking-[0.08em] text-accent">NEXT ACTION</p>
+          <p className="text-[16px] leading-6 font-semibold text-text truncate mt-1">{action.title}</p>
+          {action.meta && <p className="text-sm text-text-secondary truncate">{action.meta}</p>}
         </div>
-      </motion.div>
-
-      {/* 3. CONTINUE LEARNING — omitted entirely if no session history */}
-      {continueLearning && (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.11 }}
-          className="bg-white rounded-2xl border border-border p-5 shadow-sm"
+        <Link
+          href={nextAction.href}
+          className="shrink-0 inline-flex items-center gap-1.5 bg-accent hover:bg-accent-dark text-white rounded-md px-4 py-2 text-base font-medium transition-colors duration-[160ms]"
         >
-          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3">
-            Continue Where You Left Off
-          </p>
-          <div className="flex items-center gap-4 flex-wrap">
-            <div
-              className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0"
-              style={{ background: `${continueLearning.subjectColor}15` }}
-            >
-              {continueLearning.subjectIcon}
-            </div>
-            <div className="flex-1 min-w-[180px]">
-              <p className="text-xs font-semibold text-indigo-600">{continueLearning.subjectName}</p>
-              <p className="text-base font-bold text-gray-900 truncate">{continueLearning.topicTitle}</p>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden max-w-[160px]">
-                  <div
-                    className={cn('h-full rounded-full', continueLearning.progressPct >= 100 ? 'bg-emerald-500' : 'bg-indigo-500')}
-                    style={{ width: `${continueLearning.progressPct}%` }}
-                  />
-                </div>
-                <span className="text-xs font-semibold text-gray-600">{continueLearning.progressPct}%</span>
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-1.5">{continueLearning.lastStudiedLabel}</p>
-            </div>
-            <Link href={`/dashboard/focus?subjectId=${continueLearning.subjectId}&topicId=${continueLearning.topicId}`}>
-              <motion.div
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="flex items-center gap-1.5 bg-gray-900 hover:bg-gray-800 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition-colors shrink-0"
-              >
-                Continue <ArrowRight className="w-3.5 h-3.5" />
-              </motion.div>
-            </Link>
-          </div>
-        </motion.div>
-      )}
+          Start <ArrowRight className="size-3.5" />
+        </Link>
+      </div>
 
-      {/* 4. TODAY'S TASKS */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.14 }}
-        className="bg-white rounded-2xl border border-border p-5 shadow-sm"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-bold text-gray-900">Today&apos;s Tasks</h2>
-          <span className="text-xs text-muted-foreground">{done}/{total} done</span>
+      {/* 3. TODAY STATS — one line, no cards */}
+      <p className="my-5 text-base text-text-secondary flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span><span className="tabular text-text">{total}</span> {plural(total, 'task', 'tasks')}</span>
+        <span aria-hidden>·</span>
+        <span><span className="tabular text-text">{plannedMinutes}</span> min</span>
+        <span aria-hidden>·</span>
+        <span><span className="tabular text-text">{reviewsDueToday}</span> {plural(reviewsDueToday, 'review', 'reviews')}</span>
+        <span aria-hidden>·</span>
+        <span>
+          Learning Score: <span className="tabular text-text">{learningScore.score}</span>
+          {learningScore.change !== 0 && (
+            <span className={cn('tabular text-sm ml-1', learningScore.change > 0 ? 'text-success' : 'text-danger')}>
+              {learningScore.change > 0 ? '+' : ''}{learningScore.change}
+            </span>
+          )}
+        </span>
+      </p>
+
+      {/* 4. TODAY'S PLAN — rows with dividers, no card wrapper */}
+      <section className="mt-8">
+        <div className="flex items-center justify-between pb-2 border-b border-border">
+          <SectionLabel>TODAY&apos;S PLAN</SectionLabel>
+          <span className="tabular text-sm text-text-secondary">{done} / {total}</span>
         </div>
 
-        <ul className="flex flex-col gap-2 mb-4">
-          <AnimatePresence mode="popLayout">
-            {todayTasks.map((task, i) => {
-              const busy = completing === task.id
-              return (
-                <motion.li
-                  key={task.id}
-                  layout
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
+        <ul>
+          {todayTasks.map((task, i) => {
+            const busy = completing === task.id
+            return (
+              <li key={task.id} className="border-b border-border">
+                <button
+                  type="button"
                   onClick={() => !task.completed && !busy && handleComplete(task)}
-                  whileHover={!task.completed ? { x: 2 } : {}}
+                  disabled={task.completed || busy}
+                  aria-label={task.completed ? `${task.title} — tamamlandı` : `${task.title} — tamamlandı olarak işaretle`}
                   className={cn(
-                    'flex items-center gap-3 p-3 rounded-xl border transition-colors',
-                    task.completed
-                      ? 'bg-gray-50 border-gray-100 opacity-55 cursor-default'
-                      : busy
-                      ? 'bg-indigo-50/60 border-indigo-200 cursor-wait'
-                      : 'bg-white border-border hover:border-indigo-200 hover:bg-indigo-50/30 cursor-pointer'
+                    'group w-full h-12 flex items-center gap-3 text-left',
+                    task.completed ? 'cursor-default' : busy ? 'cursor-wait' : 'cursor-pointer',
                   )}
                 >
-                  <span className="text-xs font-mono text-muted-foreground/60 w-5 shrink-0">
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'size-4 shrink-0 rounded-sm border flex items-center justify-center transition-colors duration-200',
+                      task.completed
+                        ? 'bg-accent border-accent'
+                        : 'bg-surface border-border-strong group-hover:border-accent',
+                    )}
+                  >
+                    {busy
+                      ? <Loader2 className="size-3 text-accent animate-spin" />
+                      : task.completed && <Check className="size-3 text-white" strokeWidth={3} />}
+                  </span>
+                  <span className="tabular text-sm text-text-muted w-5 shrink-0">
                     {String(i + 1).padStart(2, '0')}
                   </span>
-                  {busy
-                    ? <Loader2 className="w-4 h-4 text-indigo-400 animate-spin shrink-0" />
-                    : task.completed
-                    ? <CheckCircle2 className="w-4 h-4 text-indigo-500 shrink-0" />
-                    : <Circle className="w-4 h-4 text-gray-300 shrink-0" />
-                  }
                   <span className={cn(
-                    'flex-1 min-w-0 text-sm font-medium truncate',
-                    task.completed ? 'line-through text-muted-foreground' : 'text-gray-900'
+                    'flex-1 min-w-0 truncate text-base font-medium transition-colors duration-200',
+                    task.completed ? 'line-through text-text-muted' : 'text-text',
                   )}>
                     {task.title}
                   </span>
                   {task.source === 'planner' && (
-                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-1.5 py-0.5 shrink-0">
-                      Planner
+                    <span className="shrink-0 max-w-[140px] truncate rounded-sm bg-accent-soft text-accent text-[11px] font-medium px-1.5 py-0.5">
+                      {task.subject}
                     </span>
                   )}
-                  <span className="text-xs text-muted-foreground shrink-0">
-                    {task.minutes} min
-                  </span>
-                </motion.li>
-              )
-            })}
-          </AnimatePresence>
-
-          {todayTasks.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No tasks yet — they&apos;ll appear here automatically.
-            </p>
-          )}
+                  <span className="tabular text-sm text-text-muted shrink-0">{task.minutes} min</span>
+                </button>
+              </li>
+            )
+          })}
         </ul>
 
-        <Link href="/dashboard/focus">
-          <motion.div
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white font-bold text-sm py-2.5 rounded-xl"
-          >
-            Start Focus
-            <ArrowRight className="w-3.5 h-3.5" />
-          </motion.div>
+        {todayTasks.length === 0 && (
+          <p className="text-sm text-text-muted py-4 border-b border-border">
+            No tasks yet — they&apos;ll appear here automatically.
+          </p>
+        )}
+
+        <Link
+          href="/dashboard/planner"
+          className="inline-flex items-center gap-1.5 mt-3 text-sm font-medium text-text-secondary hover:text-accent transition-colors duration-[160ms]"
+        >
+          <Plus className="size-3.5" /> Add task
         </Link>
-      </motion.div>
+      </section>
 
-      {/* 5. DAILY STATS — Learning Streak */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.17 }}
-        className="bg-white rounded-2xl border border-orange-100 p-5 shadow-sm"
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-orange-50 ring-1 ring-orange-100 flex items-center justify-center shrink-0">
-            <Flame className="w-6 h-6 text-orange-500" />
-          </div>
+      {/* 5. CONTINUE LEARNING — omitted entirely if no session history */}
+      {continueLearning && (
+        <section className="mt-8 flex items-center justify-between gap-4 py-4 border-y border-border">
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Learning Streak</p>
-            <p className="text-xl font-black text-gray-900 tabular-nums">🔥 {streak.current_streak} days</p>
-            <p className="text-xs text-muted-foreground mt-0.5 truncate">
-              {monthH}h {monthM}m this month · {monthly.topicsReviewed} topics reviewed · {monthly.reviewConsistencyPct}% review consistency
-            </p>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* 5b. WEEKLY REVIEW — Sundays, or once 7 days straight are active */}
-      {showWeeklyReview && (
-        <Link href="/dashboard/insights/weekly-review">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.19 }}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex items-center justify-between gap-3 bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-100 rounded-2xl p-4"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
-                <Sparkles className="w-4 h-4 text-violet-600" />
+            <p className="text-sm text-text-secondary">Continue where you left off</p>
+            <div className="flex items-center gap-3 mt-1 min-w-0">
+              <p className="text-base font-medium text-text truncate">
+                {continueLearning.subjectIcon} {continueLearning.subjectName}
+                <span className="text-text-muted"> → </span>
+                {continueLearning.topicTitle}
+              </p>
+              <div className="w-[120px] h-1 rounded-full bg-border overflow-hidden shrink-0">
+                <div
+                  className={cn('h-full rounded-full', continueLearning.progressPct >= 100 ? 'bg-success' : 'bg-accent')}
+                  style={{ width: `${continueLearning.progressPct}%` }}
+                />
               </div>
-              <p className="text-sm font-bold text-gray-900 truncate">Your weekly review is ready</p>
+              <span className="tabular text-sm text-text-muted shrink-0">{continueLearning.progressPct}%</span>
             </div>
-            <ArrowRight className="w-4 h-4 text-violet-500 shrink-0" />
-          </motion.div>
+            <p className="text-sm text-text-muted mt-0.5">{continueLearning.lastStudiedLabel}</p>
+          </div>
+          <Link
+            href={`/dashboard/focus?subjectId=${continueLearning.subjectId}&topicId=${continueLearning.topicId}`}
+            className="shrink-0 text-base font-medium text-accent hover:text-accent-dark transition-colors duration-[160ms]"
+          >
+            Continue →
+          </Link>
+        </section>
+      )}
+
+      {/* 6. LEARNING STREAK */}
+      <section className={cn('py-4 border-b border-border', !continueLearning && 'mt-8 border-t')}>
+        <p className="text-base font-medium text-text">
+          🔥 <span className="tabular">{streak.current_streak}</span> {plural(streak.current_streak, 'day', 'days')} streak
+        </p>
+        <p className="text-sm text-text-secondary mt-0.5">
+          <span className="tabular">{monthH}</span>h <span className="tabular">{monthM}</span>m this month
+          {' · '}<span className="tabular">{monthly.topicsReviewed}</span> topics reviewed
+          {' · '}<span className="tabular">{monthly.reviewConsistencyPct}%</span> consistency
+        </p>
+      </section>
+
+      {/* Weekly Review — Sundays, or once 7 days straight are active */}
+      {showWeeklyReview && (
+        <Link
+          href="/dashboard/insights/weekly-review"
+          className="group flex items-center justify-between gap-3 py-4 border-b border-border"
+        >
+          <span className="flex items-center gap-2 text-base font-medium text-text">
+            <Sparkles className="size-4 text-accent" />
+            Your weekly review is ready
+          </span>
+          <ArrowRight className="size-4 text-text-muted group-hover:text-accent transition-colors duration-[160ms]" />
         </Link>
       )}
 
-      {/* 6. QUICK ACTIONS */}
-      <div className="grid grid-cols-3 gap-3">
-        <QuickAction href="/dashboard/focus"   icon={Timer} label="Start Focus" primary />
-        <QuickAction href="/dashboard/planner" icon={Plus}  label="Add Task" />
-        <QuickAction href="/dashboard/recall"  icon={Brain} label="Start Recall" />
-      </div>
-
-      {/* 7. UPCOMING */}
-      <div className="bg-white rounded-2xl border border-border p-5 shadow-sm">
-        <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
-          <CalendarClock className="w-4 h-4 text-indigo-500" />
-          Upcoming
-        </h2>
-        <div className="flex flex-col gap-2">
-          {upcomingCards.length > 0 ? upcomingCards.map(card => (
-            <div
-              key={card.id}
-              className="flex items-center justify-between gap-3 text-sm p-2.5 rounded-lg bg-gray-50 border border-gray-100"
-            >
-              <span className="text-gray-700 truncate">{card.front}</span>
-              <span className={cn(
-                'text-xs font-medium shrink-0',
-                card.next_review_date <= today ? 'text-amber-600' : 'text-muted-foreground'
-              )}>
-                {card.next_review_date <= today ? 'Due now' : card.next_review_date}
-              </span>
-            </div>
-          )) : (
-            <p className="text-sm text-muted-foreground">No flashcards due for review yet.</p>
-          )}
-
-          {exams.length > 0 ? exams.map(exam => {
-            const days = Math.round((new Date(exam.exam_date + 'T00:00:00').getTime() - new Date(today + 'T00:00:00').getTime()) / 86400000)
-            return (
-              <div
-                key={exam.id}
-                className="flex items-center justify-between gap-3 text-sm p-2.5 rounded-lg bg-indigo-50/60 border border-indigo-100"
-              >
-                <span className="flex items-center gap-2 text-gray-700 truncate">
-                  <GraduationCap className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                  {exam.name}
-                </span>
-                <span className="text-xs font-medium text-indigo-600 shrink-0">
-                  {days === 0 ? 'Today' : `${days} day${days !== 1 ? 's' : ''} away`}
-                </span>
-              </div>
-            )
-          }) : (
-            <p className="text-xs text-muted-foreground/50 pt-1">No upcoming exams added yet.</p>
-          )}
-        </div>
-      </div>
+      {/* 7. UPCOMING — only when there's something to show */}
+      {hasUpcoming && (
+        <section className="mt-8">
+          <div className="pb-2 border-b border-border">
+            <SectionLabel>UPCOMING</SectionLabel>
+          </div>
+          <ul>
+            {exams.map(exam => {
+              const days = daysUntil(exam.exam_date)
+              const date = new Date(exam.exam_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              return (
+                <li key={exam.id} className="flex items-center justify-between gap-3 h-11 border-b border-border">
+                  <span className="text-base text-text truncate">{exam.name}</span>
+                  <span className="tabular-nums text-sm text-text-secondary shrink-0">
+                    {date} · <span className={cn(days <= 3 && 'text-warning')}>{relativeDays(days)}</span>
+                  </span>
+                </li>
+              )
+            })}
+            {upcomingCards.map(card => {
+              const due = card.next_review_date <= today
+              return (
+                <li key={card.id} className="flex items-center justify-between gap-3 h-11 border-b border-border">
+                  <span className="text-base text-text truncate">
+                    <span className="text-text-secondary">Review:</span> {card.front}
+                  </span>
+                  <span className={cn('tabular-nums text-sm shrink-0', due ? 'text-warning' : 'text-text-secondary')}>
+                    {due ? 'Due now' : relativeDays(daysUntil(card.next_review_date))}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+      )}
 
       {/* XP Toast */}
       <AnimatePresence>
         {toast && <XpToast data={toast} onClose={() => setToast(null)} />}
       </AnimatePresence>
-    </div>
+    </motion.div>
   )
-}
-
-function Stat({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="flex items-baseline gap-1.5">
-      <span className="text-2xl font-black text-white tabular-nums">{value}</span>
-      <span className="text-xs text-white/50 font-medium">{label}</span>
-    </div>
-  )
-}
-
-function Divider() {
-  return <span className="w-px h-6 bg-white/10" />
 }
