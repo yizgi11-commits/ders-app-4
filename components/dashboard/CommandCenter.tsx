@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Loader2, Zap, Star, PartyPopper, ArrowRight, Plus, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { fadeIn, EASE_CURVE } from '@/lib/motion'
+import { SectionLabel } from '@/components/ui/section-label'
 import { useGamification } from '@/components/gamification/GamificationProvider'
 import type {
   DailyTaskWithTemplate, CompleteTaskResponse, UserStreak,
@@ -102,11 +103,6 @@ function nextActionDisplay(
     case 'plan':
       return { title: 'Plan tomorrow', meta: 'Today’s work is done' }
   }
-}
-
-/** Written uppercase on purpose — CSS `uppercase` under lang="tr" turns i into İ. */
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-[11px] font-medium tracking-[0.08em] text-text-muted">{children}</p>
 }
 
 // ── XP Toast ──────────────────────────────

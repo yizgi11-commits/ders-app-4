@@ -85,6 +85,11 @@ export function relativeTime(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+/** "Sep 23" — compact date for list rows (relativeTime goes in the tooltip). */
+export function shortDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes <= 0) return '—'
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`

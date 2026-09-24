@@ -50,8 +50,8 @@ function parseMarkdown(text: string): string {
 
   function inlineFormat(line: string): string {
     return escapeHtml(line)
-      .replace(/`([^`]+)`/g, '<code class="bg-gray-100 text-indigo-700 px-1 py-0.5 rounded text-sm font-mono">$1</code>')
-      .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
+      .replace(/`([^`]+)`/g, '<code class="bg-surface-subtle text-text px-1 py-0.5 rounded-sm text-sm font-mono">$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-text">$1</strong>')
       .replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>')
       .replace(/_([^_]+)_/g, '<em class="italic">$1</em>')
   }
@@ -62,25 +62,25 @@ function parseMarkdown(text: string): string {
     // Heading h1
     if (/^# /.test(line)) {
       closeList(); closeBlockquote()
-      html.push(`<h1 class="text-2xl font-bold text-gray-900 mt-6 mb-3">${inlineFormat(line.slice(2))}</h1>`)
+      html.push(`<h1 class="text-2xl font-semibold text-text mt-6 mb-3">${inlineFormat(line.slice(2))}</h1>`)
       continue
     }
     // Heading h2
     if (/^## /.test(line)) {
       closeList(); closeBlockquote()
-      html.push(`<h2 class="text-xl font-bold text-gray-900 mt-5 mb-2">${inlineFormat(line.slice(3))}</h2>`)
+      html.push(`<h2 class="text-xl font-semibold text-text mt-5 mb-2">${inlineFormat(line.slice(3))}</h2>`)
       continue
     }
     // Heading h3
     if (/^### /.test(line)) {
       closeList(); closeBlockquote()
-      html.push(`<h3 class="text-lg font-semibold text-gray-900 mt-4 mb-2">${inlineFormat(line.slice(4))}</h3>`)
+      html.push(`<h3 class="text-lg font-semibold text-text mt-4 mb-2">${inlineFormat(line.slice(4))}</h3>`)
       continue
     }
     // Blockquote
     if (/^> /.test(line)) {
       closeList()
-      if (!inBlockquote) { html.push('<blockquote class="border-l-4 border-indigo-300 pl-4 text-gray-600 my-3 italic">'); inBlockquote = true }
+      if (!inBlockquote) { html.push('<blockquote class="border-l-2 border-border-strong pl-4 text-text-secondary my-3 italic">'); inBlockquote = true }
       html.push(`<p>${inlineFormat(line.slice(2))}</p>`)
       continue
     } else {
@@ -89,17 +89,17 @@ function parseMarkdown(text: string): string {
     // Checkbox
     if (/^- \[x\] /i.test(line)) {
       if (!inList) { html.push('<ul class="my-2 space-y-1">'); inList = true }
-      html.push(`<li class="flex items-start gap-2"><span class="mt-1 w-4 h-4 rounded bg-indigo-500 flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></span><span class="line-through text-gray-400">${inlineFormat(line.slice(6))}</span></li>`)
+      html.push(`<li class="flex items-start gap-2"><span class="mt-1.5 w-4 h-4 rounded-sm bg-accent flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></span><span class="line-through text-text-muted">${inlineFormat(line.slice(6))}</span></li>`)
       continue
     }
     if (/^- \[ \] /.test(line)) {
       if (!inList) { html.push('<ul class="my-2 space-y-1">'); inList = true }
-      html.push(`<li class="flex items-start gap-2"><span class="mt-1 w-4 h-4 rounded border-2 border-gray-300 shrink-0"></span><span>${inlineFormat(line.slice(6))}</span></li>`)
+      html.push(`<li class="flex items-start gap-2"><span class="mt-1.5 w-4 h-4 rounded-sm border-2 border-border-strong shrink-0"></span><span>${inlineFormat(line.slice(6))}</span></li>`)
       continue
     }
     // Bullet list
     if (/^[-*] /.test(line)) {
-      if (!inList) { html.push('<ul class="list-disc list-inside my-2 space-y-1 text-gray-700">'); inList = true }
+      if (!inList) { html.push('<ul class="list-disc list-inside my-2 space-y-1 text-text">'); inList = true }
       html.push(`<li class="pl-1">${inlineFormat(line.slice(2))}</li>`)
       continue
     } else {
@@ -111,7 +111,7 @@ function parseMarkdown(text: string): string {
       continue
     }
     // Normal paragraph
-    html.push(`<p class="text-gray-700 leading-relaxed">${inlineFormat(line)}</p>`)
+    html.push(`<p class="text-text">${inlineFormat(line)}</p>`)
   }
 
   closeList()
@@ -129,10 +129,10 @@ function ToolbarBtn({
       title={label}
       onClick={onClick}
       className={cn(
-        'p-1.5 rounded-lg text-sm transition-colors',
+        'p-1.5 rounded-md text-sm transition-colors duration-[160ms]',
         active
-          ? 'bg-indigo-100 text-indigo-700'
-          : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
+          ? 'bg-accent-soft text-accent'
+          : 'text-text-muted hover:text-text hover:bg-surface-subtle'
       )}
     >
       <Icon className="w-3.5 h-3.5" />
@@ -315,11 +315,12 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
   return (
     <div className="flex flex-col h-full min-w-0">
       {/* Top toolbar */}
-      <div className="flex items-center gap-1 px-3 py-2 border-b border-gray-200 bg-white/80 backdrop-blur shrink-0 flex-wrap">
+      <div className="flex items-center gap-1 px-4 py-2 border-b border-border bg-surface shrink-0 flex-wrap">
         {/* Back (mobile) */}
         <button
           onClick={onBack}
-          className="lg:hidden p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 mr-1"
+          aria-label="Geri"
+          className="lg:hidden p-1.5 rounded-md text-text-secondary hover:bg-surface-subtle mr-1"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -335,7 +336,7 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
           <ToolbarBtn icon={CheckSquare} label="Onay kutusu"       onClick={() => insertLinePrefix('- [ ] ')} />
         </div>
 
-        <div className="w-px h-4 bg-gray-200 mx-1" />
+        <div className="w-px h-4 bg-border mx-1" />
 
         {/* Preview toggle */}
         <ToolbarBtn
@@ -359,8 +360,8 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
         <button
           onClick={() => setShowMeta(!showMeta)}
           className={cn(
-            'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors',
-            showMeta ? 'bg-indigo-50 text-indigo-700' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
+            'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors duration-[160ms]',
+            showMeta ? 'bg-accent-soft text-accent' : 'text-text-muted hover:text-text hover:bg-surface-subtle'
           )}
         >
           <Tag className="w-3.5 h-3.5" />
@@ -372,7 +373,8 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
           onClick={() => {
             if (confirm('Bu notu silmek istediğinize emin misiniz?')) onDelete(note.id)
           }}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+          aria-label="Notu sil"
+          className="p-1.5 rounded-md text-text-muted hover:text-danger hover:bg-danger-soft transition-colors duration-[160ms]"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -383,24 +385,24 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
         {/* Editor / Preview */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Title */}
-          <div className="px-6 pt-5 pb-2 shrink-0">
+          <div className="w-full max-w-[680px] mx-auto px-8 pt-8 pb-2 shrink-0">
             <input
               ref={titleRef}
               type="text"
               value={title}
               onChange={e => handleTitleChange(e.target.value)}
               placeholder="Not başlığı..."
-              className="w-full text-2xl font-bold text-gray-900 bg-transparent border-none outline-none placeholder:text-gray-300"
+              className="w-full text-2xl font-semibold text-text bg-transparent border-none outline-none placeholder:text-text-muted"
             />
           </div>
 
           {/* Tags row */}
           {tags.length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap px-6 pb-2">
+            <div className="w-full max-w-[680px] mx-auto flex items-center gap-1.5 flex-wrap px-8 pb-2">
               {tags.map(tag => (
-                <span key={tag} className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 rounded-full px-2 py-0.5 text-xs">
+                <span key={tag} className="inline-flex items-center gap-1 bg-surface-subtle text-text-secondary rounded-sm px-1.5 py-0.5 text-xs">
                   {tag}
-                  <button onClick={() => removeTag(tag)} className="hover:text-indigo-900">
+                  <button onClick={() => removeTag(tag)} aria-label={`${tag} etiketini kaldır`} className="hover:text-text">
                     <X className="w-2.5 h-2.5" />
                   </button>
                 </span>
@@ -408,17 +410,18 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
             </div>
           )}
 
-          {/* Divider */}
-          <div className="mx-6 border-b border-gray-100 mb-1" />
+          {/* No rule under the title — spacing separates it from the body */}
+          <div className="h-2 shrink-0" />
 
           {/* Editor or Preview */}
           <div className="flex-1 overflow-y-auto">
             {preview ? (
               <div
-                className="px-6 py-4 prose-sm max-w-none text-gray-700 leading-relaxed"
+                className="w-full max-w-[680px] mx-auto px-8 py-4 text-[16px] leading-7 text-text"
                 dangerouslySetInnerHTML={{ __html: parseMarkdown(content) }}
               />
             ) : (
+              <div className="w-full max-w-[680px] mx-auto h-full">
               <textarea
                 ref={textareaRef}
                 value={content}
@@ -426,16 +429,17 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
                 onKeyDown={handleTextareaKey}
                 placeholder="Notunuzu buraya yazın... Markdown desteklenir."
                 className={cn(
-                  'w-full h-full px-6 py-4 bg-transparent border-none outline-none resize-none text-sm text-gray-800 leading-relaxed placeholder:text-gray-300',
+                  'w-full h-full px-8 py-4 bg-transparent border-none outline-none resize-none text-[16px] leading-7 text-text placeholder:text-text-muted',
                   monoFont ? 'font-mono' : 'font-sans'
                 )}
               />
+              </div>
             )}
           </div>
 
           {/* Status bar */}
-          <div className="flex items-center justify-between px-6 py-2 border-t border-gray-100 bg-gray-50/50 shrink-0">
-            <div className="flex items-center gap-3 text-xs text-gray-400">
+          <div className="w-full max-w-[680px] mx-auto flex items-center justify-between px-8 py-2.5 shrink-0">
+            <div className="flex items-center gap-3 text-xs text-text-muted tabular-nums">
               <span>{wordCount} kelime</span>
               <span>·</span>
               <span>{readTime} dk okuma</span>
@@ -447,9 +451,9 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="text-xs text-amber-500 flex items-center gap-1"
+                  className="text-xs text-warning flex items-center gap-1"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  <span className="size-1.5 rounded-full bg-warning animate-pulse" />
                   Kaydediliyor...
                 </motion.span>
               ) : saveState === 'saved' ? (
@@ -458,9 +462,9 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="text-xs text-emerald-500 flex items-center gap-1"
+                  className="text-xs text-text-muted flex items-center gap-1"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <span className="size-1.5 rounded-full bg-success" />
                   {formatSavedTime(lastSaved)}
                 </motion.span>
               ) : (
@@ -469,7 +473,7 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="text-xs text-gray-400"
+                  className="text-xs text-text-muted"
                 >
                   Kaydedilmemiş değişiklikler
                 </motion.span>
@@ -486,29 +490,29 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
               animate={{ width: 240, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-              className="border-l border-gray-200 bg-white overflow-hidden shrink-0"
+              className="border-l border-border bg-surface-subtle overflow-hidden shrink-0"
             >
               <div className="p-4 space-y-5 w-60">
                 {/* Pin / Fav / Archive */}
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Durum</p>
+                  <p className="text-[11px] font-medium tracking-[0.08em] text-text-muted mb-2">DURUM</p>
                   <div className="flex gap-2">
                     <button
                       onClick={() => toggleMeta('is_pinned', !isPinned)}
-                      className={cn('flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border', isPinned ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'text-gray-500 border-gray-200 hover:bg-gray-50')}
+                      className={cn('flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors border', isPinned ? 'bg-accent-soft text-accent border-accent/30' : 'text-text-secondary border-border bg-surface hover:border-border-strong')}
                     >
                       <Pin className="w-3 h-3" /> Sabit
                     </button>
                     <button
                       onClick={() => toggleMeta('is_favorite', !isFavorite)}
-                      className={cn('flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border', isFavorite ? 'bg-rose-50 text-rose-600 border-rose-200' : 'text-gray-500 border-gray-200 hover:bg-gray-50')}
+                      className={cn('flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors border', isFavorite ? 'bg-danger-soft text-danger border-danger/30' : 'text-text-secondary border-border bg-surface hover:border-border-strong')}
                     >
                       <Heart className="w-3 h-3" /> Favori
                     </button>
                   </div>
                   <button
                     onClick={() => toggleMeta('is_archived', !isArchived)}
-                    className={cn('mt-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border w-full', isArchived ? 'bg-gray-100 text-gray-700 border-gray-300' : 'text-gray-500 border-gray-200 hover:bg-gray-50')}
+                    className={cn('mt-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors border w-full', isArchived ? 'bg-surface text-text border-border-strong' : 'text-text-secondary border-border bg-surface hover:border-border-strong')}
                   >
                     <Archive className="w-3 h-3" /> {isArchived ? 'Arşivden Çıkar' : 'Arşivle'}
                   </button>
@@ -524,13 +528,13 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
 
                 {/* Folder */}
                 <div>
-                  <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">
-                    <FolderOpen className="w-3 h-3" /> Klasör
+                  <label className="flex items-center gap-1.5 text-[11px] font-medium tracking-[0.08em] text-text-muted mb-2">
+                    <FolderOpen className="w-3 h-3" /> KLASÖR
                   </label>
                   <select
                     value={localFolderId ?? ''}
                     onChange={e => updateFolder(e.target.value || null)}
-                    className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    className="w-full text-xs border border-border rounded-md px-2.5 py-1.5 bg-surface text-text focus:outline-none focus:border-accent"
                   >
                     <option value="">Klasör seçin</option>
                     {folders.map(f => (
@@ -541,12 +545,12 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
 
                 {/* Tags */}
                 <div>
-                  <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">
-                    <Tag className="w-3 h-3" /> Etiketler
+                  <label className="flex items-center gap-1.5 text-[11px] font-medium tracking-[0.08em] text-text-muted mb-2">
+                    <Tag className="w-3 h-3" /> ETİKETLER
                   </label>
                   <div className="flex gap-1 mb-2 flex-wrap">
                     {tags.map(tag => (
-                      <span key={tag} className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 rounded-full px-2 py-0.5 text-[10px]">
+                      <span key={tag} className="inline-flex items-center gap-1 bg-surface text-text-secondary border border-border rounded-sm px-1.5 py-0.5 text-[11px]">
                         {tag}
                         <button onClick={() => removeTag(tag)}><X className="w-2 h-2" /></button>
                       </span>
@@ -559,9 +563,9 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
                       onChange={e => setTagInput(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
                       placeholder="Etiket ekle..."
-                      className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                      className="flex-1 text-xs border border-border rounded-md px-2 py-1.5 bg-surface text-text focus:outline-none focus:border-accent"
                     />
-                    <button onClick={addTag} className="px-2 py-1 text-xs bg-indigo-100 text-indigo-700 rounded-lg font-medium hover:bg-indigo-200">
+                    <button onClick={addTag} aria-label="Etiket ekle" className="px-2 py-1 text-xs bg-accent-soft text-accent rounded-md font-medium hover:bg-accent/15">
                       +
                     </button>
                   </div>

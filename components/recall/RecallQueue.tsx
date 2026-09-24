@@ -1,9 +1,7 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { Brain, ArrowRight, CheckCircle2, Play, Lock } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { ArrowRight, Lock, Play } from 'lucide-react'
 import { daysAgoLabel, type RecallQueueResponse, type RecallQueueGroup } from '@/lib/recall/types'
 
 interface Props {
@@ -12,12 +10,26 @@ interface Props {
   onStartTopic: (group: RecallQueueGroup) => void
 }
 
+const plural = (n: number) => (n === 1 ? 'card' : 'cards')
+
+function Header({ title }: { title: React.ReactNode }) {
+  return (
+    <div className="mb-8">
+      <p className="text-[13px] font-medium tracking-[0.12em] text-text-muted">RECALL</p>
+      <h1 className="mt-1 text-2xl font-semibold text-text">{title}</h1>
+    </div>
+  )
+}
+
 export default function RecallQueue({ queue, onStart, onStartTopic }: Props) {
   if (!queue) {
     return (
-      <div className="space-y-3">
-        <div className="h-14 bg-white border border-border rounded-2xl animate-pulse" />
-        <div className="h-40 bg-white border border-border rounded-2xl animate-pulse" />
+      <div>
+        <div className="h-4 w-16 rounded-sm skeleton-shimmer" />
+        <div className="h-8 w-72 rounded-md skeleton-shimmer mt-2 mb-8" />
+        <div className="space-y-2">
+          {[0, 1, 2].map(i => <div key={i} className="h-10 rounded-md skeleton-shimmer" />)}
+        </div>
       </div>
     )
   }
@@ -25,19 +37,16 @@ export default function RecallQueue({ queue, onStart, onStartTopic }: Props) {
   // ── Nothing due ────────────────────────────────────────────
   if (queue.totalCards === 0) {
     return (
-      <div className="bg-white border border-border rounded-2xl py-16 px-6 text-center shadow-sm">
-        <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-        </div>
-        <h2 className="text-base font-bold text-gray-900 mb-1">Bugün tekrar bekleyen kart yok</h2>
-        <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-5">
+      <div>
+        <Header title="Nothing due today" />
+        <p className="text-base text-text-secondary">
           Her şey güncel. Yeni kartlar Vault&apos;tan veya Focus oturumu sonunda eklenir.
         </p>
         <Link
           href="/dashboard/vault"
-          className="inline-flex items-center gap-2 bg-white border border-border hover:bg-gray-50 text-gray-700 font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors"
+          className="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-accent hover:text-accent-dark transition-colors duration-[160ms]"
         >
-          Vault&apos;a git <ArrowRight className="w-3.5 h-3.5" />
+          Vault&apos;a git <ArrowRight className="size-3.5" />
         </Link>
       </div>
     )
@@ -46,96 +55,58 @@ export default function RecallQueue({ queue, onStart, onStartTopic }: Props) {
   const locked = queue.remainingToday === 0
 
   return (
-    <div className="space-y-4">
+    <div>
+      <Header title={<>Due today — <span className="tabular">{queue.totalCards}</span> {plural(queue.totalCards)}</>} />
+
       {locked && (
-        <div className="flex items-center gap-3 bg-gray-900 rounded-2xl px-5 py-4 text-white shadow-lg">
-          <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-            <Lock className="w-4 h-4 text-indigo-300" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold">Bugünkü Recall limitine ulaştın</p>
-            <p className="text-xs text-white/50">Free planda günde 20 kart — Pro ile sınırsız.</p>
-          </div>
-          <Link
-            href="/dashboard/upgrade"
-            className="shrink-0 text-xs font-bold text-indigo-300 hover:text-indigo-200 px-3 py-1.5 rounded-lg border border-white/10"
-          >
+        <div className="flex items-center gap-3 rounded-md bg-warning-soft px-4 py-2.5 mb-6">
+          <Lock className="size-4 text-warning shrink-0" />
+          <p className="flex-1 text-sm text-text">
+            Bugünkü Recall limitine ulaştın — Free planda günde 20 kart.
+          </p>
+          <Link href="/dashboard/upgrade" className="shrink-0 text-sm font-medium text-accent hover:text-accent-dark">
             Upgrade
           </Link>
         </div>
       )}
 
-      {/* Summary bar */}
-      <div className="flex items-center gap-3 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl px-5 py-4 text-white shadow-lg shadow-indigo-200/50">
-        <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
-          <Brain className="w-5 h-5" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">Due Today</p>
-          <p className="text-base font-black leading-tight">
-            {queue.totalTopics} konu, {queue.totalCards} kart
-          </p>
-        </div>
-      </div>
-
-      {/* Topic list */}
-      <div className="space-y-2">
-        {queue.groups.map((group, i) => {
+      {/* Topic groups */}
+      <ul className="border-t border-border">
+        {queue.groups.map(group => {
           const lastStudied = daysAgoLabel(group.lastStudiedAt)
           return (
-            <motion.div
-              key={group.topicId ?? '__none__'}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.04 }}
-              className="group flex items-center gap-3 bg-white border border-border rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all"
-            >
-              <span className="text-lg shrink-0">{group.subjectIcon ?? '🧠'}</span>
-
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900 truncate">{group.topicTitle}</p>
-                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                  {group.subjectName && (
-                    <span className="text-[11px] font-medium text-indigo-600">{group.subjectName}</span>
-                  )}
-                  {lastStudied && (
-                    <span className="text-[11px] text-muted-foreground">Son çalışma: {lastStudied}</span>
-                  )}
-                </div>
-              </div>
-
-              <span className="text-[11px] font-bold text-gray-600 bg-gray-100 rounded-full px-2.5 py-1 shrink-0">
-                {group.cards.length} kart
+            <li key={group.topicId ?? '__none__'} className="group h-12 flex items-center gap-3 border-b border-border">
+              <p className="flex-1 min-w-0 truncate text-base">
+                {group.subjectName && <span className="text-text-secondary">{group.subjectName} · </span>}
+                <span className="font-medium text-text">{group.topicTitle}</span>
+              </p>
+              {lastStudied && (
+                <span className="hidden sm:inline text-xs text-text-muted shrink-0">Son çalışma: {lastStudied}</span>
+              )}
+              <span className="tabular text-sm text-text-muted shrink-0 w-16 text-right">
+                {group.cards.length} {plural(group.cards.length)}
               </span>
-
               <button
                 onClick={() => onStartTopic(group)}
                 disabled={locked}
-                className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1.5 rounded-lg hover:bg-indigo-50 disabled:opacity-0 disabled:pointer-events-none"
+                aria-label={`${group.topicTitle} kartlarını başlat`}
+                className="shrink-0 inline-flex items-center gap-1 text-sm font-medium text-accent transition-opacity duration-[160ms] sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 disabled:hidden"
               >
-                <Play className="w-3 h-3 fill-current" /> Başlat
+                <Play className="size-3 fill-current" /> Start
               </button>
-            </motion.div>
+            </li>
           )
         })}
-      </div>
+      </ul>
 
       {/* Start */}
-      <motion.button
+      <button
         onClick={onStart}
         disabled={locked}
-        whileHover={locked ? {} : { scale: 1.01, y: -1 }}
-        whileTap={locked ? {} : { scale: 0.99 }}
-        className={cn(
-          'w-full flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800',
-          'text-white font-bold text-sm py-4 rounded-2xl shadow-lg transition-colors',
-          'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900',
-        )}
+        className="mt-6 w-full h-11 rounded-md bg-accent hover:bg-accent-dark text-white text-base font-medium inline-flex items-center justify-center gap-2 transition-colors duration-[160ms] disabled:bg-surface-subtle disabled:text-text-muted disabled:cursor-not-allowed"
       >
-        {locked ? <Lock className="w-4 h-4" /> : <Brain className="w-4 h-4" />}
-        {locked ? 'LIMIT DOLDU' : 'START RECALL'}
-        {!locked && <span className="font-normal opacity-60">· {queue.totalCards} kart</span>}
-      </motion.button>
+        {locked ? <><Lock className="size-4" /> Limit doldu</> : 'Start Recall'}
+      </button>
     </div>
   )
 }

@@ -1,13 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
-import { StickyNote, Brain, FileText, Layers } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { StickyNote, Brain, FileText } from 'lucide-react'
 import type { Note } from '@/lib/notes/types'
 import type { FlashcardWithSubject } from '@/lib/flashcards/types'
 import {
-  relativeTime, atlasLabel,
+  relativeTime, atlasLabel, shortDate,
   type VaultDocument, type VaultFeedItem, type VaultItemKind,
 } from '@/lib/vault/types'
 
@@ -17,10 +15,10 @@ interface Props {
   onOpenTab:   (kind: VaultItemKind) => void
 }
 
-const KIND_META: Record<VaultItemKind, { icon: typeof StickyNote; label: string; color: string; bg: string }> = {
-  note:      { icon: StickyNote, label: 'Note',      color: 'text-indigo-600',  bg: 'bg-indigo-50' },
-  flashcard: { icon: Brain,      label: 'Flashcard', color: 'text-violet-600',  bg: 'bg-violet-50' },
-  document:  { icon: FileText,   label: 'Document',  color: 'text-emerald-600', bg: 'bg-emerald-50' },
+const KIND_META: Record<VaultItemKind, { icon: typeof StickyNote; label: string }> = {
+  note:      { icon: StickyNote, label: 'Note' },
+  flashcard: { icon: Brain,      label: 'Flashcard' },
+  document:  { icon: FileText,   label: 'Document' },
 }
 
 export default function VaultAllView({ search, refreshKey = 0, onOpenTab }: Props) {
@@ -84,57 +82,44 @@ export default function VaultAllView({ search, refreshKey = 0, onOpenTab }: Prop
   if (loading) {
     return (
       <div className="space-y-2">
-        {[0, 1, 2, 3].map(i => <div key={i} className="h-16 bg-white border border-border rounded-2xl animate-pulse" />)}
+        {[0, 1, 2, 3].map(i => <div key={i} className="h-12 rounded-md skeleton-shimmer" />)}
       </div>
     )
   }
 
   if (filtered.length === 0) {
     return (
-      <div className="text-center py-16 bg-white border border-dashed border-border rounded-2xl">
-        <Layers className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
-        <p className="text-sm text-muted-foreground">
-          {q ? 'Vault içinde eşleşen bir şey yok.' : 'Vault henüz boş — not, kart veya PDF ekle.'}
-        </p>
-      </div>
+      <p className="text-sm text-text-muted py-4 border-y border-border">
+        {q ? 'Vault içinde eşleşen bir şey yok.' : 'Vault henüz boş — not, kart veya PDF ekle.'}
+      </p>
     )
   }
 
   return (
-    <div className="space-y-2">
+    <ul className="border-t border-border">
       {filtered.map(item => {
         const meta = KIND_META[item.kind]
         const Icon = meta.icon
+        const secondary = item.atlas ?? item.subtitle
         return (
-          <motion.button
-            key={`${item.kind}-${item.id}`}
-            layout
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            onClick={() => onOpenTab(item.kind)}
-            className="w-full text-left flex items-start gap-3 bg-white border border-border rounded-2xl p-3.5 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all"
-          >
-            <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center shrink-0', meta.bg)}>
-              <Icon className={cn('w-4 h-4', meta.color)} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold text-gray-900 truncate">{item.title}</p>
-                <span className={cn('text-[10px] font-bold uppercase tracking-wider shrink-0', meta.color)}>
-                  {meta.label}
-                </span>
+          <li key={`${item.kind}-${item.id}`} className="border-b border-border">
+            <button
+              onClick={() => onOpenTab(item.kind)}
+              className="w-full text-left flex items-center gap-3 px-2 py-2.5 hover:bg-surface-subtle transition-colors duration-[160ms]"
+            >
+              <Icon className="size-4 shrink-0 text-text-muted" aria-label={meta.label} />
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-medium text-text truncate">{item.title}</p>
+                {secondary && <p className="text-xs text-text-muted truncate mt-0.5">{secondary}</p>}
               </div>
-              {item.atlas && <p className="text-[11px] text-indigo-600 font-medium truncate mt-0.5">Atlas: {item.atlas}</p>}
-              {!item.atlas && item.subtitle && (
-                <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">{item.subtitle}</p>
-              )}
-            </div>
-            <span className="text-[11px] text-muted-foreground/70 shrink-0 whitespace-nowrap">
-              {relativeTime(item.date)}
-            </span>
-          </motion.button>
+              <span className="hidden sm:inline text-xs text-text-muted shrink-0">{meta.label}</span>
+              <span className="tabular text-xs text-text-muted shrink-0 w-12 text-right" title={relativeTime(item.date)}>
+                {shortDate(item.date)}
+              </span>
+            </button>
+          </li>
         )
       })}
-    </div>
+    </ul>
   )
 }

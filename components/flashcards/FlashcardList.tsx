@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Trash2, Edit2, FileText, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react'
+import { Trash2, Edit2, FileText } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import type { FlashcardWithSubject } from '@/lib/flashcards/types'
-import { stagger } from '@/lib/motion'
 
 interface Props {
   cards:      FlashcardWithSubject[]
@@ -13,7 +13,8 @@ interface Props {
   onUpdated:  (card: FlashcardWithSubject) => void
 }
 
-function FlashcardRow({
+// Compact card: front only; clicking opens the answer + actions in place.
+function FlashcardCell({
   card,
   onDelete,
   onEdit,
@@ -44,129 +45,67 @@ function FlashcardRow({
   })()
 
   return (
-    <motion.div
-      layout
-      className={`bg-white border rounded-2xl overflow-hidden transition-shadow hover:shadow-sm ${
-        isDue ? 'border-amber-200' : 'border-border'
-      }`}
-    >
-      {/* Row header */}
+    <div className={cn(
+      'rounded-lg border bg-surface transition-colors duration-[160ms]',
+      expanded ? 'border-border-strong' : 'border-border hover:border-border-strong',
+    )}>
       <button
         onClick={() => setExpanded(e => !e)}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left"
+        aria-expanded={expanded}
+        className="w-full text-left p-3 flex flex-col gap-2"
       >
-        {/* Subject chip */}
-        {card.subjects ? (
-          <span className="text-base shrink-0" title={card.subjects.name}>
-            {card.subjects.icon}
+        <div className="flex items-center justify-between gap-2 text-xs text-text-muted">
+          <span className="truncate">
+            {card.subjects ? `${card.subjects.icon} ${card.subjects.name}` : 'Konusuz'}
           </span>
-        ) : (
-          <div className="w-5 h-5 rounded-md bg-gray-100 shrink-0" />
-        )}
-
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-800 truncate">{card.front}</p>
-          <p className="text-xs text-muted-foreground truncate">{card.back}</p>
+          <span className={cn('shrink-0 tabular-nums', isDue && 'text-warning font-medium')}>{dueLabel}</span>
         </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Due badge */}
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-            isDue
-              ? 'text-amber-700 bg-amber-50 border-amber-200'
-              : 'text-gray-400 bg-gray-50 border-gray-200'
-          }`}>
-            {isDue ? '📅 ' : ''}{dueLabel}
-          </span>
-
-          {/* Review count */}
-          {card.review_count > 0 && (
-            <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
-              <RotateCcw className="w-2.5 h-2.5" />
-              {card.review_count}
-            </span>
-          )}
-
-          {expanded
-            ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" />
-            : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-          }
-        </div>
+        <p className="text-base font-medium text-text line-clamp-3">{card.front}</p>
       </button>
 
-      {/* Expanded detail */}
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {expanded && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.18 }}
             className="overflow-hidden"
           >
-            <div className="border-t border-border/60 px-4 py-3 space-y-3 bg-gray-50/50">
-              {/* Front */}
-              <div>
-                <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider mb-1">Soru</p>
-                <p className="text-sm text-gray-800">{card.front}</p>
-              </div>
-              {/* Back */}
-              <div>
-                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Cevap</p>
-                <p className="text-sm text-gray-700">{card.back}</p>
-              </div>
-              {/* Source PDF */}
+            <div className="mx-3 pt-2.5 pb-3 border-t border-border space-y-2.5">
+              <p className="text-sm text-text-secondary whitespace-pre-wrap">{card.back}</p>
               {card.source_pdf_name && (
-                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <FileText className="w-3 h-3" />
-                  {card.source_pdf_name}
-                </div>
+                <p className="flex items-center gap-1.5 text-xs text-text-muted">
+                  <FileText className="size-3" /> {card.source_pdf_name}
+                </p>
               )}
-              {/* Actions */}
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  onClick={() => onEdit(card)}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-indigo-600 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-indigo-50"
-                >
-                  <Edit2 className="w-3.5 h-3.5" /> Düzenle
+              <div className="flex items-center gap-4 text-xs">
+                {card.review_count > 0 && (
+                  <span className="text-text-muted">
+                    <span className="tabular">{card.review_count}</span> tekrar
+                  </span>
+                )}
+                <button onClick={() => onEdit(card)} className="inline-flex items-center gap-1 font-medium text-text-secondary hover:text-accent">
+                  <Edit2 className="size-3" /> Düzenle
                 </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-red-50 disabled:opacity-40"
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> {deleting ? 'Siliniyor…' : 'Sil'}
+                <button onClick={handleDelete} disabled={deleting} className="inline-flex items-center gap-1 font-medium text-text-secondary hover:text-danger disabled:opacity-40">
+                  <Trash2 className="size-3" /> {deleting ? 'Siliniyor…' : 'Sil'}
                 </button>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   )
 }
 
-export default function FlashcardList({ cards, onDelete, onEdit, onUpdated }: Props) {
+export default function FlashcardList({ cards, onDelete, onEdit }: Props) {
   return (
-    <motion.div
-      variants={stagger(0.04)}
-      initial="hidden"
-      animate="show"
-      className="space-y-2"
-    >
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-start">
       {cards.map(card => (
-        <motion.div
-          key={card.id}
-          variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }}
-          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-        >
-          <FlashcardRow
-            card={card}
-            onDelete={onDelete}
-            onEdit={onEdit}
-          />
-        </motion.div>
+        <FlashcardCell key={card.id} card={card} onDelete={onDelete} onEdit={onEdit} />
       ))}
-    </motion.div>
+    </div>
   )
 }

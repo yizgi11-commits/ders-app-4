@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import type {
   RecallCard, RecallQueueGroup, RecallQueueResponse, RecallStats,
 } from '@/lib/recall/types'
+import { SectionLabel } from '@/components/ui/section-label'
 import RecallQueue from './RecallQueue'
 import RecallSession from './RecallSession'
 import RecallAnalytics from './RecallAnalytics'
@@ -35,23 +36,27 @@ export default function RecallClient() {
   }
 
   if (session) {
+    // Full-bleed white sheet: cancels the dashboard <main> padding so the
+    // session reads as a clean page, then re-applies the same padding inside.
     return (
-      <RecallSession
-        cards={session}
-        onFinished={load}
-        onClose={() => { setSession(null); load() }}
-      />
+      <div className="-mx-4 -mt-4 -mb-24 lg:-mx-6 lg:-mt-6 lg:-mb-20 min-h-[calc(100dvh-3.5rem)] bg-surface px-4 pt-6 pb-28 lg:px-6 lg:pb-24">
+        <RecallSession
+          cards={session}
+          onFinished={load}
+          onClose={() => { setSession(null); load() }}
+        />
+      </div>
     )
   }
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-3xl mx-auto">
       <RecallQueue queue={queue} onStart={startAll} onStartTopic={startTopic} />
 
-      <div>
-        <h2 className="text-sm font-bold text-gray-900 mb-3">Recall Analytics</h2>
+      <section className="mt-14">
+        <SectionLabel className="pb-2 mb-5 border-b border-border">RECALL ANALYTICS</SectionLabel>
         <RecallAnalytics stats={stats} />
-      </div>
+      </section>
     </div>
   )
 }

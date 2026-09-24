@@ -20,10 +20,7 @@ export const PRIORITY_DOT: Record<TaskPriority, string> = {
   low:    'bg-border-strong',
 }
 
-/** Written uppercase on purpose — CSS `uppercase` under lang="tr" turns i into İ. */
-export function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-[11px] font-medium tracking-[0.08em] text-text-muted">{children}</p>
-}
+export { SectionLabel } from '@/components/ui/section-label'
 
 export function daysFromToday(dateStr: string): number {
   const today = new Date().toISOString().split('T')[0]

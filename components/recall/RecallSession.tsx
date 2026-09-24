@@ -2,9 +2,10 @@
 
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X, Brain, Eye, Loader2, Lock } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { X, Loader2, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { EASE_CURVE } from '@/lib/motion'
 import {
   RECALL_GRADES, GRADE_CONFIG,
   type RecallCard, type RecallGrade,
@@ -15,6 +16,18 @@ interface Props {
   onClose: () => void
   /** Fired once the session ends so the queue/analytics can refetch. */
   onFinished: () => void
+}
+
+/** Border-only for Again/Hard/Good, filled for Easy — no playful color blocks. */
+const GRADE_STYLE: Record<RecallGrade, string> = {
+  again: 'border-border text-danger hover:bg-danger-soft',
+  hard:  'border-border text-warning hover:bg-warning-soft',
+  good:  'border-border text-success hover:bg-success-soft',
+  easy:  'border-success bg-success text-white hover:opacity-90',
+}
+
+const GRADE_TEXT: Record<RecallGrade, string> = {
+  again: 'text-danger', hard: 'text-warning', good: 'text-success', easy: 'text-success',
 }
 
 export default function RecallSession({ cards, onClose, onFinished }: Props) {
@@ -66,37 +79,32 @@ export default function RecallSession({ cards, onClose, onFinished }: Props) {
     }
   }, [card, saving, index, total, onFinished, tally])
 
+  const reviewed = tally.again + tally.hard + tally.good + tally.easy
+
   // ── Free daily limit hit mid-session ────────────────────────────
   if (locked) {
     return (
-      <motion.div
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-        className="max-w-lg mx-auto py-14 flex flex-col items-center text-center gap-5"
-      >
-        <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center">
-          <Lock className="w-7 h-7 text-indigo-300" />
-        </div>
-        <div>
-          <h2 className="text-xl font-black text-gray-900">Bugünkü Recall limitine ulaştın</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            {tally.again + tally.hard + tally.good + tally.easy} kart tamamladın. Free planda günde 20 kart — Pro ile sınırsız.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <div className="max-w-[560px] mx-auto pt-16 text-center">
+        <Lock className="size-5 text-text-muted mx-auto" />
+        <h2 className="mt-4 text-xl font-semibold text-text">Bugünkü Recall limitine ulaştın</h2>
+        <p className="mt-2 text-base text-text-secondary">
+          <span className="tabular">{reviewed}</span> kart tamamladın. Free planda günde 20 kart — Pro ile sınırsız.
+        </p>
+        <div className="mt-8 flex items-center justify-center gap-3">
           <button
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl border border-border text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+            className="h-10 px-5 rounded-md border border-border text-base font-medium text-text hover:bg-surface-subtle transition-colors duration-[160ms]"
           >
             Recall&apos;a dön
           </button>
           <Link
             href="/dashboard/upgrade"
-            className="px-5 py-2.5 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-sm font-bold transition-colors"
+            className="inline-flex items-center h-10 px-5 rounded-md bg-accent hover:bg-accent-dark text-white text-base font-medium transition-colors duration-[160ms]"
           >
             Upgrade
           </Link>
         </div>
-      </motion.div>
+      </div>
     )
   }
 
@@ -105,175 +113,117 @@ export default function RecallSession({ cards, onClose, onFinished }: Props) {
     const remembered = tally.good + tally.easy
     const rate = total > 0 ? Math.round((remembered / total) * 100) : 0
     return (
-      <motion.div
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-        className="max-w-lg mx-auto py-14 flex flex-col items-center text-center gap-6"
-      >
-        <motion.div
-          initial={{ scale: 0 }} animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 22, delay: 0.1 }}
-          className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-200"
-        >
-          <Brain className="w-10 h-10 text-white" />
-        </motion.div>
+      <div className="max-w-[560px] mx-auto pt-16 text-center">
+        <p className="text-[13px] font-medium tracking-[0.12em] text-text-muted">SESSION COMPLETE</p>
+        <h2 className="mt-2 text-2xl font-semibold text-text">
+          <span className="tabular">{total}</span> kart · <span className="tabular">%{rate}</span> hatırlandı
+        </h2>
 
-        <div>
-          <h2 className="text-2xl font-black text-gray-900">Recall tamamlandı</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            {total} kart · %{rate} hatırlandı
-          </p>
-        </div>
-
-        <div className="grid grid-cols-4 gap-2 w-full">
-          {RECALL_GRADES.map(g => {
-            const cfg = GRADE_CONFIG[g]
-            return (
-              <div key={g} className={cn('rounded-2xl border p-3 text-center', cfg.bg, cfg.border)}>
-                <p className={cn('text-2xl font-black', cfg.color)}>{tally[g]}</p>
-                <p className={cn('text-[11px] font-semibold mt-0.5', cfg.color)}>{cfg.label}</p>
-              </div>
-            )
-          })}
+        <div className="mt-10 grid grid-cols-4 border-y border-border divide-x divide-border">
+          {RECALL_GRADES.map(g => (
+            <div key={g} className="py-4">
+              <p className="tabular text-xl text-text">{tally[g]}</p>
+              <p className={cn('mt-0.5 text-xs font-medium', GRADE_TEXT[g])}>{GRADE_CONFIG[g].label}</p>
+            </div>
+          ))}
         </div>
 
         <button
           onClick={onClose}
-          className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-lg shadow-indigo-200/50 transition-colors"
+          className="mt-10 h-10 px-6 rounded-md bg-accent hover:bg-accent-dark text-white text-base font-medium transition-colors duration-[160ms]"
         >
           Recall&apos;a dön
         </button>
-      </motion.div>
+      </div>
     )
   }
 
   if (!card) return null
 
   const pct = Math.round((index / total) * 100)
-  const topicLabel = card.topic_title ?? card.subject_name ?? 'Konusuz'
+  const context = [card.subject_name, card.topic_title].filter(Boolean).join(' · ') || 'Konusuz'
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
-            <X className="w-4 h-4 text-gray-500" />
-          </button>
-          <div>
-            <p className="text-sm font-bold text-gray-900">Recall Session</p>
-            <p className="text-xs text-muted-foreground">{index + 1} / {total} kart</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5">
-          {RECALL_GRADES.filter(g => tally[g] > 0).map(g => (
-            <span
-              key={g}
-              className={cn('text-[11px] font-bold px-2 py-1 rounded-full border', GRADE_CONFIG[g].bg, GRADE_CONFIG[g].border, GRADE_CONFIG[g].color)}
-            >
-              {GRADE_CONFIG[g].label} {tally[g]}
-            </span>
-          ))}
-        </div>
+    <div className="max-w-3xl mx-auto">
+      {/* Top bar */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onClose}
+          aria-label="Oturumu kapat"
+          className="p-1.5 -ml-1.5 rounded-md text-text-muted hover:text-text hover:bg-surface-subtle transition-colors duration-[160ms]"
+        >
+          <X className="size-4" />
+        </button>
+        <p className="flex-1 min-w-0 truncate text-[13px] text-text-muted">{context}</p>
+        <span className="tabular text-[13px] text-text-muted shrink-0">{index + 1} / {total}</span>
       </div>
-
-      {/* Progress */}
-      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div className="mt-3 h-0.5 bg-border rounded-full overflow-hidden" aria-hidden>
         <motion.div
-          className="h-full bg-indigo-500 rounded-full"
-          initial={{ width: '0%' }}
+          className="h-full bg-accent"
+          initial={false}
           animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.3, ease: EASE_CURVE }}
         />
       </div>
 
-      {/* Card */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={card.id}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-          className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-gray-950 to-gray-900 p-8 shadow-xl"
-        >
-          <div className="absolute top-0 right-0 w-56 h-56 bg-indigo-600/10 rounded-full blur-[70px] pointer-events-none" />
+      {/* Card — enter-only fade per card */}
+      <motion.div
+        key={card.id}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, ease: EASE_CURVE }}
+        className="max-w-[560px] mx-auto"
+      >
+        <p className="py-12 text-center text-[22px] leading-8 font-semibold text-text whitespace-pre-wrap">
+          {card.front}
+        </p>
 
-          {/* Topic */}
-          <p className="relative text-[11px] font-bold text-indigo-400 uppercase tracking-[0.18em] mb-5">
-            {card.subject_icon ? `${card.subject_icon} ` : ''}{topicLabel}
-          </p>
-
-          {/* Question */}
-          <p className="relative text-xl sm:text-2xl font-bold text-white leading-relaxed">
-            {card.front}
-          </p>
-
-          {/* Answer */}
-          <AnimatePresence>
-            {revealed && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                className="relative overflow-hidden"
-              >
-                <div className="flex items-center gap-3 my-5">
-                  <span className="h-px flex-1 bg-white/10" />
-                  <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Show Answer</span>
-                  <span className="h-px flex-1 bg-white/10" />
-                </div>
-                <p className="text-lg text-white/85 leading-relaxed">{card.back}</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      </AnimatePresence>
+        {revealed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="h-px bg-border" />
+            <p className="py-6 text-center text-[16px] leading-7 text-text-secondary whitespace-pre-wrap">
+              {card.back}
+            </p>
+          </motion.div>
+        )}
+      </motion.div>
 
       {/* Reveal / grade */}
-      {!revealed ? (
-        <div className="flex flex-col items-center gap-2">
-          <motion.button
-            onClick={() => setRevealed(true)}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-bold text-sm px-8 py-3.5 rounded-xl shadow-lg transition-colors"
-          >
-            <Eye className="w-4 h-4" /> Show Answer
-          </motion.button>
-          <p className="text-xs text-muted-foreground">Önce hatırlamayı dene — sonra cevabı aç.</p>
-        </div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-          className="space-y-3"
-        >
-          <p className="text-center text-sm font-semibold text-gray-700">How well did you remember?</p>
-          <div className="grid grid-cols-4 gap-2">
-            {RECALL_GRADES.map(g => {
-              const cfg = GRADE_CONFIG[g]
-              return (
-                <motion.button
-                  key={g}
+      <div className="max-w-[560px] mx-auto">
+        {!revealed ? (
+          <div className="flex flex-col items-center gap-3">
+            <button
+              onClick={() => setRevealed(true)}
+              className="h-10 px-6 rounded-md border border-border text-base font-medium text-text hover:bg-surface-subtle transition-colors duration-[160ms]"
+            >
+              Show Answer
+            </button>
+            <p className="text-xs text-text-muted">Önce hatırlamayı dene — sonra cevabı aç.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-4 gap-2" role="group" aria-label="Ne kadar iyi hatırladın?">
+            {RECALL_GRADES.map(g => (
+              <div key={g} className="flex flex-col items-center gap-1.5">
+                <button
                   onClick={() => grade(g)}
                   disabled={saving}
-                  whileHover={{ scale: 1.03, y: -2 }}
-                  whileTap={{ scale: 0.96 }}
                   className={cn(
-                    'flex flex-col items-center gap-0.5 py-3.5 rounded-2xl border-2 font-bold text-sm transition-all disabled:opacity-50',
-                    cfg.bg, cfg.border, cfg.color, cfg.hover,
+                    'w-full h-10 rounded-md border text-base font-medium transition-colors duration-[160ms] disabled:opacity-50',
+                    GRADE_STYLE[g],
                   )}
                 >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : cfg.label}
-                  <span className="text-[10px] font-medium opacity-60">{cfg.hint}</span>
-                </motion.button>
-              )
-            })}
+                  {saving ? <Loader2 className="size-4 animate-spin mx-auto" /> : GRADE_CONFIG[g].label}
+                </button>
+                <span className="text-xs text-text-muted">{GRADE_CONFIG[g].hint}</span>
+              </div>
+            ))}
           </div>
-        </motion.div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

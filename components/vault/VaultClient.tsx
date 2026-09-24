@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Note } from '@/lib/notes/types'
 import { VAULT_TABS, type VaultTab, type VaultDocument, type VaultItemKind } from '@/lib/vault/types'
 import { useAssist } from '@/components/assist/AssistProvider'
+import { SectionLabel } from '@/components/ui/section-label'
 import VaultAllView from './VaultAllView'
 import VaultNotesView from './VaultNotesView'
 import VaultFlashcardsView from './VaultFlashcardsView'
@@ -40,44 +41,53 @@ export default function VaultClient() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search Vault..."
-          className="w-full text-sm bg-white border border-border rounded-2xl pl-10 pr-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-all"
-        />
-      </div>
+    <div className="flex flex-col md:flex-row gap-6 md:gap-10">
+      {/* Collections — a plain list on the left (a scrollable row on small screens) */}
+      <nav aria-label="Vault koleksiyonları" className="md:w-[200px] md:shrink-0">
+        <SectionLabel className="hidden md:block mb-2 px-3">COLLECTIONS</SectionLabel>
+        <ul className="flex md:flex-col gap-1 md:gap-0.5 overflow-x-auto -mx-1 px-1 md:mx-0 md:px-0">
+          {VAULT_TABS.map(({ id, label }) => {
+            const active = tab === id
+            return (
+              <li key={id} className="shrink-0">
+                <button
+                  onClick={() => setTab(id)}
+                  aria-current={active ? 'page' : undefined}
+                  className={cn(
+                    'relative w-full text-left h-8 px-3 rounded-md text-base font-medium transition-colors duration-[160ms] whitespace-nowrap',
+                    active ? 'text-accent' : 'text-text-secondary hover:text-text hover:bg-surface-subtle',
+                  )}
+                >
+                  {active && <span aria-hidden className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-accent" />}
+                  {label}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      </nav>
 
-      {/* Tabs */}
-      <div className="flex bg-white border border-border rounded-xl p-1 gap-0.5 shadow-sm overflow-x-auto">
-        {VAULT_TABS.map(({ id, label }) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            className={cn(
-              'relative flex-1 min-w-[84px] text-xs font-semibold py-2.5 rounded-lg transition-colors whitespace-nowrap z-10',
-              tab === id ? 'text-white' : 'text-muted-foreground hover:text-gray-700',
-            )}
-          >
-            {tab === id && (
-              <motion.div
-                layoutId="vault-tab"
-                className="absolute inset-0 bg-indigo-600 rounded-lg"
-                transition={{ type: 'spring', stiffness: 420, damping: 36 }}
-              />
-            )}
-            <span className="relative z-10">{label}</span>
-          </button>
-        ))}
-      </div>
+      <div className="flex-1 min-w-0">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-text-muted" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search Vault…"
+            aria-label="Vault içinde ara"
+            className="w-full h-10 rounded-md bg-surface border border-border pl-9 pr-3 text-base text-text placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors duration-[160ms]"
+          />
+        </div>
 
-      {/* Content */}
-      <AnimatePresence mode="wait">
-        <motion.div key={tab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+        {/* Content — enter-only fade so a collection never waits on the previous one's exit */}
+        <motion.div
+          key={tab}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.12 }}
+          className="mt-6"
+        >
           {tab === 'all' && (
             <VaultAllView search={search} refreshKey={refreshKey} onOpenTab={openFromFeed} />
           )}
@@ -95,29 +105,29 @@ export default function VaultClient() {
           )}
 
           {tab === 'saved' && (
-            <div className="space-y-6">
-              <SavedSection title="Notes">
+            <div className="space-y-10">
+              <SavedSection title="NOTES">
                 <VaultNotesView search={search} savedOnly refreshKey={refreshKey} onAssist={assistNote} />
               </SavedSection>
-              <SavedSection title="Flashcards">
+              <SavedSection title="FLASHCARDS">
                 <VaultFlashcardsView search={search} savedOnly refreshKey={refreshKey} />
               </SavedSection>
-              <SavedSection title="Documents">
+              <SavedSection title="DOCUMENTS">
                 <VaultDocumentsView search={search} savedOnly refreshKey={refreshKey} onAssist={assistDocument} />
               </SavedSection>
             </div>
           )}
         </motion.div>
-      </AnimatePresence>
+      </div>
     </div>
   )
 }
 
 function SavedSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div>
-      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">{title}</p>
+    <section>
+      <SectionLabel className="mb-3">{title}</SectionLabel>
       {children}
-    </div>
+    </section>
   )
 }
