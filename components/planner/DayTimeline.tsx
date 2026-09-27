@@ -43,20 +43,20 @@ export default function DayTimeline({ date, blocks, onStatusChange }: Props) {
       >
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-            isToday ? 'bg-indigo-100 border border-indigo-200' : 'bg-gray-100 border border-gray-200'
+            isToday ? 'bg-accent-soft border border-accent/30' : 'bg-surface-subtle border border-border'
           }`}>
-            <Calendar className={`w-4 h-4 ${isToday ? 'text-indigo-600' : 'text-gray-400'}`} />
+            <Calendar className={`w-4 h-4 ${isToday ? 'text-accent' : 'text-text-muted'}`} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-gray-900">{dayName}</h3>
+              <h3 className="text-sm font-bold text-text">{dayName}</h3>
               {isToday && (
-                <span className="text-[9px] font-bold text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                <span className="text-[9px] font-bold text-accent bg-accent-soft px-1.5 py-0.5 rounded-md uppercase tracking-wider">
                   Bugün
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-gray-400">
+            <p className="text-[11px] text-text-muted">
               {date} · {total} ders bloku · {totalMins} dk
             </p>
           </div>
@@ -65,17 +65,17 @@ export default function DayTimeline({ date, blocks, onStatusChange }: Props) {
         {/* Progress */}
         {total > 0 && (
           <div className="flex items-center gap-3 text-[11px]">
-            <div className="flex items-center gap-1 text-emerald-600">
+            <div className="flex items-center gap-1 text-success">
               <CheckCircle2 className="w-3 h-3" />
               <span>{completed}/{total}</span>
             </div>
             {skipped > 0 && (
-              <div className="flex items-center gap-1 text-gray-400">
+              <div className="flex items-center gap-1 text-text-muted">
                 <XCircle className="w-3 h-3" />
                 <span>{skipped}</span>
               </div>
             )}
-            <div className="flex items-center gap-1 text-gray-400">
+            <div className="flex items-center gap-1 text-text-muted">
               <Clock className="w-3 h-3" />
               <span>{totalMins} dk</span>
             </div>
@@ -88,7 +88,7 @@ export default function DayTimeline({ date, blocks, onStatusChange }: Props) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center py-12 text-gray-400 text-sm"
+          className="text-center py-12 text-text-muted text-sm"
         >
           Bu gün için program oluşturulmamış.
         </motion.div>

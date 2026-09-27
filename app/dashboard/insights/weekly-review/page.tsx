@@ -27,10 +27,10 @@ export default async function WeeklyReviewPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-5">
       <div>
-        <Link href="/dashboard/insights" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-gray-700 transition-colors mb-3">
+        <Link href="/dashboard/insights" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-text-secondary transition-colors mb-3">
           <ArrowLeft className="w-3.5 h-3.5" /> Insights
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">Your Week</h1>
+        <h1 className="text-xl font-bold text-text">Your Week</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Bu haftanın özeti — tamamen veriden, yorum yok.</p>
       </div>
 

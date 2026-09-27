@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight, Lock, Play } from 'lucide-react'
+import { ArrowRight, Lock, Play, CheckCircle2 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/states'
 import { daysAgoLabel, type RecallQueueResponse, type RecallQueueGroup } from '@/lib/recall/types'
 
 interface Props {
@@ -38,16 +39,21 @@ export default function RecallQueue({ queue, onStart, onStartTopic }: Props) {
   if (queue.totalCards === 0) {
     return (
       <div>
-        <Header title="Nothing due today" />
-        <p className="text-base text-text-secondary">
-          Her şey güncel. Yeni kartlar Vault&apos;tan veya Focus oturumu sonunda eklenir.
-        </p>
-        <Link
-          href="/dashboard/vault"
-          className="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-accent hover:text-accent-dark transition-colors duration-[160ms]"
+        <p className="text-[13px] font-medium tracking-[0.12em] text-text-muted">RECALL</p>
+        <EmptyState
+          icon={CheckCircle2}
+          tone="success"
+          title="Bugün tekrar edilecek konu yok."
+          description="Harika iş — her şey güncel."
+          className="border-y border-border mt-4"
         >
-          Vault&apos;a git <ArrowRight className="size-3.5" />
-        </Link>
+          <Link
+            href="/dashboard/vault"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-accent transition-colors duration-[120ms]"
+          >
+            Vault&apos;a git <ArrowRight className="size-3.5" />
+          </Link>
+        </EmptyState>
       </div>
     )
   }

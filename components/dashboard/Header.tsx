@@ -47,7 +47,7 @@ export default function Header({ userName }: HeaderProps) {
         type="button"
         aria-label="Bildirimler"
         className={cn(
-          'p-2 rounded-md transition-colors duration-[160ms]',
+          'hit-area p-2 rounded-md transition-colors duration-[160ms]',
           dark
             ? 'text-dark-text-secondary hover:text-dark-text hover:bg-white/[0.06]'
             : 'text-text-secondary hover:text-text hover:bg-surface-subtle',

@@ -54,8 +54,8 @@ export default function WeekOverview({ blocks, weekStart, selectedDate, onSelect
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
+    <div className="bg-surface border border-border rounded-2xl p-5 shadow-sm">
+      <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-4">
         Haftalık Özet
       </h3>
 
@@ -77,14 +77,14 @@ export default function WeekOverview({ blocks, weekStart, selectedDate, onSelect
               className={cn(
                 'flex flex-col items-center gap-2 py-3 px-1 rounded-xl border transition-all',
                 isSelected
-                  ? 'bg-indigo-50 border-indigo-200 shadow-sm shadow-indigo-100'
-                  : 'bg-gray-50/50 border-gray-100 hover:border-gray-200 hover:bg-gray-50',
+                  ? 'bg-accent-soft border-accent/30 shadow-sm'
+                  : 'bg-surface-subtle/50 border-border hover:border-border hover:bg-surface-subtle',
               )}
             >
               {/* Day label */}
               <span className={cn(
                 'text-[10px] font-semibold uppercase tracking-wider',
-                day.isToday ? 'text-indigo-600' : 'text-gray-400',
+                day.isToday ? 'text-accent' : 'text-text-muted',
               )}>
                 {day.dayLabel}
               </span>
@@ -92,18 +92,18 @@ export default function WeekOverview({ blocks, weekStart, selectedDate, onSelect
               {/* Date number */}
               <span className={cn(
                 'text-sm font-bold',
-                day.isToday ? 'text-indigo-600' :
-                isSelected ? 'text-gray-900' : 'text-gray-500',
+                day.isToday ? 'text-accent' :
+                isSelected ? 'text-text' : 'text-text-muted',
               )}>
                 {day.shortLabel}
               </span>
 
               {/* Mini bar */}
               <div className="w-full px-2">
-                <div className="relative w-full bg-gray-200 rounded-full overflow-hidden" style={{ height: 4 }}>
+                <div className="relative w-full bg-border rounded-full overflow-hidden" style={{ height: 4 }}>
                   {day.studyBlocks > 0 && (
                     <motion.div
-                      className="absolute left-0 top-0 h-full rounded-full bg-indigo-500"
+                      className="absolute left-0 top-0 h-full rounded-full bg-accent"
                       initial={{ width: 0 }}
                       animate={{ width: `${pct}%` }}
                       transition={{ duration: 0.6, delay: 0.2 + i * 0.05 }}
@@ -116,19 +116,19 @@ export default function WeekOverview({ blocks, weekStart, selectedDate, onSelect
               <div className="text-center">
                 {day.studyBlocks > 0 ? (
                   <>
-                    <p className="text-[10px] text-gray-500 font-medium">
+                    <p className="text-[10px] text-text-muted font-medium">
                       {day.completed}/{day.studyBlocks}
                     </p>
-                    <p className="text-[9px] text-gray-400">{day.totalMins}dk</p>
+                    <p className="text-[9px] text-text-muted">{day.totalMins}dk</p>
                   </>
                 ) : (
-                  <p className="text-[10px] text-gray-300">—</p>
+                  <p className="text-[10px] text-text-muted">—</p>
                 )}
               </div>
 
               {/* Today dot */}
               {day.isToday && (
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                <div className="w-1.5 h-1.5 rounded-full bg-accent" />
               )}
             </motion.button>
           )

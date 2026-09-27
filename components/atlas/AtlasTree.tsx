@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, ChevronDown, Search } from 'lucide-react'
+import { Plus, ChevronDown, Search, Map as MapIcon } from 'lucide-react'
+import { EmptyState, StateAction } from '@/components/ui/states'
 import { cn } from '@/lib/utils'
 import { EASE_CURVE } from '@/lib/motion'
 import type { SubjectWithProgress } from '@/lib/subjects/types'
@@ -75,11 +76,13 @@ export default function AtlasTree({ initialSubjects, initialExamName }: Props) {
       </div>
 
       {subjects.length === 0 ? (
-        <div className="py-16 text-center">
-          <p className="text-base font-medium text-text">Your Atlas is empty</p>
-          <p className="text-sm text-text-secondary mt-1 mb-4">Add a subject to start mapping what you&apos;re learning.</p>
-          <AddSubjectButton onClick={() => setShowCreate(true)} />
-        </div>
+        <EmptyState
+          icon={MapIcon}
+          title="Henüz bir ders eklemedin."
+          description="İlk dersini ekleyerek öğrenme haritanı oluşturmaya başla."
+        >
+          <StateAction onClick={() => setShowCreate(true)}><Plus className="size-3.5" /> Ders ekle</StateAction>
+        </EmptyState>
       ) : filtered.length === 0 ? (
         <p className="py-10 text-sm text-text-muted">No subjects match “{search}”.</p>
       ) : (

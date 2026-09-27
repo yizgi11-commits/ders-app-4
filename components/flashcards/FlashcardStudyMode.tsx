@@ -62,31 +62,31 @@ export default function FlashcardStudyMode({ cards, onReviewed, onClose }: Props
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 400, damping: 22, delay: 0.1 }}
-          className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-200"
+          className="w-20 h-20 bg-accent rounded-2xl flex items-center justify-center shadow-xl"
         >
           <Brain className="w-10 h-10 text-white" />
         </motion.div>
 
         <div>
-          <h2 className="text-2xl font-black text-gray-900">Oturum Tamamlandı!</h2>
+          <h2 className="text-2xl font-semibold text-text">Oturum Tamamlandı!</h2>
           <p className="text-sm text-muted-foreground mt-1">{total} kart çalışıldı</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
-          <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-center">
-            <p className="text-3xl font-black text-emerald-700">{knowCount}</p>
-            <p className="text-xs text-emerald-600 font-semibold mt-0.5">Biliyorum ✓</p>
+          <div className="bg-success-soft border border-success/30 rounded-2xl p-4 text-center">
+            <p className="text-3xl font-semibold text-success">{knowCount}</p>
+            <p className="text-xs text-success font-semibold mt-0.5">Biliyorum ✓</p>
           </div>
-          <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-center">
-            <p className="text-3xl font-black text-red-600">{againCount}</p>
-            <p className="text-xs text-red-500 font-semibold mt-0.5">Tekrar ❌</p>
+          <div className="bg-danger-soft border border-danger/30 rounded-2xl p-4 text-center">
+            <p className="text-3xl font-semibold text-danger">{againCount}</p>
+            <p className="text-xs text-danger font-semibold mt-0.5">Tekrar ❌</p>
           </div>
         </div>
 
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl border border-border text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+            className="px-6 py-2.5 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-subtle transition-colors"
           >
             Bitir
           </button>
@@ -97,7 +97,7 @@ export default function FlashcardStudyMode({ cards, onReviewed, onClose }: Props
             }}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
-            className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-lg shadow-indigo-200/50"
+            className="px-6 py-2.5 rounded-xl bg-accent hover:bg-accent-dark text-white text-sm font-bold shadow-lg"
           >
             Tekrar Çalış
           </motion.button>
@@ -113,30 +113,30 @@ export default function FlashcardStudyMode({ cards, onReviewed, onClose }: Props
         <div className="flex items-center gap-3">
           <button
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-xl hover:bg-surface-subtle transition-colors"
           >
-            <X className="w-4 h-4 text-gray-500" />
+            <X className="w-4 h-4 text-text-muted" />
           </button>
           <div>
-            <p className="text-sm font-bold text-gray-900">Çalışma Modu</p>
+            <p className="text-sm font-bold text-text">Çalışma Modu</p>
             <p className="text-xs text-muted-foreground">{index + 1} / {total} kart</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">
+          <span className="text-xs font-semibold text-success bg-success-soft border border-success/30 px-2.5 py-1 rounded-full">
             ✓ {knowCount}
           </span>
-          <span className="text-xs font-semibold text-red-600 bg-red-50 border border-red-100 px-2.5 py-1 rounded-full">
+          <span className="text-xs font-semibold text-danger bg-danger-soft border border-danger/30 px-2.5 py-1 rounded-full">
             ❌ {againCount}
           </span>
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-surface-subtle rounded-full overflow-hidden">
         <motion.div
-          className="h-full bg-indigo-500 rounded-full"
+          className="h-full bg-accent rounded-full"
           initial={{ width: '0%' }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.4 }}
@@ -163,10 +163,9 @@ export default function FlashcardStudyMode({ cards, onReviewed, onClose }: Props
           >
             {/* Front */}
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-gradient-to-br from-gray-950 to-gray-900 border border-white/[0.08] rounded-2xl shadow-xl"
+              className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-dark-base border border-white/[0.08] rounded-2xl shadow-xl"
               style={{ backfaceVisibility: 'hidden' }}
             >
-              <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-600/10 rounded-full blur-[60px] pointer-events-none" />
               {card.subjects && (
                 <span
                   className="absolute top-4 left-4 text-[10px] font-bold px-2 py-1 rounded-full border text-white/50 border-white/[0.07] bg-white/[0.04]"
@@ -187,11 +186,10 @@ export default function FlashcardStudyMode({ cards, onReviewed, onClose }: Props
 
             {/* Back */}
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-gradient-to-br from-indigo-950 to-violet-950 border border-indigo-500/[0.2] rounded-2xl shadow-xl"
+              className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-accent border border-accent/[0.2] rounded-2xl shadow-xl"
               style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
             >
-              <div className="absolute top-0 left-0 w-48 h-48 bg-violet-600/15 rounded-full blur-[60px] pointer-events-none" />
-              <span className="absolute top-4 right-4 text-[10px] text-indigo-400/50 font-semibold uppercase tracking-widest">
+              <span className="absolute top-4 right-4 text-[10px] text-accent/50 font-semibold uppercase tracking-widest">
                 CEVAP
               </span>
               <p className="relative text-lg sm:text-xl font-semibold text-white/90 text-center leading-relaxed">
@@ -216,18 +214,18 @@ export default function FlashcardStudyMode({ cards, onReviewed, onClose }: Props
               whileHover={{ scale: 1.03, y: -2 }}
               whileTap={{ scale: 0.96 }}
               onClick={() => advance('again')}
-              className="flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-white border-2 border-red-200 hover:bg-red-50 hover:border-red-300 text-red-600 font-bold text-sm transition-all shadow-sm"
+              className="flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-surface border-2 border-danger/30 hover:bg-danger-soft hover:border-danger/30 text-danger font-bold text-sm transition-all shadow-sm"
             >
               <span className="text-xl">❌</span>
               Tekrar
-              <span className="text-xs font-normal text-red-400 ml-0.5">(yarın)</span>
+              <span className="text-xs font-normal text-danger ml-0.5">(yarın)</span>
             </motion.button>
 
             <motion.button
               whileHover={{ scale: 1.03, y: -2 }}
               whileTap={{ scale: 0.96 }}
               onClick={() => advance('know')}
-              className="flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-200/60"
+              className="flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-success hover:bg-success text-white font-bold text-sm transition-all shadow-lg"
             >
               <Check className="w-5 h-5" />
               Biliyorum

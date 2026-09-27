@@ -59,7 +59,7 @@ export default function NoeticAssist({ source, id, title, onClose, onFlashcardsS
         animate: { x: 0, opacity: 1 },
         exit: { x: 40, opacity: 0 },
         transition: { type: 'spring' as const, stiffness: 380, damping: 34 },
-        className: 'w-full lg:w-80 shrink-0 bg-white border border-border rounded-2xl shadow-sm flex flex-col overflow-hidden max-h-[calc(100vh-9rem)]',
+        className: 'w-full lg:w-80 shrink-0 bg-surface border border-border rounded-2xl shadow-sm flex flex-col overflow-hidden max-h-[calc(100vh-9rem)]',
       }
 
   return (
@@ -68,15 +68,15 @@ export default function NoeticAssist({ source, id, title, onClose, onFlashcardsS
       {!embedded && (
         <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-6 h-6 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-lg flex items-center justify-center shrink-0">
+            <div className="w-6 h-6 bg-accent rounded-lg flex items-center justify-center shrink-0">
               <Sparkles className="w-3 h-3 text-white" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-bold text-gray-900 leading-tight">Noetic Assist</p>
+              <p className="text-sm font-bold text-text leading-tight">Noetic Assist</p>
               <p className="text-[10px] text-muted-foreground truncate">{title}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 shrink-0">
+          <button onClick={onClose} className="p-1 rounded-lg text-text-muted hover:text-text-secondary hover:bg-surface-subtle shrink-0">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -92,14 +92,14 @@ export default function NoeticAssist({ source, id, title, onClose, onFlashcardsS
       {tier === 'free' ? (
         <Link
           href="/dashboard/upgrade"
-          className="flex items-center gap-3 p-4 border-b border-border shrink-0 hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-3 p-4 border-b border-border shrink-0 hover:bg-surface-subtle transition-colors"
         >
-          <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
-            <Lock className="w-4 h-4 text-gray-400" />
+          <div className="w-9 h-9 rounded-xl bg-surface-subtle flex items-center justify-center shrink-0">
+            <Lock className="w-4 h-4 text-text-muted" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-gray-900">Özetle · Açıkla · Flashcard · Quiz</p>
-            <p className="text-[11px] text-indigo-500 font-semibold">Pro’da açılır — yükseltmek için dokun</p>
+            <p className="text-xs font-bold text-text">Özetle · Açıkla · Flashcard · Quiz</p>
+            <p className="text-[11px] text-accent font-semibold">Pro’da açılır — yükseltmek için dokun</p>
           </div>
         </Link>
       ) : (
@@ -112,8 +112,8 @@ export default function NoeticAssist({ source, id, title, onClose, onFlashcardsS
               className={cn(
                 'flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl border transition-colors disabled:opacity-50',
                 results[a.id]
-                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                  : 'bg-gray-50/50 border-border text-gray-600 hover:border-indigo-200 hover:bg-indigo-50/40',
+                  ? 'bg-accent-soft border-accent/30 text-accent'
+                  : 'bg-surface-subtle/50 border-border text-text-secondary hover:border-accent/30 hover:bg-accent-soft/40',
               )}
             >
               {loading === a.id
@@ -128,7 +128,7 @@ export default function NoeticAssist({ source, id, title, onClose, onFlashcardsS
       {/* Results */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {error && (
-          <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">{error}</p>
+          <p className="text-xs text-danger bg-danger-soft border border-danger/30 rounded-xl px-3 py-2">{error}</p>
         )}
 
         {!error && !loading && Object.keys(results).length === 0 && (
@@ -139,26 +139,26 @@ export default function NoeticAssist({ source, id, title, onClose, onFlashcardsS
 
         {results.summarize && (
           <Section title="Özet">
-            <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">{results.summarize.text}</p>
+            <p className="text-xs text-text-secondary leading-relaxed whitespace-pre-wrap">{results.summarize.text}</p>
           </Section>
         )}
 
         {results.explain && (
           <Section title="Açıklama">
-            <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">{results.explain.text}</p>
+            <p className="text-xs text-text-secondary leading-relaxed whitespace-pre-wrap">{results.explain.text}</p>
           </Section>
         )}
 
         {results.flashcards && (
           <Section title="Flashcardlar">
-            <p className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 mb-2">
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold text-success mb-2">
               <Check className="w-3 h-3" />
               {results.flashcards.saved} kart Vault&apos;a kaydedildi
             </p>
             <div className="space-y-1.5">
               {results.flashcards.cards.map((c, i) => (
-                <div key={i} className="rounded-lg border border-border bg-gray-50/60 px-2.5 py-2">
-                  <p className="text-[11px] font-semibold text-gray-800">{c.front}</p>
+                <div key={i} className="rounded-lg border border-border bg-surface-subtle/60 px-2.5 py-2">
+                  <p className="text-[11px] font-semibold text-text">{c.front}</p>
                   <p className="text-[11px] text-muted-foreground mt-0.5">{c.back}</p>
                 </div>
               ))}
@@ -193,7 +193,7 @@ function QuizItem({ q, index }: { q: AssistQuizQuestion; index: number }) {
 
   return (
     <div>
-      <p className="text-xs font-medium text-gray-800 mb-2">{index + 1}. {q.question}</p>
+      <p className="text-xs font-medium text-text mb-2">{index + 1}. {q.question}</p>
       <div className="space-y-1">
         {q.options.map((opt, oi) => {
           const isCorrect = oi === q.correct
@@ -203,10 +203,10 @@ function QuizItem({ q, index }: { q: AssistQuizQuestion; index: number }) {
               onClick={() => !checked && setPicked(oi)}
               className={cn(
                 'w-full text-left text-[11px] px-2.5 py-1.5 rounded-lg border transition-colors',
-                checked && isCorrect       ? 'bg-emerald-50 border-emerald-300 text-emerald-700' :
-                checked && picked === oi   ? 'bg-red-50 border-red-300 text-red-700' :
-                picked === oi              ? 'bg-indigo-50 border-indigo-300 text-indigo-700' :
-                'border-border text-gray-600 hover:bg-gray-50',
+                checked && isCorrect       ? 'bg-success-soft border-success/30 text-success' :
+                checked && picked === oi   ? 'bg-danger-soft border-danger/30 text-danger' :
+                picked === oi              ? 'bg-accent-soft border-accent/30 text-accent' :
+                'border-border text-text-secondary hover:bg-surface-subtle',
               )}
             >
               {String.fromCharCode(65 + oi)}) {opt}
@@ -215,12 +215,12 @@ function QuizItem({ q, index }: { q: AssistQuizQuestion; index: number }) {
         })}
       </div>
       {!checked && picked !== null && (
-        <button onClick={() => setChecked(true)} className="mt-1.5 text-[10px] text-indigo-600 font-medium hover:underline">
+        <button onClick={() => setChecked(true)} className="mt-1.5 text-[10px] text-accent font-medium hover:underline">
           Cevabı kontrol et
         </button>
       )}
       {checked && (
-        <p className={cn('mt-1.5 text-[10px] font-medium', picked === q.correct ? 'text-emerald-600' : 'text-red-500')}>
+        <p className={cn('mt-1.5 text-[10px] font-medium', picked === q.correct ? 'text-success' : 'text-danger')}>
           {picked === q.correct ? '✓ Doğru!' : `✗ Yanlış. Doğru cevap: ${String.fromCharCode(65 + q.correct)}`}
         </p>
       )}

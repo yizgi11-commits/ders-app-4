@@ -94,23 +94,23 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
         initial="hidden"
         animate="show"
         exit="exit"
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+        className="bg-surface rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/60">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <Brain className="w-4 h-4 text-indigo-600" />
+            <div className="w-8 h-8 bg-accent-soft rounded-lg flex items-center justify-center">
+              <Brain className="w-4 h-4 text-accent" />
             </div>
-            <h2 className="text-sm font-bold text-gray-900">
+            <h2 className="text-sm font-bold text-text">
               {isEdit ? 'Kartı Düzenle' : 'Yeni Flash Kart'}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-surface-subtle transition-colors"
           >
-            <X className="w-4 h-4 text-gray-400" />
+            <X className="w-4 h-4 text-text-muted" />
           </button>
         </div>
 
@@ -118,7 +118,7 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
         <div className="p-6 space-y-4">
           {/* Front */}
           <div>
-            <label className="text-xs font-bold text-indigo-600 uppercase tracking-wider block mb-1.5">
+            <label className="text-xs font-bold text-accent uppercase tracking-wider block mb-1.5">
               Ön Yüz — Soru / Kavram
             </label>
             <textarea
@@ -126,13 +126,13 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
               onChange={e => setFront(e.target.value)}
               placeholder="Soru veya kavramı yaz…"
               rows={3}
-              className="w-full text-sm border border-border rounded-xl px-3 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 transition-all"
+              className="w-full text-sm border border-border rounded-xl px-3 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/30 transition-all"
             />
           </div>
 
           {/* Back */}
           <div>
-            <label className="text-xs font-bold text-emerald-600 uppercase tracking-wider block mb-1.5">
+            <label className="text-xs font-bold text-success uppercase tracking-wider block mb-1.5">
               Arka Yüz — Cevap / Açıklama
             </label>
             <textarea
@@ -140,7 +140,7 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
               onChange={e => setBack(e.target.value)}
               placeholder="Cevap veya açıklamayı yaz…"
               rows={4}
-              className="w-full text-sm border border-border rounded-xl px-3 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-300 transition-all"
+              className="w-full text-sm border border-border rounded-xl px-3 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-success/30 focus:border-success/30 transition-all"
             />
           </div>
 
@@ -154,17 +154,17 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
 
           {/* Preview */}
           {(front || back) && (
-            <div className="bg-gray-50 rounded-xl border border-border/60 p-3 space-y-2">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Önizleme</p>
+            <div className="bg-surface-subtle rounded-xl border border-border/60 p-3 space-y-2">
+              <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Önizleme</p>
               {front && (
-                <div className="bg-gray-900 rounded-lg p-3">
-                  <p className="text-[10px] text-indigo-400 font-bold mb-1 uppercase tracking-wider">SORU</p>
+                <div className="bg-dark-base rounded-lg p-3">
+                  <p className="text-[10px] text-accent font-bold mb-1 uppercase tracking-wider">SORU</p>
                   <p className="text-sm text-white font-medium">{front}</p>
                 </div>
               )}
               {back && (
-                <div className="bg-indigo-950 rounded-lg p-3">
-                  <p className="text-[10px] text-violet-400 font-bold mb-1 uppercase tracking-wider">CEVAP</p>
+                <div className="bg-accent rounded-lg p-3">
+                  <p className="text-[10px] text-accent font-bold mb-1 uppercase tracking-wider">CEVAP</p>
                   <p className="text-sm text-white/80">{back}</p>
                 </div>
               )}
@@ -172,7 +172,7 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
           )}
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+            <p className="text-sm text-danger bg-danger-soft border border-danger/30 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
               <span>{error}</span>
               {locked && (
                 <Link href="/dashboard/upgrade" className="shrink-0 font-bold underline">Upgrade</Link>
@@ -184,7 +184,7 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
           <div className="flex gap-2 pt-1">
             <button
               onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl border border-border text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+              className="flex-1 py-2.5 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-subtle transition-colors"
             >
               İptal
             </button>
@@ -193,7 +193,7 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
               disabled={saving || !front.trim() || !back.trim()}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-lg shadow-indigo-200/50 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
+              className="flex-1 py-2.5 rounded-xl bg-accent hover:bg-accent-dark text-white text-sm font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
             >
               <Save className="w-4 h-4" />
               {saving ? 'Kaydediliyor…' : isEdit ? 'Güncelle' : 'Kaydet'}

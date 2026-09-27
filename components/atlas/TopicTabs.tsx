@@ -23,7 +23,7 @@ const TABS: { id: Tab; label: string; icon: typeof BookOpen }[] = [
 ]
 
 const RATING_DOT: Record<SessionRating, string> = {
-  poor: 'bg-red-400', okay: 'bg-amber-400', good: 'bg-indigo-400', excellent: 'bg-emerald-400',
+  poor: 'bg-danger', okay: 'bg-warning', good: 'bg-accent', excellent: 'bg-success',
 }
 
 function fmtDate(iso: string) {
@@ -51,20 +51,20 @@ export default function TopicTabs({ subjectId, topicId, notes: initialNotes, fla
   return (
     <div className="space-y-4">
       {/* Tab bar */}
-      <div className="flex bg-white border border-border rounded-xl p-1 gap-0.5 shadow-sm">
+      <div className="flex bg-surface border border-border rounded-xl p-1 gap-0.5 shadow-sm">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
             className={cn(
               'relative flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg transition-all z-10',
-              tab === id ? 'text-white' : 'text-muted-foreground hover:text-gray-700'
+              tab === id ? 'text-white' : 'text-muted-foreground hover:text-text-secondary'
             )}
           >
             {tab === id && (
               <motion.div
                 layoutId="atlas-topic-tab"
-                className="absolute inset-0 bg-indigo-600 rounded-lg"
+                className="absolute inset-0 bg-accent rounded-lg"
                 transition={{ type: 'spring', stiffness: 420, damping: 36 }}
               />
             )}
@@ -110,7 +110,7 @@ export default function TopicTabs({ subjectId, topicId, notes: initialNotes, fla
 function LearnTab({ notes }: { notes: Note[] }) {
   if (notes.length === 0) {
     return (
-      <div className="text-center py-14 bg-white border border-dashed border-border rounded-2xl">
+      <div className="text-center py-14 bg-surface border border-dashed border-border rounded-2xl">
         <p className="text-3xl mb-3">📖</p>
         <p className="text-sm text-muted-foreground">No Vault notes for this topic yet.</p>
         <p className="text-xs text-muted-foreground/70 mt-1">Add one from the Notes tab.</p>
@@ -121,12 +121,12 @@ function LearnTab({ notes }: { notes: Note[] }) {
   return (
     <div className="space-y-2">
       {notes.map(note => (
-        <div key={note.id} className="bg-white border border-border rounded-2xl p-4 shadow-sm">
+        <div key={note.id} className="bg-surface border border-border rounded-2xl p-4 shadow-sm">
           <div className="flex items-start justify-between gap-3">
-            <p className="text-sm font-bold text-gray-900">{note.title}</p>
+            <p className="text-sm font-bold text-text">{note.title}</p>
             <Link
               href="/dashboard/vault"
-              className="flex items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-700 shrink-0"
+              className="flex items-center gap-1 text-[11px] font-medium text-accent hover:text-accent shrink-0"
             >
               Open <ExternalLink className="w-3 h-3" />
             </Link>
@@ -193,7 +193,7 @@ function PracticeTab({
         <p className="text-xs text-muted-foreground">{flashcards.length} recall card{flashcards.length !== 1 ? 's' : ''}</p>
         <button
           onClick={() => setShowAdd(v => !v)}
-          className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+          className="flex items-center gap-1.5 text-xs font-semibold text-accent hover:text-accent transition-colors"
         >
           <Plus className="w-3.5 h-3.5" /> Add Card
         </button>
@@ -202,27 +202,27 @@ function PracticeTab({
       <AnimatePresence>
         {showAdd && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-            <div className="bg-white border border-border rounded-2xl p-4 shadow-sm space-y-2">
+            <div className="bg-surface border border-border rounded-2xl p-4 shadow-sm space-y-2">
               <input
                 value={front} onChange={e => setFront(e.target.value)}
                 placeholder="Front (question)"
-                className="w-full text-sm bg-gray-50/50 border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+                className="w-full text-sm bg-surface-subtle/50 border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30"
               />
               <input
                 value={back} onChange={e => setBack(e.target.value)}
                 placeholder="Back (answer)"
-                className="w-full text-sm bg-gray-50/50 border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+                className="w-full text-sm bg-surface-subtle/50 border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30"
               />
               <div className="flex gap-2">
                 <button
                   onClick={handleAdd}
                   disabled={!front.trim() || !back.trim() || saving}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent-dark text-white text-xs font-semibold rounded-xl transition-colors disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                   Save
                 </button>
-                <button onClick={() => setShowAdd(false)} className="px-3 py-2 bg-gray-50 hover:bg-gray-100 text-muted-foreground text-xs rounded-xl transition-colors">
+                <button onClick={() => setShowAdd(false)} className="px-3 py-2 bg-surface-subtle hover:bg-surface-subtle text-muted-foreground text-xs rounded-xl transition-colors">
                   Cancel
                 </button>
               </div>
@@ -232,7 +232,7 @@ function PracticeTab({
       </AnimatePresence>
 
       {flashcards.length === 0 ? (
-        <div className="text-center py-14 bg-white border border-dashed border-border rounded-2xl">
+        <div className="text-center py-14 bg-surface border border-dashed border-border rounded-2xl">
           <p className="text-3xl mb-3">🧠</p>
           <p className="text-sm text-muted-foreground">No Recall cards for this topic yet.</p>
         </div>
@@ -242,7 +242,7 @@ function PracticeTab({
             const flipped = flippedId === card.id
             const busy = reviewingId === card.id
             return (
-              <div key={card.id} className="bg-white border border-border rounded-2xl p-4 shadow-sm flex flex-col gap-3">
+              <div key={card.id} className="bg-surface border border-border rounded-2xl p-4 shadow-sm flex flex-col gap-3">
                 <button
                   onClick={() => setFlippedId(flipped ? null : card.id)}
                   className="text-left"
@@ -250,7 +250,7 @@ function PracticeTab({
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                     {flipped ? 'Back' : 'Front'}
                   </p>
-                  <p className="text-sm font-medium text-gray-900 min-h-[2.5rem]">
+                  <p className="text-sm font-medium text-text min-h-[2.5rem]">
                     {flipped ? card.back : card.front}
                   </p>
                 </button>
@@ -260,14 +260,14 @@ function PracticeTab({
                     <button
                       onClick={() => handleReview(card.id, 'again')}
                       disabled={busy}
-                      className="flex items-center gap-1 px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-[11px] font-semibold rounded-lg transition-colors disabled:opacity-50"
+                      className="flex items-center gap-1 px-2.5 py-1.5 bg-danger-soft hover:bg-danger-soft text-danger text-[11px] font-semibold rounded-lg transition-colors disabled:opacity-50"
                     >
                       <ThumbsDown className="w-3 h-3" /> Again
                     </button>
                     <button
                       onClick={() => handleReview(card.id, 'know')}
                       disabled={busy}
-                      className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-[11px] font-semibold rounded-lg transition-colors disabled:opacity-50"
+                      className="flex items-center gap-1 px-2.5 py-1.5 bg-success-soft hover:bg-success-soft text-success text-[11px] font-semibold rounded-lg transition-colors disabled:opacity-50"
                     >
                       <ThumbsUp className="w-3 h-3" /> Know
                     </button>
@@ -286,7 +286,7 @@ function PracticeTab({
 function HistoryTab({ sessions }: { sessions: PomodoroSession[] }) {
   if (sessions.length === 0) {
     return (
-      <div className="text-center py-14 bg-white border border-dashed border-border rounded-2xl">
+      <div className="text-center py-14 bg-surface border border-dashed border-border rounded-2xl">
         <Flame className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
         <p className="text-sm text-muted-foreground">No Focus sessions for this topic yet.</p>
       </div>
@@ -294,7 +294,7 @@ function HistoryTab({ sessions }: { sessions: PomodoroSession[] }) {
   }
 
   return (
-    <div className="bg-white border border-border rounded-2xl shadow-sm overflow-hidden">
+    <div className="bg-surface border border-border rounded-2xl shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -307,7 +307,7 @@ function HistoryTab({ sessions }: { sessions: PomodoroSession[] }) {
           </thead>
           <tbody>
             {sessions.map(s => (
-              <tr key={s.id} className="border-t border-border/70 text-gray-700">
+              <tr key={s.id} className="border-t border-border/70 text-text-secondary">
                 <td className="px-4 py-2.5 whitespace-nowrap text-muted-foreground">{fmtDate(s.started_at)}</td>
                 <td className="px-4 py-2.5 tabular-nums">{fmtDuration(s.elapsed_seconds)}</td>
                 <td className="px-4 py-2.5">
@@ -363,22 +363,22 @@ function NotesTab({
 
   return (
     <div className="space-y-4">
-      <div className="bg-white border border-border rounded-2xl p-4 shadow-sm space-y-2">
+      <div className="bg-surface border border-border rounded-2xl p-4 shadow-sm space-y-2">
         <input
           value={title} onChange={e => setTitle(e.target.value)}
           placeholder="Title (optional)"
-          className="w-full text-sm bg-gray-50/50 border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+          className="w-full text-sm bg-surface-subtle/50 border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30"
         />
         <textarea
           value={content} onChange={e => setContent(e.target.value)}
           placeholder="Quick note…"
           rows={4}
-          className="w-full text-sm bg-gray-50/50 border border-border rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+          className="w-full text-sm bg-surface-subtle/50 border border-border rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30"
         />
         <button
           onClick={handleAdd}
           disabled={!content.trim() || saving}
-          className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent-dark text-white text-xs font-semibold rounded-xl transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
           Save Note
@@ -388,8 +388,8 @@ function NotesTab({
       {notes.length > 0 && (
         <div className="space-y-2">
           {notes.map(note => (
-            <div key={note.id} className="bg-white border border-border rounded-2xl p-3.5 shadow-sm">
-              <p className="text-xs font-bold text-gray-900">{note.title}</p>
+            <div key={note.id} className="bg-surface border border-border rounded-2xl p-3.5 shadow-sm">
+              <p className="text-xs font-bold text-text">{note.title}</p>
               <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{note.content_preview}</p>
             </div>
           ))}

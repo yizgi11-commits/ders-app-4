@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AnimatePresence } from 'framer-motion'
-import { Upload, Sparkles, Trash2, Loader2, Star, ExternalLink } from 'lucide-react'
+import { Upload, Sparkles, Trash2, Loader2, Star, ExternalLink, FileText } from 'lucide-react'
+import { EmptyState, StateAction } from '@/components/ui/states'
 import { cn } from '@/lib/utils'
 import { relativeTime, formatBytes, atlasLabel, shortDate, type VaultDocument } from '@/lib/vault/types'
 import PDFUploadModal from '@/components/flashcards/PDFUploadModal'
@@ -83,9 +84,13 @@ export default function VaultDocumentsView({ search, savedOnly = false, onAssist
       )}
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-text-muted py-4 border-y border-border">
-          {q ? 'Eşleşen belge yok.' : savedOnly ? 'Kaydedilmiş belge yok.' : 'Henüz PDF yüklenmedi.'}
-        </p>
+        q || savedOnly
+          ? <EmptyState title={q ? 'Eşleşen belge yok.' : 'Kaydedilmiş belge yok.'} className="border-y border-border py-8" />
+          : (
+            <EmptyState icon={FileText} title="Henüz PDF yüklenmedi." description="Ders notlarını yükle; Noetic Assist onlardan kart ve özet çıkarabilir." className="border-y border-border">
+              <StateAction onClick={() => setShowUpload(true)}><Upload className="size-3.5" /> PDF yükle</StateAction>
+            </EmptyState>
+          )
       ) : (
         <ul className="border-t border-border">
           {filtered.map(doc => {
@@ -130,7 +135,7 @@ export default function VaultDocumentsView({ search, savedOnly = false, onAssist
                     onClick={() => handleDelete(doc.id)}
                     disabled={busy}
                     aria-label={`${doc.name} belgesini sil`}
-                    className="p-1.5 rounded-md text-text-muted hover:text-danger transition-[color,opacity] duration-[160ms] sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
+                    className="hit-area p-1.5 rounded-md text-text-muted hover:text-danger transition-[color,opacity] duration-[160ms] sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
                   >
                     <Trash2 className="size-3.5" />
                   </button>

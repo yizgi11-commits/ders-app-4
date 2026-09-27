@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Plus, ArrowLeft, Star, Pin, Sparkles, Lock } from 'lucide-react'
+import { Plus, ArrowLeft, Star, Pin, Sparkles, Lock, StickyNote } from 'lucide-react'
+import { EmptyState, StateAction } from '@/components/ui/states'
 import type { Note } from '@/lib/notes/types'
 import { relativeTime, atlasLabel, shortDate } from '@/lib/vault/types'
 import NoteEditor from '@/components/notes/NoteEditor'
@@ -148,9 +149,13 @@ export default function VaultNotesView({ search, savedOnly = false, onAssist, re
       )}
 
       {notes.length === 0 ? (
-        <p className="text-sm text-text-muted py-4 border-y border-border">
-          {search.trim() ? 'Eşleşen not yok.' : savedOnly ? 'Kaydedilmiş not yok.' : 'Henüz not oluşturulmadı.'}
-        </p>
+        search.trim() || savedOnly
+          ? <EmptyState title={search.trim() ? 'Eşleşen not yok.' : 'Kaydedilmiş not yok.'} className="border-y border-border py-8" />
+          : (
+            <EmptyState icon={StickyNote} title="Henüz not yok." description="Öğrendiklerini kendi cümlelerinle yaz — Atlas konularına bağlayabilirsin." className="border-y border-border">
+              <StateAction onClick={handleCreate}><Plus className="size-3.5" /> Not oluştur</StateAction>
+            </EmptyState>
+          )
       ) : (
         <ul className="border-t border-border">
           {notes.map(note => {

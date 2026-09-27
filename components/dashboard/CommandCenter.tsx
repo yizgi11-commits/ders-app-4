@@ -3,10 +3,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Loader2, Zap, Star, PartyPopper, ArrowRight, Plus, Sparkles } from 'lucide-react'
+import { Loader2, Zap, Star, PartyPopper, ArrowRight, Plus, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { fadeIn, EASE_CURVE } from '@/lib/motion'
 import { SectionLabel } from '@/components/ui/section-label'
+import { ErrorState, AnimatedCheck } from '@/components/ui/states'
 import { useGamification } from '@/components/gamification/GamificationProvider'
 import type {
   DailyTaskWithTemplate, CompleteTaskResponse, UserStreak,
@@ -159,6 +160,8 @@ export default function CommandCenter() {
   const [loading, setLoading]     = useState(true)
   const [completing, setCompleting] = useState<string | null>(null)
   const [toast, setToast]         = useState<CompleteTaskResponse | null>(null)
+  // A network failure used to leave the skeleton spinning forever.
+  const [failed, setFailed]       = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -196,6 +199,9 @@ export default function CommandCenter() {
         exams:            examsJson.exams ?? [],
         learningScore:    scoreJson.score !== undefined ? scoreJson : EMPTY_LEARNING_SCORE,
       })
+      setFailed(false)
+    } catch {
+      setFailed(true)
     } finally {
       setLoading(false)
     }
@@ -235,6 +241,13 @@ export default function CommandCenter() {
     }
   }
 
+  if (failed && !data) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <ErrorState onRetry={() => { setFailed(false); setLoading(true); load() }} />
+      </div>
+    )
+  }
   if (loading || !data) return <Skeleton />
 
   const {
@@ -371,7 +384,7 @@ export default function CommandCenter() {
                   >
                     {busy
                       ? <Loader2 className="size-3 text-accent animate-spin" />
-                      : task.completed && <Check className="size-3 text-white" strokeWidth={3} />}
+                      : task.completed && <AnimatedCheck className="text-white" />}
                   </span>
                   <span className="tabular text-sm text-text-muted w-5 shrink-0">
                     {String(i + 1).padStart(2, '0')}

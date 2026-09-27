@@ -86,33 +86,33 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
       initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.97 }}
-      className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm"
+      className="bg-surface border border-border rounded-2xl overflow-hidden shadow-sm"
     >
       {/* Progress steps */}
-      <div className="flex items-center gap-0 border-b border-gray-200 px-6 py-3 bg-gray-50/50">
+      <div className="flex items-center gap-0 border-b border-border px-6 py-3 bg-surface-subtle/50">
         {STEPS.map((label, i) => (
           <div key={label} className="flex items-center">
             <button
               onClick={() => i <= step && setStep(i)}
               className={cn(
                 'flex items-center gap-2 text-xs font-medium transition-colors px-2 py-1 rounded-lg',
-                i === step ? 'text-indigo-600 bg-indigo-50' :
-                i < step ? 'text-emerald-600 cursor-pointer hover:bg-gray-100' :
-                'text-gray-300 cursor-default',
+                i === step ? 'text-accent bg-accent-soft' :
+                i < step ? 'text-success cursor-pointer hover:bg-surface-subtle' :
+                'text-text-muted cursor-default',
               )}
             >
               <span className={cn(
                 'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border',
-                i === step ? 'border-indigo-300 bg-indigo-100 text-indigo-600' :
-                i < step ? 'border-emerald-300 bg-emerald-100 text-emerald-600' :
-                'border-gray-200 bg-gray-100 text-gray-400',
+                i === step ? 'border-accent/30 bg-accent-soft text-accent' :
+                i < step ? 'border-success/30 bg-success-soft text-success' :
+                'border-border bg-surface-subtle text-text-muted',
               )}>
                 {i < step ? <Check className="w-3 h-3" /> : i + 1}
               </span>
               <span className="hidden sm:inline">{label}</span>
             </button>
             {i < STEPS.length - 1 && (
-              <ChevronRight className="w-3 h-3 text-gray-300 mx-1" />
+              <ChevronRight className="w-3 h-3 text-text-muted mx-1" />
             )}
           </div>
         ))}
@@ -130,8 +130,8 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
             >
-              <h2 className="text-base font-bold text-gray-900 mb-1">Çalışma Yoğunluğu</h2>
-              <p className="text-xs text-gray-500 mb-5">Günlük tempo ve oturum süresini belirler.</p>
+              <h2 className="text-base font-bold text-text mb-1">Çalışma Yoğunluğu</h2>
+              <p className="text-xs text-text-muted mb-5">Günlük tempo ve oturum süresini belirler.</p>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {(Object.entries(INTENSITY_CONFIG) as [StudyIntensity, typeof cfg][]).map(([key, val]) => (
@@ -143,14 +143,14 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
                     className={cn(
                       'text-left p-4 rounded-xl border transition-all',
                       intensity === key
-                        ? 'bg-indigo-50 border-indigo-200 shadow-sm shadow-indigo-100'
-                        : 'bg-gray-50/50 border-gray-200 hover:border-gray-300',
+                        ? 'bg-accent-soft border-accent/30 shadow-sm'
+                        : 'bg-surface-subtle/50 border-border hover:border-border-strong',
                     )}
                   >
                     <span className="text-2xl">{val.emoji}</span>
-                    <h4 className="text-sm font-bold text-gray-900 mt-2">{val.label}</h4>
-                    <p className="text-[11px] text-gray-500 mt-1">{val.desc}</p>
-                    <div className="flex items-center gap-3 mt-3 text-[10px] text-gray-400">
+                    <h4 className="text-sm font-bold text-text mt-2">{val.label}</h4>
+                    <p className="text-[11px] text-text-muted mt-1">{val.desc}</p>
+                    <div className="flex items-center gap-3 mt-3 text-[10px] text-text-muted">
                       <span>{val.sessionMins}dk oturum</span>
                       <span>·</span>
                       <span>{val.breakMins}dk mola</span>
@@ -170,13 +170,13 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
             >
-              <h2 className="text-base font-bold text-gray-900 mb-1">Zaman Ayarları</h2>
-              <p className="text-xs text-gray-500 mb-6">Günlük çalışma süren ve başlangıç saatin.</p>
+              <h2 className="text-base font-bold text-text mb-1">Zaman Ayarları</h2>
+              <p className="text-xs text-text-muted mb-6">Günlük çalışma süren ve başlangıç saatin.</p>
 
               <div className="space-y-6 max-w-sm">
                 {/* Daily minutes */}
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2 mb-3">
+                  <label className="text-xs font-semibold text-text-muted uppercase tracking-wider flex items-center gap-2 mb-3">
                     <Clock className="w-3.5 h-3.5" />
                     Günlük Çalışma Süresi
                   </label>
@@ -190,7 +190,7 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
                       onChange={e => setDailyMins(Number(e.target.value))}
                       className="flex-1 accent-indigo-500"
                     />
-                    <span className="text-sm font-bold text-indigo-600 w-16 text-right">
+                    <span className="text-sm font-bold text-accent w-16 text-right">
                       {Math.floor(dailyMins / 60)}s {dailyMins % 60}dk
                     </span>
                   </div>
@@ -198,7 +198,7 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
 
                 {/* Start hour */}
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2 mb-3">
+                  <label className="text-xs font-semibold text-text-muted uppercase tracking-wider flex items-center gap-2 mb-3">
                     <Zap className="w-3.5 h-3.5" />
                     Başlangıç Saati
                   </label>
@@ -212,7 +212,7 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
                       onChange={e => setStartHour(Number(e.target.value))}
                       className="flex-1 accent-indigo-500"
                     />
-                    <span className="text-sm font-bold text-indigo-600 w-16 text-right">
+                    <span className="text-sm font-bold text-accent w-16 text-right">
                       {String(startHour).padStart(2, '0')}:00
                     </span>
                   </div>
@@ -220,7 +220,7 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
 
                 {/* Week / Day toggle */}
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 block">
+                  <label className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 block">
                     Plan Türü
                   </label>
                   <div className="flex gap-2">
@@ -234,12 +234,12 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
                         className={cn(
                           'flex-1 text-left p-3 rounded-xl border transition-all text-sm',
                           weekMode === opt.val
-                            ? 'bg-indigo-50 border-indigo-200 text-gray-900 font-semibold'
-                            : 'bg-gray-50/50 border-gray-200 text-gray-500 hover:border-gray-300',
+                            ? 'bg-accent-soft border-accent/30 text-text font-semibold'
+                            : 'bg-surface-subtle/50 border-border text-text-muted hover:border-border-strong',
                         )}
                       >
                         {opt.label}
-                        <span className="block text-[10px] text-gray-400 mt-0.5">{opt.desc}</span>
+                        <span className="block text-[10px] text-text-muted mt-0.5">{opt.desc}</span>
                       </button>
                     ))}
                   </div>
@@ -257,11 +257,11 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
             >
-              <h2 className="text-base font-bold text-gray-900 mb-1">Ders Öncelikleri</h2>
-              <p className="text-xs text-gray-500 mb-5">Sırala ve zayıf dersleri işaretle. Üstteki dersler daha fazla zaman alır.</p>
+              <h2 className="text-base font-bold text-text mb-1">Ders Öncelikleri</h2>
+              <p className="text-xs text-text-muted mb-5">Sırala ve zayıf dersleri işaretle. Üstteki dersler daha fazla zaman alır.</p>
 
               {subjects.length === 0 ? (
-                <div className="text-center py-8 text-gray-400 text-sm">
+                <div className="text-center py-8 text-text-muted text-sm">
                   Henüz ders eklenmemiş. Önce &ldquo;Derslerim&rdquo; sayfasından ders ekleyin.
                 </div>
               ) : (
@@ -277,25 +277,25 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
                         className={cn(
                           'flex items-center gap-3 p-3 rounded-xl border transition-all',
                           isWeak
-                            ? 'bg-amber-50 border-amber-200'
-                            : 'bg-gray-50/50 border-gray-200',
+                            ? 'bg-warning-soft border-warning/30'
+                            : 'bg-surface-subtle/50 border-border',
                         )}
                       >
                         {/* Rank */}
-                        <span className="text-[10px] font-bold text-gray-400 w-5 text-center">
+                        <span className="text-[10px] font-bold text-text-muted w-5 text-center">
                           {idx + 1}
                         </span>
 
                         {/* Icon */}
                         <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-sm border border-gray-200 shrink-0"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-sm border border-border shrink-0"
                           style={{ background: `${sub.color}15` }}
                         >
                           {sub.icon}
                         </div>
 
                         {/* Name */}
-                        <span className="text-sm font-medium text-gray-900 flex-1">{sub.name}</span>
+                        <span className="text-sm font-medium text-text flex-1">{sub.name}</span>
 
                         {/* Weak toggle */}
                         <button
@@ -303,8 +303,8 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
                           className={cn(
                             'flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg border transition-all',
                             isWeak
-                              ? 'text-amber-600 bg-amber-100 border-amber-200'
-                              : 'text-gray-400 bg-gray-100 border-gray-200 hover:text-gray-600',
+                              ? 'text-warning bg-warning-soft border-warning/30'
+                              : 'text-text-muted bg-surface-subtle border-border hover:text-text-secondary',
                           )}
                         >
                           <AlertTriangle className="w-3 h-3" />
@@ -316,14 +316,14 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
                           <button
                             onClick={() => movePriority(id, -1)}
                             disabled={idx === 0}
-                            className="w-5 h-5 rounded flex items-center justify-center text-gray-400 hover:text-gray-600 disabled:opacity-20 transition-colors"
+                            className="w-5 h-5 rounded flex items-center justify-center text-text-muted hover:text-text-secondary disabled:opacity-20 transition-colors"
                           >
                             <ChevronLeft className="w-3 h-3 rotate-90" />
                           </button>
                           <button
                             onClick={() => movePriority(id, 1)}
                             disabled={idx === priorities.length - 1}
-                            className="w-5 h-5 rounded flex items-center justify-center text-gray-400 hover:text-gray-600 disabled:opacity-20 transition-colors"
+                            className="w-5 h-5 rounded flex items-center justify-center text-text-muted hover:text-text-secondary disabled:opacity-20 transition-colors"
                           >
                             <ChevronRight className="w-3 h-3 rotate-90" />
                           </button>
@@ -345,8 +345,8 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
             >
-              <h2 className="text-base font-bold text-gray-900 mb-1">Plan Özeti</h2>
-              <p className="text-xs text-gray-500 mb-5">Ayarlarını kontrol et ve programını oluştur.</p>
+              <h2 className="text-base font-bold text-text mb-1">Plan Özeti</h2>
+              <p className="text-xs text-text-muted mb-5">Ayarlarını kontrol et ve programını oluştur.</p>
 
               <div className="grid grid-cols-2 gap-3 max-w-md">
                 <SummaryCard label="Yoğunluk" value={`${cfg.emoji} ${cfg.label}`} />
@@ -362,7 +362,7 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
                   {weakSubs.map(id => {
                     const sub = subjects.find(s => s.id === id)
                     return sub ? (
-                      <span key={id} className="text-[10px] text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-200">
+                      <span key={id} className="text-[10px] text-warning bg-warning-soft px-2 py-0.5 rounded-md border border-warning/30">
                         {sub.icon} {sub.name}
                       </span>
                     ) : null
@@ -375,14 +375,14 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50/50">
+      <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-surface-subtle/50">
         <div className="flex items-center gap-2">
           {canPrev && (
             <motion.button
               whileHover={{ x: -2 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setStep(s => s - 1)}
-              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors px-3 py-2"
+              className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors px-3 py-2"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
               Geri
@@ -390,7 +390,7 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
           )}
           <button
             onClick={onCancel}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors px-3 py-2"
+            className="text-xs text-text-muted hover:text-text-secondary transition-colors px-3 py-2"
           >
             İptal
           </button>
@@ -401,7 +401,7 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
             whileHover={{ x: 2 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setStep(s => s + 1)}
-            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-200/50"
+            className="flex items-center gap-1.5 bg-accent hover:bg-accent-dark text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition-colors shadow-lg"
           >
             Devam
             <ChevronRight className="w-3.5 h-3.5" />
@@ -412,7 +412,7 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
             whileTap={{ scale: 0.95 }}
             onClick={handleSubmit}
             disabled={loading}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-200/50"
+            className="flex items-center gap-2 bg-accent hover:bg-accent-dark disabled:opacity-50 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition-colors shadow-lg"
           >
             <Sparkles className="w-3.5 h-3.5" />
             {loading ? 'Oluşturuluyor…' : 'Programı Oluştur'}
@@ -425,9 +425,9 @@ export default function PlanSetupWizard({ subjects, existingPrefs, onGenerate, o
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
-      <p className="text-[10px] text-gray-400 uppercase tracking-wider">{label}</p>
-      <p className="text-sm font-bold text-gray-900 mt-0.5">{value}</p>
+    <div className="bg-surface-subtle border border-border rounded-xl p-3">
+      <p className="text-[10px] text-text-muted uppercase tracking-wider">{label}</p>
+      <p className="text-sm font-bold text-text mt-0.5">{value}</p>
     </div>
   )
 }

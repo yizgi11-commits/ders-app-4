@@ -50,7 +50,7 @@ export default function CreateSubjectModal({ onClose, onCreated, initial }: Prop
         exit={{ scale: 0.95, y: 8, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 340, damping: 28 }}
         onClick={e => e.stopPropagation()}
-        className="relative bg-gradient-to-br from-gray-950 to-gray-900 border border-white/[0.1] rounded-2xl w-full max-w-md shadow-2xl"
+        className="relative bg-dark-base border border-white/[0.1] rounded-2xl w-full max-w-md shadow-2xl"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.07]">
@@ -100,7 +100,7 @@ export default function CreateSubjectModal({ onClose, onCreated, initial }: Prop
                   onClick={() => setIcon(ic)}
                   className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg transition-all border ${
                     icon === ic
-                      ? 'bg-white/[0.1] border-indigo-500/40 scale-110'
+                      ? 'bg-white/[0.1] border-accent/40 scale-110'
                       : 'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.07]'
                   }`}
                 >
@@ -132,7 +132,7 @@ export default function CreateSubjectModal({ onClose, onCreated, initial }: Prop
             <button
               onClick={handleSave}
               disabled={!name.trim() || saving}
-              className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold py-3 rounded-xl text-sm transition-all shadow-lg shadow-indigo-900/40 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center gap-2 bg-accent text-white font-semibold py-3 rounded-xl text-sm transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               {isEdit ? 'Kaydet' : 'Ders Ekle'}

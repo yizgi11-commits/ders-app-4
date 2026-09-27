@@ -89,7 +89,7 @@ export default function MobileNav() {
                   type="button"
                   onClick={() => setMoreOpen(false)}
                   aria-label="Kapat"
-                  className="p-1.5 rounded-md text-text-secondary hover:bg-surface-subtle"
+                  className="hit-area p-1.5 rounded-md text-text-secondary hover:bg-surface-subtle"
                 >
                   <X className="size-4" />
                 </button>

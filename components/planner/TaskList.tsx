@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Check, Loader2, Timer, Trash2 } from 'lucide-react'
+import { Loader2, Timer, Trash2, CalendarDays, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { TASK_PRIORITY_CONFIG, type PlannerTask } from '@/lib/planner/types'
 import { PRIORITY_DOT, SectionLabel } from './ui'
+import { EmptyState, StateAction, AnimatedCheck } from '@/components/ui/states'
 
 interface Props {
   tasks: PlannerTask[]
@@ -47,7 +48,13 @@ export default function TaskList({ tasks, onChange }: Props) {
   }
 
   if (tasks.length === 0) {
-    return <p className="text-sm text-text-muted py-4 border-y border-border">No tasks yet — add one above.</p>
+    return (
+      <EmptyState icon={CalendarDays} title="Bugün için plan oluşturulmadı." description="Yukarıdaki formdan ilk görevini ekleyebilirsin." className="border-y border-border">
+        <StateAction onClick={() => document.getElementById('planner-task-subject')?.focus()}>
+          <Plus className="size-3.5" /> Görev ekle
+        </StateAction>
+      </EmptyState>
+    )
   }
 
   const groups = new Map<string, PlannerTask[]>()
@@ -96,7 +103,7 @@ export default function TaskList({ tasks, onChange }: Props) {
                     >
                       {busy
                         ? <Loader2 className="size-3 text-accent animate-spin" />
-                        : task.completed && <Check className="size-3 text-white" strokeWidth={3} />}
+                        : task.completed && <AnimatedCheck className="text-white" />}
                     </button>
 
                     <span className={cn(
@@ -127,7 +134,7 @@ export default function TaskList({ tasks, onChange }: Props) {
                       onClick={() => handleDelete(task.id)}
                       disabled={busy}
                       aria-label={`${title} görevini sil`}
-                      className="shrink-0 p-1 rounded-sm text-text-muted hover:text-danger transition-[color,opacity] duration-[160ms] sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
+                      className="hit-area shrink-0 p-1 rounded-sm text-text-muted hover:text-danger transition-[color,opacity] duration-[160ms] sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
                     >
                       <Trash2 className="size-3.5" />
                     </button>

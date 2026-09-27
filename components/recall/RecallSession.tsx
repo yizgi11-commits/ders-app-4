@@ -179,10 +179,12 @@ export default function RecallSession({ cards, onClose, onFinished }: Props) {
         </p>
 
         {revealed && (
+          // Controlled reveal: the answer expands in height over 200ms.
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            transition={{ duration: 0.2, ease: EASE_CURVE }}
+            className="overflow-hidden"
           >
             <div className="h-px bg-border" />
             <p className="py-6 text-center text-[16px] leading-7 text-text-secondary whitespace-pre-wrap">

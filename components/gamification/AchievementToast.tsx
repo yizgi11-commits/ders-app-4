@@ -32,7 +32,7 @@ export default function AchievementToast({ achievement, index, onClose }: Props)
       style={{ marginBottom: index > 0 ? -8 : 0 }}
     >
       <div
-        className="relative bg-gray-950 border rounded-2xl px-4 py-3.5 flex items-center gap-3.5 min-w-[280px] max-w-[320px] overflow-hidden shadow-2xl"
+        className="relative bg-dark-base border rounded-2xl px-4 py-3.5 flex items-center gap-3.5 min-w-[280px] max-w-[320px] overflow-hidden shadow-2xl"
         style={{ borderColor: `rgba(${rarityRgb(achievement.rarity)}, 0.35)` }}
       >
         {/* Glow edge */}
@@ -67,7 +67,7 @@ export default function AchievementToast({ achievement, index, onClose }: Props)
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.25, type: 'spring', stiffness: 400 }}
-          className="flex items-center gap-1 text-xs font-bold text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 px-2 py-1 rounded-lg shrink-0"
+          className="flex items-center gap-1 text-xs font-bold text-warning bg-warning/10 border border-warning/20 px-2 py-1 rounded-lg shrink-0"
         >
           <Zap className="w-3 h-3" />+{achievement.xpReward}
         </motion.div>

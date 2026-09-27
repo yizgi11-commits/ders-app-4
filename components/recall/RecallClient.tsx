@@ -5,6 +5,7 @@ import type {
   RecallCard, RecallQueueGroup, RecallQueueResponse, RecallStats,
 } from '@/lib/recall/types'
 import { SectionLabel } from '@/components/ui/section-label'
+import { ErrorState } from '@/components/ui/states'
 import RecallQueue from './RecallQueue'
 import RecallSession from './RecallSession'
 import RecallAnalytics from './RecallAnalytics'
@@ -13,14 +14,21 @@ export default function RecallClient() {
   const [queue, setQueue]   = useState<RecallQueueResponse | null>(null)
   const [stats, setStats]   = useState<RecallStats | null>(null)
   const [session, setSession] = useState<RecallCard[] | null>(null)
+  const [failed, setFailed]   = useState(false)
 
   const load = useCallback(async () => {
-    const [queueRes, statsRes] = await Promise.all([
-      fetch('/api/recall/queue'),
-      fetch('/api/recall/stats'),
-    ])
-    if (queueRes.ok) setQueue(await queueRes.json())
-    if (statsRes.ok) setStats(await statsRes.json())
+    try {
+      const [queueRes, statsRes] = await Promise.all([
+        fetch('/api/recall/queue'),
+        fetch('/api/recall/stats'),
+      ])
+      if (queueRes.ok) setQueue(await queueRes.json())
+      if (statsRes.ok) setStats(await statsRes.json())
+      // A failed queue read used to leave the skeleton up forever.
+      setFailed(!queueRes.ok)
+    } catch {
+      setFailed(true)
+    }
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -45,6 +53,14 @@ export default function RecallClient() {
           onFinished={load}
           onClose={() => { setSession(null); load() }}
         />
+      </div>
+    )
+  }
+
+  if (failed && !queue) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <ErrorState onRetry={() => { setFailed(false); load() }} />
       </div>
     )
   }

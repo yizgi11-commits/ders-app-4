@@ -173,7 +173,7 @@ export default function FloatingAssist({ tier }: { tier: SubscriptionTier }) {
                 <button
                   onClick={close}
                   aria-label="Kapat"
-                  className="p-1.5 -mr-1.5 rounded-md text-text-secondary hover:text-text hover:bg-surface-subtle transition-colors duration-[160ms] shrink-0"
+                  className="hit-area p-1.5 -mr-1.5 rounded-md text-text-secondary hover:text-text hover:bg-surface-subtle transition-colors duration-[160ms] shrink-0"
                 >
                   <X className="size-4" />
                 </button>

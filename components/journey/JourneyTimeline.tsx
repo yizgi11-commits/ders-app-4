@@ -4,6 +4,8 @@ import { formatFocus, hasActivity, type JourneyDay } from '@/lib/journey/types'
 import { ACHIEVEMENT_MAP } from '@/lib/gamification/achievements'
 import { dateKey } from '@/components/ui/heat-grid'
 import { cn } from '@/lib/utils'
+import { Milestone } from 'lucide-react'
+import { EmptyState, StateAction } from '@/components/ui/states'
 
 interface Props {
   days:      JourneyDay[]
@@ -35,9 +37,14 @@ export default function JourneyTimeline({ days, unlocked = [], limit = 30 }: Pro
 
   if (active.length === 0) {
     return (
-      <p className="text-sm text-text-muted py-4 border-y border-border">
-        Henüz kayıtlı aktivite yok — bir Focus oturumu tamamla, geçmişin burada birikmeye başlasın.
-      </p>
+      <EmptyState
+        icon={Milestone}
+        title="Öğrenme geçmişin burada görünecek."
+        description="İlk Focus oturumunu tamamlayarak başla."
+        className="border-y border-border"
+      >
+        <StateAction href="/dashboard/focus">Focus&apos;a git</StateAction>
+      </EmptyState>
     )
   }
 

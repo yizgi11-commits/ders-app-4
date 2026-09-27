@@ -32,14 +32,14 @@ export default function Sidebar({ tier, userName }: Props) {
         href={href}
         aria-current={active ? 'page' : undefined}
         className={cn(
-          'relative flex items-center gap-2.5 h-9 px-3 rounded-md text-base font-medium transition-colors duration-[160ms]',
+          'group relative flex items-center gap-2.5 h-9 px-3 rounded-md text-base font-medium transition-colors duration-[160ms]',
           active
             ? 'bg-white/[0.09] text-dark-text'
             : 'text-dark-text-secondary hover:bg-white/[0.06] hover:text-dark-text',
         )}
       >
         {active && <span aria-hidden className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full bg-accent" />}
-        <Icon className={cn('size-4 shrink-0', active && 'text-dark-accent')} />
+        <Icon className={cn('size-4 shrink-0 transition-transform duration-[160ms] group-hover:translate-x-px', active && 'text-dark-accent')} />
         {label}
       </Link>
     )
@@ -89,7 +89,7 @@ export default function Sidebar({ tier, userName }: Props) {
             onClick={handleCikis}
             aria-label="Çıkış yap"
             title="Çıkış yap"
-            className="p-1.5 rounded-md text-dark-text-secondary hover:text-dark-text hover:bg-white/[0.06] transition-colors duration-[160ms]"
+            className="hit-area p-1.5 rounded-md text-dark-text-secondary hover:text-dark-text hover:bg-white/[0.06] transition-colors duration-[160ms]"
           >
             <LogOut className="size-4" />
           </button>

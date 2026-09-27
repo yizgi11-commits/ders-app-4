@@ -63,6 +63,7 @@ export default function TaskForm({ onCreated }: Props) {
         <select
           value={subjectId}
           onChange={e => { setSubjectId(e.target.value); setTopicId('') }}
+          id="planner-task-subject"
           aria-label="Ders"
           className={fieldClass}
         >

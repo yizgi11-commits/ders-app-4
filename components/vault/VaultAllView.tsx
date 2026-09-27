@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { StickyNote, Brain, FileText } from 'lucide-react'
+import { StickyNote, Brain, FileText, Archive, Plus, Upload } from 'lucide-react'
+import { EmptyState, StateAction } from '@/components/ui/states'
 import type { Note } from '@/lib/notes/types'
 import type { FlashcardWithSubject } from '@/lib/flashcards/types'
 import {
@@ -88,10 +89,12 @@ export default function VaultAllView({ search, refreshKey = 0, onOpenTab }: Prop
   }
 
   if (filtered.length === 0) {
+    if (q) return <EmptyState title="Vault içinde eşleşen bir şey yok." className="border-y border-border" />
     return (
-      <p className="text-sm text-text-muted py-4 border-y border-border">
-        {q ? 'Vault içinde eşleşen bir şey yok.' : 'Vault henüz boş — not, kart veya PDF ekle.'}
-      </p>
+      <EmptyState icon={Archive} title="Henüz içerik yok." description="Bir not yaz ya da PDF yükle — Vault öğrendiklerini tek yerde toplar." className="border-y border-border">
+        <StateAction onClick={() => onOpenTab('note')}><Plus className="size-3.5" /> Not oluştur</StateAction>
+        <StateAction onClick={() => onOpenTab('document')}><Upload className="size-3.5" /> PDF yükle</StateAction>
+      </EmptyState>
     )
   }
 

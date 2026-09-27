@@ -25,7 +25,7 @@ export default async function SubjectPage({ params }: Props) {
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <Link href="/dashboard/atlas" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-gray-700 transition-colors mb-3">
+        <Link href="/dashboard/atlas" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-text-secondary transition-colors mb-3">
           <ArrowLeft className="w-3.5 h-3.5" /> Atlas
         </Link>
 
@@ -37,7 +37,7 @@ export default async function SubjectPage({ params }: Props) {
             {subject.icon}
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-gray-900 truncate">{subject.name}</h1>
+            <h1 className="text-xl font-bold text-text truncate">{subject.name}</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               Progress: %{subjectPct} — {completedTopics}/{totalTopics} topics completed
             </p>
@@ -53,12 +53,12 @@ export default async function SubjectPage({ params }: Props) {
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xs font-bold text-gray-900">{subjectPct}%</span>
+              <span className="text-xs font-bold text-text">{subjectPct}%</span>
             </div>
           </div>
         </div>
 
-        <div className="mt-4 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className="mt-4 h-1.5 bg-surface-subtle rounded-full overflow-hidden">
           <div className="h-full rounded-full" style={{ width: `${subjectPct}%`, background: subject.color }} />
         </div>
       </div>

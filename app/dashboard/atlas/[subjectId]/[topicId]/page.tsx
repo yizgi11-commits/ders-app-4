@@ -35,17 +35,17 @@ export default async function TopicPage({ params }: Props) {
       <div>
         <Link
           href={`/dashboard/atlas/${subjectId}`}
-          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-gray-700 transition-colors mb-3"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-text-secondary transition-colors mb-3"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> {subject.name}
         </Link>
 
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-xl font-bold text-gray-900">{topic.title}</h1>
-          <span className="text-sm font-bold text-gray-700 tabular-nums shrink-0">{topic.progress_pct}%</span>
+          <h1 className="text-xl font-bold text-text">{topic.title}</h1>
+          <span className="text-sm font-bold text-text-secondary tabular-nums shrink-0">{topic.progress_pct}%</span>
         </div>
 
-        <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div className="mt-3 h-2 bg-surface-subtle rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all"
             style={{ width: `${topic.progress_pct}%`, background: topic.progress_pct >= 100 ? '#10b981' : subject.color }}

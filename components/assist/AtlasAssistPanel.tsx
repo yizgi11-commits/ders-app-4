@@ -42,7 +42,7 @@ export default function AtlasAssistPanel({ subjectId, topicId, tier, onContextLa
   if (!names) {
     return (
       <div className="flex-1 flex items-center justify-center py-12">
-        <Loader2 className="w-5 h-5 animate-spin text-indigo-400" />
+        <Loader2 className="w-5 h-5 animate-spin text-accent" />
       </div>
     )
   }

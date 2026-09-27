@@ -125,7 +125,7 @@ export default function ExamsPanel() {
                   {shortDate(exam.exam_date)} · {daysLabel(days)}
                 </p>
                 <button onClick={() => handleDelete(exam.id)} aria-label={`${exam.name} sınavını sil`}
-                  className="shrink-0 p-1 rounded-sm text-text-muted hover:text-danger transition-[color,opacity] duration-[160ms] sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100">
+                  className="hit-area shrink-0 p-1 rounded-sm text-text-muted hover:text-danger transition-[color,opacity] duration-[160ms] sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100">
                   <Trash2 className="size-3.5" />
                 </button>
               </li>

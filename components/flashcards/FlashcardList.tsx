@@ -46,8 +46,9 @@ function FlashcardCell({
 
   return (
     <div className={cn(
-      'rounded-lg border bg-surface transition-colors duration-[160ms]',
-      expanded ? 'border-border-strong' : 'border-border hover:border-border-strong',
+      'rounded-lg border bg-surface transition-[transform,box-shadow,border-color] duration-[160ms]',
+      // Interactive card: lifts 2px with a slightly stronger shadow on hover.
+      expanded ? 'border-border-strong' : 'border-border hover:border-border-strong hover:-translate-y-0.5 hover:shadow-md',
     )}>
       <button
         onClick={() => setExpanded(e => !e)}

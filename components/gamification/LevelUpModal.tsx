@@ -60,18 +60,16 @@ export default function LevelUpModal({ level, onClose }: { level: number; onClos
         exit={{    scale: 0.9, y: 20, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 22, delay: 0.05 }}
         onClick={e => e.stopPropagation()}
-        className="relative bg-gradient-to-br from-gray-950 to-gray-900 border border-white/[0.1] rounded-3xl p-10 text-center max-w-sm w-full shadow-2xl overflow-hidden"
+        className="relative bg-dark-base border border-white/[0.1] rounded-3xl p-10 text-center max-w-sm w-full shadow-2xl overflow-hidden"
       >
         {/* Background glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-56 h-56 bg-yellow-500/15 rounded-full blur-[80px] pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-32 h-32 bg-indigo-500/15 rounded-full blur-[50px] pointer-events-none" />
 
         {/* Stars decoration */}
         <div className="flex justify-center gap-2 mb-6">
           {[0, 1, 2, 3, 4].map(i => (
             <motion.div key={i} custom={i} variants={starVariants} initial="hidden" animate="show">
               <Star
-                className={i === 2 ? 'w-7 h-7 text-yellow-400 fill-yellow-400' : 'w-4 h-4 text-yellow-500/60 fill-yellow-500/40'}
+                className={i === 2 ? 'w-7 h-7 text-warning fill-warning' : 'w-4 h-4 text-warning/60 fill-warning/40'}
               />
             </motion.div>
           ))}
@@ -86,12 +84,12 @@ export default function LevelUpModal({ level, onClose }: { level: number; onClos
         >
           {/* Outer pulse ring */}
           <motion.div
-            className="absolute inset-0 rounded-full bg-yellow-400/20"
+            className="absolute inset-0 rounded-full bg-warning/20"
             animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0, 0.6] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           />
-          <div className="absolute inset-2 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 shadow-lg shadow-yellow-900/50 flex items-center justify-center">
-            <span className="text-3xl font-black text-yellow-900">{level}</span>
+          <div className="absolute inset-2 rounded-full bg-warning shadow-lg flex items-center justify-center">
+            <span className="text-3xl font-semibold text-white">{level}</span>
           </div>
         </motion.div>
 
@@ -101,10 +99,10 @@ export default function LevelUpModal({ level, onClose }: { level: number; onClos
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
         >
-          <p className="text-xs font-bold text-yellow-400 uppercase tracking-widest mb-1.5">
+          <p className="text-xs font-bold text-warning uppercase tracking-widest mb-1.5">
             Seviye Atladın! 🎉
           </p>
-          <h2 className="text-3xl font-black text-white mb-1">Seviye {level}</h2>
+          <h2 className="text-3xl font-semibold text-white mb-1">Seviye {level}</h2>
           <p className="text-sm text-white/50 mb-2">{title}</p>
         </motion.div>
 
@@ -113,7 +111,7 @@ export default function LevelUpModal({ level, onClose }: { level: number; onClos
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5, type: 'spring', stiffness: 350 }}
-          className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/25 text-yellow-400 text-sm font-bold px-4 py-2 rounded-full mb-8"
+          className="inline-flex items-center gap-2 bg-warning/10 border border-warning/25 text-warning text-sm font-bold px-4 py-2 rounded-full mb-8"
         >
           <Zap className="w-4 h-4" />
           Tebrikler! Güçleniyorsun
@@ -127,7 +125,7 @@ export default function LevelUpModal({ level, onClose }: { level: number; onClos
           transition={{ delay: 0.6 }}
           whileHover={{ scale: 1.03, y: -1 }}
           whileTap={{ scale: 0.97 }}
-          className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold py-3.5 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-900/40"
+          className="w-full bg-accent text-white font-semibold py-3.5 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-lg"
         >
           Devam Et
           <ArrowRight className="w-4 h-4" />
