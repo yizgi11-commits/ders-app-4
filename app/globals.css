@@ -249,6 +249,7 @@ body {
     --color-dark-text-secondary: var(--dark-text-secondary);
     --color-dark-accent:         var(--dark-accent);
     --color-dark-canvas:         var(--dark-canvas);
+    --color-dark-page:           var(--dark-page);
     --color-dark-text-muted:     var(--dark-text-muted);
 }
 
@@ -323,6 +324,7 @@ body {
     --dark-text-secondary: #A4A6AD;
     --dark-accent:         #7B93FF;
     --dark-canvas:         #0D0F13; /* Focus Lab page */
+    --dark-page:           #0F1115; /* landing + auth */
     --dark-text-muted:     #6B6E78;
 
     /* ── Motion ───────────────── */

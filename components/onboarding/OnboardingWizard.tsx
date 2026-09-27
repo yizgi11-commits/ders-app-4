@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
+import { EASE_CURVE } from '@/lib/motion'
 import { useRouter } from 'next/navigation'
 import type { OnboardingData } from '@/lib/onboarding/types'
 import { ONBOARDING_STEPS, DEFAULT_SUBJECTS } from '@/lib/onboarding/types'
@@ -76,62 +77,34 @@ export default function OnboardingWizard({ userName }: Props) {
   const isReadyStep = step === totalSteps - 1
 
   return (
-    <div className="min-h-screen bg-[#080810] flex flex-col items-center justify-center relative overflow-hidden">
-
-      {/* Ambient background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <motion.div
-          animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
-          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/8 rounded-full blur-[120px]"
-        />
-        <motion.div
-          animate={{ x: [0, -20, 0], y: [0, 30, 0] }}
-          transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-600/8 rounded-full blur-[100px]"
-        />
-      </div>
-
-      {/* Progress bar */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="fixed top-0 left-0 right-0 z-50"
-      >
-        <div className="h-1 bg-white/[0.05]">
+    <div className="min-h-screen bg-background">
+      {/* Thin progress line + step dots */}
+      <div className="fixed top-0 inset-x-0 z-50 bg-background">
+        <div className="h-[3px] bg-border">
           <motion.div
-            className="h-full bg-gradient-to-r from-indigo-500 to-violet-500"
+            className="h-full bg-accent"
             animate={{ width: `${(step / (totalSteps - 1)) * 100}%` }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.4, ease: EASE_CURVE }}
           />
         </div>
-        <div className="flex items-center justify-center gap-2 py-3">
+        <div className="flex items-center justify-center gap-1.5 py-4" aria-label={`Adım ${step + 1} / ${totalSteps}`}>
           {ONBOARDING_STEPS.map((s, i) => (
-            <div
+            <span
               key={s.key}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                i === step ? 'bg-indigo-400 scale-125' :
-                i < step ? 'bg-indigo-500/40' :
-                'bg-white/10'
+              className={`size-1.5 rounded-full transition-colors duration-300 ${
+                i === step ? 'bg-accent' : i < step ? 'bg-accent-muted' : 'bg-border-strong'
               }`}
             />
           ))}
         </div>
-      </motion.div>
+      </div>
 
-      {/* Step content */}
-      <div className="relative z-10 w-full max-w-xl px-6">
+      {/* Step content — one question per screen, 560px column */}
+      <div className="w-full max-w-[560px] mx-auto px-5 pt-28 pb-16">
         {!isReadyStep && (
-          <motion.p
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center text-xs font-semibold text-white/25 uppercase tracking-[0.15em] mb-3"
-          >
-            Noetic seni tanısın.
-          </motion.p>
+          <p className="mb-3 text-[11px] font-medium tracking-[0.08em] text-text-muted">NOETIC SENİ TANISIN</p>
         )}
 
-        <AnimatePresence mode="wait">
           {step === 0 && (
             <StepGoal
               key="goal"
@@ -199,7 +172,6 @@ export default function OnboardingWizard({ userName }: Props) {
               onBack={goBack}
             />
           )}
-        </AnimatePresence>
       </div>
     </div>
   )
