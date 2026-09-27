@@ -2,205 +2,145 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import {
-  Settings, Flame, Clock, Map, Brain, CheckCircle2, CalendarDays,
-  Trophy, ArrowRight, GraduationCap, Target,
-} from 'lucide-react'
+import { Settings, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ACHIEVEMENTS, RARITY_CONFIG } from '@/lib/gamification/achievements'
+import { EASE_CURVE } from '@/lib/motion'
+import { ACHIEVEMENTS } from '@/lib/gamification/achievements'
 import { formatFocus } from '@/lib/journey/types'
 import type { ProfileData } from '@/lib/profile/queries'
+import { SectionLabel } from '@/components/ui/section-label'
+import { initialsOf } from '@/components/dashboard/nav'
 
 export default function ProfileClient({ data }: { data: ProfileData }) {
   const memberSince = new Date(data.memberSince).toLocaleDateString('tr-TR', {
     month: 'long', year: 'numeric',
   })
 
-  const unlocked = ACHIEVEMENTS.filter(a => data.unlockedAchievementIds.includes(a.id))
+  const unlockedIds = new Set(data.unlockedAchievementIds)
+  const unlockedCount = ACHIEVEMENTS.filter(a => unlockedIds.has(a.id)).length
+  // Achieved first, so the grid reads as "what I've earned, then what's next".
+  const achievements = [...ACHIEVEMENTS].sort((a, b) => Number(unlockedIds.has(b.id)) - Number(unlockedIds.has(a.id)))
+
+  const stats: { label: string; value: string; mono: boolean }[] = [
+    { label: 'Topics Studied',  value: String(data.totalTopicsStudied),  mono: true },
+    { label: 'Recall Cards',    value: String(data.totalRecallCards),    mono: true },
+    { label: 'Tasks Completed', value: String(data.totalTasksCompleted), mono: true },
+    { label: 'Member Since',    value: memberSince,                      mono: false },
+  ]
 
   return (
-    <div className="space-y-6">
-      {/* ── OVERVIEW ─────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white border border-border rounded-2xl p-5 shadow-sm"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-indigo-200 shrink-0">
-              {data.displayName.charAt(0).toUpperCase() || '?'}
-            </div>
-            <div className="min-w-0">
-              <p className="text-lg font-bold text-gray-900 truncate">{data.displayName}</p>
-              <p className="text-xs text-muted-foreground">{data.email}</p>
-              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+    <div className="space-y-12">
+      {/* ── Header ─────────────────────────────────────────── */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-4 min-w-0">
+          <div className="size-12 shrink-0 rounded-full bg-accent-soft text-accent flex items-center justify-center text-base font-semibold">
+            {initialsOf(data.displayName) || '?'}
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-xl font-semibold text-text truncate">{data.displayName}</h1>
+            <p className="text-sm text-text-muted truncate">{data.email}</p>
+            {(data.gradeLabel || data.goal) && (
+              <div className="flex flex-wrap items-center gap-1.5 mt-2">
                 {data.gradeLabel && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-700 bg-gray-100 rounded-full px-2.5 py-1">
-                    <GraduationCap className="w-3 h-3" /> {data.gradeLabel}
+                  <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-xs text-text-secondary">
+                    {data.gradeLabel}
                   </span>
                 )}
                 {data.goal && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full px-2.5 py-1">
-                    <Target className="w-3 h-3" /> {data.goal.emoji} {data.goal.label}
+                  <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs text-accent">
+                    {data.goal.emoji} {data.goal.label}
                   </span>
                 )}
               </div>
-            </div>
+            )}
           </div>
-
-          <Link
-            href="/dashboard/settings"
-            className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-gray-700 bg-gray-50 hover:bg-gray-100 border border-border rounded-xl px-3 py-2 transition-colors shrink-0"
-          >
-            <Settings className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Settings</span>
-          </Link>
         </div>
-      </motion.div>
+        <Link
+          href="/dashboard/settings"
+          className="inline-flex items-center gap-1.5 shrink-0 text-sm font-medium text-text-secondary hover:text-accent transition-colors duration-[160ms]"
+        >
+          <Settings className="size-3.5" /> <span className="hidden sm:inline">Settings</span>
+        </Link>
+      </div>
 
-      {/* ── MOMENTUM ─────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-      >
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-[0.14em] mb-3">Momentum</p>
-
-        <div className="bg-gradient-to-br from-gray-950 to-gray-900 rounded-2xl p-5 text-white shadow-lg">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/50">Level</p>
-              <p className="text-2xl font-black leading-tight">
-                {data.level} <span className="text-base font-semibold text-indigo-300">— {data.levelTitle}</span>
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/50">Total XP</p>
-              <p className="text-xl font-black tabular-nums">{data.totalXp.toLocaleString('tr-TR')}</p>
-            </div>
+      {/* ── Momentum — rows, no cards ──────────────────────── */}
+      <section>
+        <SectionLabel className="pb-2 border-b border-border">MOMENTUM</SectionLabel>
+        <div className="py-3.5 border-b border-border">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="text-base font-medium text-text">
+              Level <span className="tabular">{data.level}</span>
+              <span className="text-text-secondary font-normal"> — {data.levelTitle}</span>
+            </p>
+            <p className="tabular text-xs text-text-muted">{data.xpCurrent} / {data.xpRequired} XP</p>
           </div>
-
-          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+          <div className="mt-2.5 h-1 rounded-full bg-border overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full"
+              className="h-full rounded-full bg-accent"
               initial={{ width: 0 }}
               animate={{ width: `${data.xpPct}%` }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.8, ease: EASE_CURVE }}
             />
           </div>
-          <p className="text-[11px] text-white/40 mt-1.5">
-            {data.xpCurrent} / {data.xpRequired} XP — sonraki seviyeye
-          </p>
+        </div>
+        <div className="h-12 flex items-center justify-between border-b border-border">
+          <p className="text-base text-text">🔥 <span className="tabular">{data.currentStreak}</span> days streak</p>
+          <p className="text-xs text-text-muted">Rekor: <span className="tabular">{data.longestStreak}</span> gün</p>
+        </div>
+        <div className="h-12 flex items-center justify-between border-b border-border">
+          <p className="text-base text-text">Total Focus</p>
+          <p className="tabular-nums text-base text-text">{formatFocus(data.totalFocusMinutes)}</p>
+        </div>
+        <div className="h-12 flex items-center justify-between border-b border-border">
+          <p className="text-base text-text">Total XP</p>
+          <p className="tabular text-base text-text">{data.totalXp.toLocaleString('tr-TR')}</p>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-white/10">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-orange-500/15 flex items-center justify-center shrink-0">
-                <Flame className="w-4 h-4 text-orange-400" />
-              </div>
-              <div>
-                <p className="text-sm font-bold tabular-nums">{data.currentStreak} days</p>
-                <p className="text-[10px] text-white/40">Streak</p>
-              </div>
+      {/* ── Learning stats — 2-column grid ─────────────────── */}
+      <section>
+        <SectionLabel className="pb-2 border-b border-border">LEARNING STATS</SectionLabel>
+        <dl className="grid grid-cols-1 sm:grid-cols-2 sm:gap-x-10">
+          {stats.map(s => (
+            <div key={s.label} className="h-12 flex items-center justify-between border-b border-border">
+              <dt className="text-base text-text-secondary">{s.label}</dt>
+              <dd className={cn('text-base text-text', s.mono && 'tabular')}>{s.value}</dd>
             </div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/15 flex items-center justify-center shrink-0">
-                <Clock className="w-4 h-4 text-indigo-300" />
-              </div>
-              <div>
-                <p className="text-sm font-bold tabular-nums">{formatFocus(data.totalFocusMinutes)}</p>
-                <p className="text-[10px] text-white/40">Total Focus</p>
-              </div>
-            </div>
-          </div>
+          ))}
+        </dl>
+      </section>
+
+      {/* ── Achievements — compact badge grid ──────────────── */}
+      <section>
+        <div className="flex items-center justify-between pb-2 border-b border-border">
+          <SectionLabel>ACHIEVEMENTS</SectionLabel>
+          <span className="tabular text-sm text-text-secondary">{unlockedCount} / {ACHIEVEMENTS.length}</span>
         </div>
-      </motion.div>
-
-      {/* ── LEARNING STATS ───────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-[0.14em] mb-3">Learning Stats</p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatTile icon={Map}          color="violet"  value={String(data.totalTopicsStudied)}  label="Topics Studied" />
-          <StatTile icon={Brain}        color="amber"   value={String(data.totalRecallCards)}    label="Recall Cards" />
-          <StatTile icon={CheckCircle2} color="emerald" value={String(data.totalTasksCompleted)} label="Tasks Completed" />
-          <StatTile icon={CalendarDays} color="indigo"  value={memberSince}                      label="Member Since" />
-        </div>
-      </motion.div>
-
-      {/* ── ACHIEVEMENTS ─────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="bg-white border border-border rounded-2xl p-5 shadow-sm"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-sm font-bold text-gray-900 flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-amber-500" />
-            Achievements
-          </p>
-          <span className="text-xs font-bold text-gray-500 tabular-nums">
-            {unlocked.length}<span className="text-muted-foreground font-normal">/{ACHIEVEMENTS.length}</span>
-          </span>
-        </div>
-
-        {unlocked.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-6">
-            Henüz bir başarım açmadın — ilk Focus oturumunla başla.
-          </p>
-        ) : (
-          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2.5 mb-4">
-            {unlocked.slice(0, 12).map(a => {
-              const c = RARITY_CONFIG[a.rarity]
-              return (
-                <div
-                  key={a.id}
-                  title={a.title}
-                  className={cn('aspect-square rounded-xl border flex items-center justify-center text-xl', c.bg, c.border)}
-                >
-                  {a.icon}
-                </div>
-              )
-            })}
-          </div>
-        )}
-
+        <ul className="mt-4 grid grid-cols-7 sm:grid-cols-10 gap-2">
+          {achievements.map(a => {
+            const on = unlockedIds.has(a.id)
+            return (
+              <li
+                key={a.id}
+                title={`${a.title}${on ? '' : ' — kilitli'}`}
+                aria-label={`${a.title}${on ? '' : ' (kilitli)'}`}
+                className={cn(
+                  'aspect-square rounded-md border border-border bg-surface flex items-center justify-center text-lg',
+                  !on && 'grayscale opacity-40',
+                )}
+              >
+                {a.icon}
+              </li>
+            )
+          })}
+        </ul>
         <Link
           href="/dashboard/journey"
-          className="flex items-center justify-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+          className="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-accent hover:text-accent-dark transition-colors duration-[160ms]"
         >
-          Journey&apos;de tümünü gör <ArrowRight className="w-3 h-3" />
+          View all in Journey <ArrowRight className="size-3.5" />
         </Link>
-      </motion.div>
-    </div>
-  )
-}
-
-const TILE_COLORS = {
-  indigo:  { bg: 'bg-indigo-50/80',  ring: 'ring-indigo-100',  icon: 'text-indigo-600',  border: 'border-indigo-100' },
-  emerald: { bg: 'bg-emerald-50/80', ring: 'ring-emerald-100', icon: 'text-emerald-600', border: 'border-emerald-100' },
-  violet:  { bg: 'bg-violet-50/80',  ring: 'ring-violet-100',  icon: 'text-violet-600',  border: 'border-violet-100' },
-  amber:   { bg: 'bg-amber-50/80',   ring: 'ring-amber-100',   icon: 'text-amber-600',   border: 'border-amber-100' },
-} as const
-
-function StatTile({ icon: Icon, color, value, label }: {
-  icon: React.ElementType
-  color: keyof typeof TILE_COLORS
-  value: string
-  label: string
-}) {
-  const c = TILE_COLORS[color]
-  return (
-    <div className={cn('bg-white rounded-2xl border p-4 shadow-sm', c.border)}>
-      <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center ring-1 mb-3', c.bg, c.ring)}>
-        <Icon className={cn('w-4 h-4', c.icon)} />
-      </div>
-      <p className="text-lg font-black text-gray-900 tabular-nums truncate">{value}</p>
-      <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+      </section>
     </div>
   )
 }

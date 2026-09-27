@@ -2,16 +2,11 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  User, Mail, Shield, Trash2, ChevronRight,
-  Check, Loader2, LogOut, Bell, Palette, BookOpen,
-  AlertTriangle,
-} from 'lucide-react'
+import { Check, Loader2, LogOut } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { STUDY_GOALS, PREFERRED_HOURS, FOCUS_OPTIONS } from '@/lib/onboarding/types'
-
-type Section = 'profil' | 'calisma' | 'hesap'
+import { SectionLabel } from '@/components/ui/section-label'
 
 interface SettingsProfile {
   study_goal?:           string | null
@@ -25,9 +20,55 @@ interface Props {
   initial: { ad: string; email: string; profile: SettingsProfile | null }
 }
 
+// ── Layout primitives ────────────────────────────────────────────
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section>
+      <SectionLabel className="pb-2 border-b border-border">{title}</SectionLabel>
+      {children}
+    </section>
+  )
+}
+
+/** One setting: label (+ optional hint) on the left, control right-aligned — or below with `stacked`. */
+function Row({ label, hint, stacked, children }: {
+  label: string; hint?: React.ReactNode; stacked?: boolean; children: React.ReactNode
+}) {
+  return (
+    <div className={cn(
+      'min-h-12 py-3 border-b border-border',
+      stacked ? 'space-y-2.5' : 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-6',
+    )}>
+      <div className="min-w-0">
+        <p className="text-base font-medium text-text">{label}</p>
+        {hint && <p className="text-xs text-text-muted mt-0.5">{hint}</p>}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+/** Small single-choice buttons — replaces the old card grids. */
+function Choice({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        'inline-flex items-center gap-1.5 h-8 px-3 rounded-md border text-sm transition-colors duration-[160ms]',
+        active
+          ? 'border-accent bg-accent-soft text-accent font-medium'
+          : 'border-border bg-surface text-text-secondary hover:border-border-strong',
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
 export default function SettingsClient({ initial }: Props) {
   const router = useRouter()
-  const [section, setSection] = useState<Section>('profil')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -40,7 +81,7 @@ export default function SettingsClient({ initial }: Props) {
   const [ad, setAd] = useState(initial.ad)
   const [email] = useState(initial.email)
   const [studyGoal, setStudyGoal] = useState(initial.profile?.study_goal ?? 'ders_basarisi')
-  const [examType, setExamType] = useState(initial.profile?.exam_type ?? '')
+  const [examType] = useState(initial.profile?.exam_type ?? '')
   const [dailyMins, setDailyMins] = useState(initial.profile?.daily_available_mins ?? 120)
   const [prefHours, setPrefHours] = useState(initial.profile?.preferred_hours ?? 'evening')
   const [intensity, setIntensity] = useState(initial.profile?.focus_intensity ?? 'normal')
@@ -101,357 +142,163 @@ export default function SettingsClient({ initial }: Props) {
     }
   }
 
-  const navItems: { key: Section; label: string; icon: typeof User }[] = [
-    { key: 'profil',   label: 'Profil',           icon: User },
-    { key: 'calisma',  label: 'Çalışma Ayarları',  icon: BookOpen },
-    { key: 'hesap',    label: 'Hesap & Güvenlik',  icon: Shield },
-  ]
+  const inputClass =
+    'h-9 w-full sm:w-64 rounded-md bg-surface border border-border px-3 text-sm text-text placeholder:text-text-muted ' +
+    'focus:outline-none focus:border-accent transition-colors duration-[160ms]'
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-text">Settings</h1>
+        <p className="text-base text-text-secondary mt-1">Profil ve tercihlerini yönet.</p>
+      </div>
 
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h1 className="text-xl font-bold text-gray-900">Settings</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Profil ve tercihlerini yönet.</p>
-      </motion.div>
+      <div className="space-y-12">
+        {/* ── Profil ── */}
+        <Section title="PROFİL">
+          <Row label="Ad Soyad">
+            <input
+              value={ad}
+              onChange={e => setAd(e.target.value)}
+              placeholder="Adın Soyadın"
+              aria-label="Ad Soyad"
+              className={inputClass}
+            />
+          </Row>
+          <Row label="E-posta" hint="Değiştirilemez">
+            <p className="text-sm text-text-secondary truncate">{email}</p>
+          </Row>
+        </Section>
 
-      <div className="flex flex-col sm:flex-row gap-5">
+        {/* ── Çalışma ── */}
+        <Section title="ÇALIŞMA AYARLARI">
+          <Row label="Çalışma hedefi" stacked>
+            <div className="flex flex-wrap gap-2">
+              {STUDY_GOALS.map(g => (
+                <Choice key={g.value} active={studyGoal === g.value} onClick={() => setStudyGoal(g.value)}>
+                  <span>{g.emoji}</span>{g.label}
+                </Choice>
+              ))}
+            </div>
+          </Row>
 
-        {/* Sidebar nav */}
-        <motion.nav
-          initial={{ opacity: 0, x: -12 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="sm:w-48 flex sm:flex-col gap-1"
-        >
-          {navItems.map(({ key, label, icon: Icon }) => (
+          <Row label="Günlük süre" hint="30 dk – 6 saat">
+            <div className="flex items-center gap-3 sm:w-64">
+              <input
+                type="range" min={30} max={360} step={15}
+                value={dailyMins}
+                onChange={e => setDailyMins(Number(e.target.value))}
+                aria-label="Günlük çalışma süresi"
+                className="flex-1 accent-[var(--accent)]"
+              />
+              <span className="tabular text-sm text-text w-16 text-right">
+                {Math.floor(dailyMins / 60)}s {dailyMins % 60}dk
+              </span>
+            </div>
+          </Row>
+
+          <Row label="Tercih edilen saat" stacked>
+            <div className="flex flex-wrap gap-2">
+              {PREFERRED_HOURS.map(h => (
+                <Choice key={h.value} active={prefHours === h.value} onClick={() => setPrefHours(h.value)}>
+                  <span>{h.emoji}</span>{h.label}
+                  <span className="tabular-nums text-xs text-text-muted">{h.range}</span>
+                </Choice>
+              ))}
+            </div>
+          </Row>
+
+          <Row label="Odak yoğunluğu" stacked>
+            <div className="flex flex-wrap gap-2">
+              {FOCUS_OPTIONS.map(f => (
+                <Choice key={f.value} active={intensity === f.value} onClick={() => setIntensity(f.value)}>
+                  <span>{f.emoji}</span>{f.label}
+                </Choice>
+              ))}
+            </div>
+          </Row>
+
+          {/* One save for both sections — same PATCH as before */}
+          <div className="flex items-center justify-end gap-3 pt-4">
+            {saveError && <p className="text-sm text-danger">Kaydedilemedi — tekrar dene</p>}
+            {saved && <p className="inline-flex items-center gap-1 text-sm text-success"><Check className="size-3.5" /> Kaydedildi</p>}
             <button
-              key={key}
-              onClick={() => setSection(key)}
-              className={cn(
-                'flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left w-full',
-                section === key
-                  ? 'bg-indigo-50 text-indigo-700 border border-indigo-100'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-              )}
+              onClick={handleSave}
+              disabled={saving}
+              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-md bg-accent hover:bg-accent-dark text-white text-sm font-medium transition-colors duration-[160ms] disabled:opacity-60"
             >
-              <Icon className="w-4 h-4 shrink-0" />
-              {label}
-              {section === key && <ChevronRight className="w-3 h-3 ml-auto" />}
+              {saving ? <><Loader2 className="size-3.5 animate-spin" /> Kaydediliyor…</> : 'Kaydet'}
             </button>
-          ))}
-        </motion.nav>
+          </div>
+        </Section>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <AnimatePresence mode="wait">
+        {/* ── Hesap ── */}
+        <Section title="HESAP">
+          <Row label="Oturum" hint={email}>
+            <button
+              onClick={handleSignOut}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-surface text-sm font-medium text-text hover:border-border-strong transition-colors duration-[160ms] self-start sm:self-auto"
+            >
+              <LogOut className="size-3.5" /> Çıkış Yap
+            </button>
+          </Row>
+          <Row label="Versiyon"><p className="tabular text-sm text-text-secondary">1.0.0</p></Row>
+          <Row label="Platform"><p className="text-sm text-text-secondary">Noetic OS Web</p></Row>
+        </Section>
 
-            {/* ── Profil ── */}
-            {section === 'profil' && (
-              <motion.div
-                key="profil"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-5"
+        {/* ── Danger zone — a text button, not a red card ── */}
+        <section>
+          {!showDeleteConfirm ? (
+            <div>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="text-sm font-medium text-danger hover:underline underline-offset-4"
               >
-                <h2 className="text-sm font-bold text-gray-700">Profil Bilgileri</h2>
-
-                {/* Avatar */}
+                Hesabımı Sil
+              </button>
+              <p className="text-xs text-text-muted mt-1">Hesabını silersen tüm verilerin kalıcı olarak silinir.</p>
+            </div>
+          ) : (
+            <AnimatePresence>
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18 }}
+                className="space-y-3 max-w-sm"
+              >
+                <p className="text-sm text-text">
+                  Onaylamak için <strong className="font-semibold">SİL</strong> yaz. Tüm verilerin kalıcı olarak silinir.
+                </p>
+                <input
+                  value={deleteText}
+                  onChange={e => setDeleteText(e.target.value)}
+                  placeholder="SİL"
+                  aria-label="Onay metni"
+                  className="h-9 w-full rounded-md bg-surface border border-border px-3 text-sm text-text focus:outline-none focus:border-danger"
+                />
+                {deleteError && <p className="text-sm text-danger">{deleteError}</p>}
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-indigo-200">
-                    {ad.charAt(0).toUpperCase() || '?'}
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-900">{ad || 'İsimsiz'}</p>
-                    <p className="text-xs text-gray-400">{email}</p>
-                  </div>
-                </div>
-
-                {/* Name */}
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5" /> Ad Soyad
-                  </label>
-                  <input
-                    value={ad}
-                    onChange={e => setAd(e.target.value)}
-                    placeholder="Adın Soyadın"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-all bg-gray-50/50"
-                  />
-                </div>
-
-                {/* Email (readonly) */}
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5" /> E-posta
-                  </label>
-                  <div className="w-full border border-gray-100 rounded-xl px-4 py-2.5 text-sm text-gray-400 bg-gray-50 flex items-center gap-2">
-                    <span className="flex-1">{email}</span>
-                    <span className="text-[10px] text-gray-300 bg-gray-100 px-2 py-0.5 rounded-md">Değiştirilemez</span>
-                  </div>
-                </div>
-
-                <SaveButton saving={saving} saved={saved} error={saveError} onClick={handleSave} />
-              </motion.div>
-            )}
-
-            {/* ── Çalışma Ayarları ── */}
-            {section === 'calisma' && (
-              <motion.div
-                key="calisma"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-6"
-              >
-                <h2 className="text-sm font-bold text-gray-700">Çalışma Ayarları</h2>
-
-                {/* Study goal */}
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 block">
-                    Çalışma Hedefi
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {STUDY_GOALS.map(g => (
-                      <button
-                        key={g.value}
-                        onClick={() => setStudyGoal(g.value)}
-                        className={cn(
-                          'flex items-center gap-2.5 p-3 rounded-xl border transition-all text-left',
-                          studyGoal === g.value
-                            ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                            : 'bg-gray-50/50 border-gray-200 text-gray-600 hover:border-gray-300'
-                        )}
-                      >
-                        <span className="text-lg">{g.emoji}</span>
-                        <span className="text-xs font-semibold">{g.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Daily minutes */}
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center justify-between">
-                    <span>Günlük Süre</span>
-                    <span className="text-indigo-600 font-bold normal-case">
-                      {Math.floor(dailyMins / 60)}s {dailyMins % 60}dk
-                    </span>
-                  </label>
-                  <input
-                    type="range" min={30} max={360} step={15}
-                    value={dailyMins}
-                    onChange={e => setDailyMins(Number(e.target.value))}
-                    className="w-full accent-indigo-500"
-                  />
-                  <div className="flex justify-between text-[10px] text-gray-300 mt-1">
-                    <span>30 dk</span><span>6 saat</span>
-                  </div>
-                </div>
-
-                {/* Preferred hours */}
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 block">
-                    Tercih Edilen Saat
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {PREFERRED_HOURS.map(h => (
-                      <button
-                        key={h.value}
-                        onClick={() => setPrefHours(h.value)}
-                        className={cn(
-                          'flex items-center gap-2 p-3 rounded-xl border transition-all text-left',
-                          prefHours === h.value
-                            ? 'bg-indigo-50 border-indigo-200'
-                            : 'bg-gray-50/50 border-gray-200 hover:border-gray-300'
-                        )}
-                      >
-                        <span>{h.emoji}</span>
-                        <div>
-                          <p className={cn('text-xs font-semibold', prefHours === h.value ? 'text-indigo-700' : 'text-gray-600')}>{h.label}</p>
-                          <p className="text-[10px] text-gray-400">{h.range}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Intensity */}
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 block">
-                    Odak Yoğunluğu
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {FOCUS_OPTIONS.map(f => (
-                      <button
-                        key={f.value}
-                        onClick={() => setIntensity(f.value)}
-                        className={cn(
-                          'text-center p-3 rounded-xl border transition-all',
-                          intensity === f.value
-                            ? 'bg-indigo-50 border-indigo-200'
-                            : 'bg-gray-50/50 border-gray-200 hover:border-gray-300'
-                        )}
-                      >
-                        <span className="text-xl">{f.emoji}</span>
-                        <p className={cn('text-xs font-semibold mt-1', intensity === f.value ? 'text-indigo-700' : 'text-gray-600')}>
-                          {f.label}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <SaveButton saving={saving} saved={saved} error={saveError} onClick={handleSave} />
-              </motion.div>
-            )}
-
-            {/* ── Hesap & Güvenlik ── */}
-            {section === 'hesap' && (
-              <motion.div
-                key="hesap"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="space-y-4"
-              >
-                {/* Sign out */}
-                <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                  <h2 className="text-sm font-bold text-gray-700 mb-4">Oturum</h2>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Çıkış Yap</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{email}</p>
-                    </div>
-                    <motion.button
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={handleSignOut}
-                      className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Çıkış Yap
-                    </motion.button>
-                  </div>
-                </div>
-
-                {/* App info */}
-                <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                  <h2 className="text-sm font-bold text-gray-700 mb-4">Uygulama</h2>
-                  <div className="space-y-3">
-                    {[
-                      { label: 'Versiyon', value: '1.0.0' },
-                      { label: 'Platform', value: 'Noetic OS Web' },
-                    ].map(item => (
-                      <div key={item.label} className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">{item.label}</span>
-                        <span className="text-sm font-semibold text-gray-700">{item.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Delete account */}
-                <div className="bg-white border border-red-100 rounded-2xl p-6 shadow-sm">
-                  <h2 className="text-sm font-bold text-red-600 mb-1 flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4" />
-                    Tehlikeli Bölge
-                  </h2>
-                  <p className="text-xs text-gray-400 mb-4">
-                    Hesabını silersen tüm verilerin kalıcı olarak silinir.
-                  </p>
-
-                  {!showDeleteConfirm ? (
-                    <button
-                      onClick={() => setShowDeleteConfirm(true)}
-                      className="flex items-center gap-2 text-red-500 hover:text-red-600 text-sm font-semibold bg-red-50 hover:bg-red-100 border border-red-100 px-4 py-2 rounded-xl transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Hesabımı Sil
-                    </button>
-                  ) : (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="space-y-3"
-                    >
-                      <p className="text-xs text-red-500 font-medium">
-                        Onaylamak için aşağıya <strong>SİL</strong> yaz:
-                      </p>
-                      <input
-                        value={deleteText}
-                        onChange={e => setDeleteText(e.target.value)}
-                        placeholder="SİL"
-                        className="w-full border border-red-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-300"
-                      />
-                      {deleteError && (
-                        <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
-                          {deleteError}
-                        </p>
-                      )}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => { setShowDeleteConfirm(false); setDeleteText(''); setDeleteError(null) }}
-                          disabled={deleting}
-                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold py-2 rounded-xl transition-colors disabled:opacity-50"
-                        >
-                          İptal
-                        </button>
-                        <button
-                          onClick={handleDelete}
-                          disabled={deleteText !== 'SİL' || deleting}
-                          className="flex-1 flex items-center justify-center gap-1.5 bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white text-sm font-semibold py-2 rounded-xl transition-colors"
-                        >
-                          {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                          {deleting ? 'Siliniyor…' : 'Kalıcı Olarak Sil'}
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleteText !== 'SİL' || deleting}
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-danger disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {deleting && <Loader2 className="size-3.5 animate-spin" />}
+                    {deleting ? 'Siliniyor…' : 'Kalıcı olarak sil'}
+                  </button>
+                  <button
+                    onClick={() => { setShowDeleteConfirm(false); setDeleteText(''); setDeleteError(null) }}
+                    disabled={deleting}
+                    className="text-sm text-text-secondary hover:text-text disabled:opacity-50"
+                  >
+                    İptal
+                  </button>
                 </div>
               </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+            </AnimatePresence>
+          )}
+        </section>
       </div>
     </div>
-  )
-}
-
-// ── Save button ──────────────────────────────────────────────────
-function SaveButton({
-  saving, saved, error, onClick,
-}: {
-  saving: boolean; saved: boolean; error?: boolean; onClick: () => void
-}) {
-  return (
-    <motion.button
-      onClick={onClick}
-      disabled={saving}
-      whileHover={!saving ? { scale: 1.02 } : {}}
-      whileTap={!saving ? { scale: 0.97 } : {}}
-      className={cn(
-        'w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all',
-        error
-          ? 'bg-red-500 text-white'
-          : saved
-          ? 'bg-emerald-500 text-white'
-          : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-200/60'
-      )}
-    >
-      {saving ? (
-        <><Loader2 className="w-4 h-4 animate-spin" /> Kaydediliyor…</>
-      ) : error ? (
-        'Kaydedilemedi — tekrar dene'
-      ) : saved ? (
-        <><Check className="w-4 h-4" /> Kaydedildi!</>
-      ) : (
-        'Kaydet'
-      )}
-    </motion.button>
   )
 }

@@ -13,11 +13,8 @@ export default async function ProfilePage() {
   const data = await getProfileData(supabase, user)
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5">
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">Profile</h1>
-      </div>
-
+    <div className="max-w-3xl mx-auto">
+      {/* The header's page title already says "Profile" — the name is the heading here. */}
       <ProfileClient data={data} />
     </div>
   )
