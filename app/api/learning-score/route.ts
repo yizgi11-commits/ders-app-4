@@ -17,6 +17,6 @@ export async function GET() {
     void trackEvent(supabase, user.id, 'learning_score_viewed')
     return NextResponse.json(data)
   } catch {
-    return NextResponse.json({ error: 'Learning Score alınamadı' }, { status: 500 })
+    return NextResponse.json({ error: 'Öğrenme Puanı alınamadı' }, { status: 500 })
   }
 }

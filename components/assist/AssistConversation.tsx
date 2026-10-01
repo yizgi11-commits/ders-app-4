@@ -198,14 +198,14 @@ export default function AssistConversation({
         <Link href="/dashboard/upgrade" className="block p-3 border-t border-border group">
           <div className="flex items-center gap-2">
             <div className="flex-1 text-sm bg-surface-subtle border border-border rounded-xl px-3.5 py-2.5 text-muted-foreground group-hover:bg-surface-subtle transition-colors cursor-pointer">
-              Serbest soru sorma — Pro ile geliyor
+              Serbest soru sorma
             </div>
             <div className="w-10 h-10 shrink-0 rounded-xl bg-surface-subtle text-text-muted flex items-center justify-center">
               <Lock className="w-4 h-4" />
             </div>
           </div>
           <p className="text-[10px] font-semibold text-accent uppercase tracking-wider mt-1.5 text-center">
-            Coming with Pro
+            Pro ile geliyor
           </p>
         </Link>
       )}

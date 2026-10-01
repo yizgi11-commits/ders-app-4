@@ -70,7 +70,7 @@ export default function RecallClient() {
       <RecallQueue queue={queue} onStart={startAll} onStartTopic={startTopic} />
 
       <section className="mt-14">
-        <SectionLabel className="pb-2 mb-5 border-b border-border">RECALL ANALYTICS</SectionLabel>
+        <SectionLabel className="pb-2 mb-5 border-b border-border">RECALL ANALİZİ</SectionLabel>
         <RecallAnalytics stats={stats} />
       </section>
     </div>

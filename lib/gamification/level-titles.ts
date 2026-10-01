@@ -9,7 +9,7 @@ const LEVEL_TITLES: { min: number; title: string }[] = [
   { min: 10, title: 'Uzman Öğrenci' },
   { min: 15, title: 'Usta' },
   { min: 20, title: 'Bilge' },
-  { min: 30, title: 'Noetic Master' },
+  { min: 30, title: 'Noetic Ustası' },
 ]
 
 export function levelTitle(level: number): string {

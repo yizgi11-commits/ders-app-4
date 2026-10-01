@@ -71,12 +71,12 @@ export function hasActivity(day: JourneyDay): boolean {
 }
 
 export function formatFocus(minutes: number): string {
-  if (minutes <= 0) return '0m'
+  if (minutes <= 0) return '0 dk'
   const h = Math.floor(minutes / 60)
   const m = minutes % 60
-  if (h === 0) return `${m}m`
-  if (m === 0) return `${h}h`
-  return `${h}h ${m}m`
+  if (h === 0) return `${m} dk`
+  if (m === 0) return `${h} sa`
+  return `${h} sa ${m} dk`
 }
 
 export function formatDayHeading(dateStr: string): string {

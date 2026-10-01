@@ -11,7 +11,6 @@ interface Props {
   onStartTopic: (group: RecallQueueGroup) => void
 }
 
-const plural = (n: number) => (n === 1 ? 'card' : 'cards')
 
 function Header({ title }: { title: React.ReactNode }) {
   return (
@@ -62,16 +61,16 @@ export default function RecallQueue({ queue, onStart, onStartTopic }: Props) {
 
   return (
     <div>
-      <Header title={<>Due today — <span className="tabular">{queue.totalCards}</span> {plural(queue.totalCards)}</>} />
+      <Header title={<>Bugün tekrar edilecek — <span className="tabular">{queue.totalCards}</span> kart</>} />
 
       {locked && (
         <div className="flex items-center gap-3 rounded-md bg-warning-soft px-4 py-2.5 mb-6">
           <Lock className="size-4 text-warning shrink-0" />
           <p className="flex-1 text-sm text-text">
-            Bugünkü Recall limitine ulaştın — Free planda günde 20 kart.
+            Bugünkü Recall limitine ulaştın — Ücretsiz planda günde 20 kart.
           </p>
           <Link href="/dashboard/upgrade" className="shrink-0 text-sm font-medium text-accent hover:text-accent-dark">
-            Upgrade
+            Yükselt
           </Link>
         </div>
       )}
@@ -90,7 +89,7 @@ export default function RecallQueue({ queue, onStart, onStartTopic }: Props) {
                 <span className="hidden sm:inline text-xs text-text-muted shrink-0">Son çalışma: {lastStudied}</span>
               )}
               <span className="tabular text-sm text-text-muted shrink-0 w-16 text-right">
-                {group.cards.length} {plural(group.cards.length)}
+                {group.cards.length} kart
               </span>
               <button
                 onClick={() => onStartTopic(group)}
@@ -98,7 +97,7 @@ export default function RecallQueue({ queue, onStart, onStartTopic }: Props) {
                 aria-label={`${group.topicTitle} kartlarını başlat`}
                 className="shrink-0 inline-flex items-center gap-1 text-sm font-medium text-accent transition-opacity duration-[160ms] sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 disabled:hidden"
               >
-                <Play className="size-3 fill-current" /> Start
+                <Play className="size-3 fill-current" /> Başla
               </button>
             </li>
           )
@@ -111,7 +110,7 @@ export default function RecallQueue({ queue, onStart, onStartTopic }: Props) {
         disabled={locked}
         className="mt-6 w-full h-11 rounded-md bg-accent hover:bg-accent-dark text-white text-base font-medium inline-flex items-center justify-center gap-2 transition-colors duration-[160ms] disabled:bg-surface-subtle disabled:text-text-muted disabled:cursor-not-allowed"
       >
-        {locked ? <><Lock className="size-4" /> Limit doldu</> : 'Start Recall'}
+        {locked ? <><Lock className="size-4" /> Limit doldu</> : 'Recall’ı başlat'}
       </button>
     </div>
   )

@@ -14,13 +14,11 @@ interface Props {
   limit?:    number
 }
 
-const plural = (n: number, one: string, many: string) => (n === 1 ? one : many)
-
-/** "SEP 23" */
+/** "23 EYL" */
 function shortHeading(dateStr: string): string {
   return new Date(dateStr + 'T00:00:00')
-    .toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    .toUpperCase()
+    .toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
+    .toLocaleUpperCase('tr-TR')
 }
 
 export default function JourneyTimeline({ days, unlocked = [], limit = 30 }: Props) {
@@ -56,10 +54,10 @@ export default function JourneyTimeline({ days, unlocked = [], limit = 30 }: Pro
       {active.map(day => {
         const events = eventsByDay.get(day.date) ?? []
         const parts: React.ReactNode[] = []
-        if (day.focusMinutes > 0)   parts.push(<><span className="tabular-nums">{formatFocus(day.focusMinutes)}</span> focus</>)
-        if (day.topicsStudied > 0)  parts.push(<><span className="tabular">{day.topicsStudied}</span> {plural(day.topicsStudied, 'topic studied', 'topics studied')}</>)
-        if (day.recallCards > 0)    parts.push(<><span className="tabular">{day.recallCards}</span> {plural(day.recallCards, 'recall card', 'recall cards')}</>)
-        if (day.tasksCompleted > 0) parts.push(<><span className="tabular">{day.tasksCompleted}</span> {plural(day.tasksCompleted, 'task completed', 'tasks completed')}</>)
+        if (day.focusMinutes > 0)   parts.push(<><span className="tabular-nums">{formatFocus(day.focusMinutes)}</span> Focus</>)
+        if (day.topicsStudied > 0)  parts.push(<><span className="tabular">{day.topicsStudied}</span> konu çalışıldı</>)
+        if (day.recallCards > 0)    parts.push(<><span className="tabular">{day.recallCards}</span> Recall kartı</>)
+        if (day.tasksCompleted > 0) parts.push(<><span className="tabular">{day.tasksCompleted}</span> görev tamamlandı</>)
 
         return (
           <li key={day.date} className="relative pl-6 pb-6 last:pb-0">
@@ -79,7 +77,7 @@ export default function JourneyTimeline({ days, unlocked = [], limit = 30 }: Pro
             </p>
             {events.map((e, i) => (
               <p key={i} className="mt-1 text-sm text-accent">
-                {e.icon} Milestone — {e.title}
+                {e.icon} Kilometre taşı — {e.title}
               </p>
             ))}
           </li>

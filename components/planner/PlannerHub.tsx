@@ -15,10 +15,10 @@ import { getWeekStart, addDays, todayStr } from './week'
 type Tab = 'tasks' | 'calendar' | 'goals' | 'exams'
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'tasks',    label: 'Tasks' },
-  { id: 'calendar', label: 'Calendar' },
-  { id: 'goals',    label: 'Goals' },
-  { id: 'exams',    label: 'Exams' },
+  { id: 'tasks',    label: 'Görevler' },
+  { id: 'calendar', label: 'Takvim' },
+  { id: 'goals',    label: 'Hedefler' },
+  { id: 'exams',    label: 'Sınavlar' },
 ]
 
 export default function PlannerHub() {
@@ -57,7 +57,7 @@ export default function PlannerHub() {
             </div>
           )}
           <button onClick={() => setShowAiPlanner(true)} className={textButtonClass}>
-            <Sparkles className="size-3.5" /> Generate plan from exam
+            <Sparkles className="size-3.5" /> Sınava göre plan oluştur
           </button>
         </div>
       </div>

@@ -8,10 +8,10 @@ import { SectionLabel } from '@/components/ui/section-label'
 
 // Plain measurement readout: no glow, no giant number.
 const ROWS: { key: keyof LearningScoreResponse['breakdown']; label: string }[] = [
-  { key: 'consistency', label: 'Consistency' },
-  { key: 'focus',       label: 'Focus' },
-  { key: 'recall',      label: 'Recall' },
-  { key: 'completion',  label: 'Completion' },
+  { key: 'consistency', label: 'Süreklilik' },
+  { key: 'focus',       label: 'Odak' },
+  { key: 'recall',      label: 'Tekrar' },
+  { key: 'completion',  label: 'Tamamlama' },
 ]
 
 export default function LearningScoreCard({ data }: { data: LearningScoreResponse }) {
@@ -19,7 +19,7 @@ export default function LearningScoreCard({ data }: { data: LearningScoreRespons
 
   return (
     <div className="rounded-lg border border-border bg-surface p-6">
-      <SectionLabel>LEARNING SCORE</SectionLabel>
+      <SectionLabel>ÖĞRENME PUANI</SectionLabel>
 
       <p className="mt-3 tabular text-[48px] leading-none text-text">
         {score}<span className="text-text-muted"> / 100</span>
@@ -29,8 +29,8 @@ export default function LearningScoreCard({ data }: { data: LearningScoreRespons
         change > 0 ? 'text-success' : change < 0 ? 'text-danger' : 'text-text-muted',
       )}>
         {change === 0
-          ? 'No change from last week'
-          : <><span className="tabular">{change > 0 ? '+' : ''}{change}</span> from last week</>}
+          ? 'Geçen haftaya göre değişim yok'
+          : <>Geçen haftaya göre <span className="tabular">{change > 0 ? '+' : ''}{change}</span></>}
       </p>
 
       <div className="mt-6 space-y-3">
@@ -47,7 +47,7 @@ export default function LearningScoreCard({ data }: { data: LearningScoreRespons
                   transition={{ duration: 0.5, delay: i * 0.05, ease: EASE_CURVE }}
                 />
               </div>
-              <span className="w-10 shrink-0 text-right tabular text-sm text-text">{value}%</span>
+              <span className="w-10 shrink-0 text-right tabular text-sm text-text">%{value}</span>
             </div>
           )
         })}

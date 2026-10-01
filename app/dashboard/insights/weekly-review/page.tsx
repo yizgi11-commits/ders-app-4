@@ -7,7 +7,7 @@ import { getUserTier } from '@/lib/subscription'
 import { trackEvent } from '@/lib/analytics/track'
 import WeeklyReviewClient from '@/components/insights/WeeklyReviewClient'
 
-export const metadata = { title: 'Weekly Review' }
+export const metadata = { title: 'Haftalık Değerlendirme' }
 
 // This route is force-dynamic (createClient() reads the session cookie).
 // The review itself is app_cache-backed (24h, invalidated on
@@ -30,7 +30,7 @@ export default async function WeeklyReviewPage() {
         <Link href="/dashboard/insights" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-text-secondary transition-colors mb-3">
           <ArrowLeft className="w-3.5 h-3.5" /> Insights
         </Link>
-        <h1 className="text-xl font-bold text-text">Your Week</h1>
+        <h1 className="text-xl font-bold text-text">Haftan</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Bu haftanın özeti — tamamen veriden, yorum yok.</p>
       </div>
 

@@ -10,12 +10,12 @@ import { fieldClass, primaryButtonClass, textButtonClass, SectionLabel, daysFrom
 
 /** "Aug 20 (12 days)" */
 function fmtDeadline(dateStr: string | null): string {
-  if (!dateStr) return 'No deadline'
+  if (!dateStr) return 'Son tarih yok'
   const days = daysFromToday(dateStr)
   const label = shortDate(dateStr)
-  if (days < 0) return `${label} (overdue)`
-  if (days === 0) return `${label} (today)`
-  return `${label} (${days} day${days !== 1 ? 's' : ''})`
+  if (days < 0) return `${label} (gecikti)`
+  if (days === 0) return `${label} (bugün)`
+  return `${label} (${days} gün)`
 }
 
 export default function GoalsPanel() {
@@ -82,9 +82,9 @@ export default function GoalsPanel() {
   return (
     <div>
       <div className="flex items-center justify-between pb-2 border-b border-border">
-        <SectionLabel>GOALS</SectionLabel>
+        <SectionLabel>HEDEFLER</SectionLabel>
         <button onClick={() => setShowForm(v => !v)} className={textButtonClass}>
-          <Plus className="size-3.5" /> New goal
+          <Plus className="size-3.5" /> Yeni hedef
         </button>
       </div>
 
@@ -94,13 +94,13 @@ export default function GoalsPanel() {
             <div className="mt-4 rounded-lg border border-border bg-surface p-3 space-y-2">
               <input
                 value={title} onChange={e => setTitle(e.target.value)}
-                placeholder='Goal title — e.g. "Finish TYT Functions"'
+                placeholder='Hedef başlığı — örn. "TYT Fonksiyonlar’ı bitir"'
                 aria-label="Hedef başlığı"
                 className={fieldClass}
               />
               <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px_auto] gap-2">
                 <select value={subjectId} onChange={e => setSubjectId(e.target.value)} aria-label="Ders" className={fieldClass}>
-                  <option value="">— Subject (optional)</option>
+                  <option value="">— Ders (isteğe bağlı)</option>
                   {subjects.map(s => <option key={s.id} value={s.id}>{s.icon} {s.name}</option>)}
                 </select>
                 <input
@@ -109,7 +109,7 @@ export default function GoalsPanel() {
                   className={cn(fieldClass, 'tabular-nums')}
                 />
                 <button onClick={handleCreate} disabled={!title.trim() || saving} className={primaryButtonClass}>
-                  {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />} Add goal
+                  {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />} Hedef ekle
                 </button>
               </div>
             </div>
@@ -118,7 +118,7 @@ export default function GoalsPanel() {
       </AnimatePresence>
 
       {goals.length === 0 ? (
-        <p className="text-sm text-text-muted py-4 border-b border-border">No goals yet.</p>
+        <p className="text-sm text-text-muted py-4 border-b border-border">Henüz hedef yok.</p>
       ) : (
         <ul>
           {goals.map(goal => {
@@ -148,7 +148,7 @@ export default function GoalsPanel() {
                 </div>
 
                 <p className="mt-2 text-sm text-text-muted">
-                  <span className="tabular">{pct}%</span>
+                  <span className="tabular">%{pct}</span>
                   {goal.subjects?.name && <> · {goal.subjects.name}</>}
                   {' · '}<span className="tabular-nums">{fmtDeadline(goal.deadline)}</span>
                 </p>

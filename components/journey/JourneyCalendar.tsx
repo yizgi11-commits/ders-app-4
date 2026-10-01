@@ -50,8 +50,8 @@ export default function JourneyCalendar({ days }: { days: JourneyDay[] }) {
                     onClick={() => setSelected(day ?? {
                       date: key, focusMinutes: 0, topicsStudied: 0, recallCards: 0, tasksCompleted: 0,
                     })}
-                    title={`${key} — ${day ? formatFocus(day.focusMinutes) : '0m'}`}
-                    aria-label={`${key}: ${day ? formatFocus(day.focusMinutes) : '0m'} odak`}
+                    title={`${key} — ${day ? formatFocus(day.focusMinutes) : '0 dk'}`}
+                    aria-label={`${key}: ${day ? formatFocus(day.focusMinutes) : '0 dk'} odak`}
                     className={cn(
                       HEAT_CELL, INTENSITY_CLASS[intensityFor(day)],
                       'hover:ring-1 hover:ring-border-strong',
@@ -83,10 +83,10 @@ export default function JourneyCalendar({ days }: { days: JourneyDay[] }) {
                 <span className="text-text-secondary">
                   {hasActivity(selected) ? (
                     <>
-                      {' · '}<span className="tabular-nums">{formatFocus(selected.focusMinutes)}</span> focus
-                      {' · '}<span className="tabular">{selected.topicsStudied}</span> topics
-                      {' · '}<span className="tabular">{selected.recallCards}</span> recall
-                      {' · '}<span className="tabular">{selected.tasksCompleted}</span> tasks
+                      {' · '}<span className="tabular-nums">{formatFocus(selected.focusMinutes)}</span> Focus
+                      {' · '}<span className="tabular">{selected.topicsStudied}</span> konu
+                      {' · '}<span className="tabular">{selected.recallCards}</span> Recall
+                      {' · '}<span className="tabular">{selected.tasksCompleted}</span> görev
                     </>
                   ) : ' · Bu gün kayıtlı aktivite yok.'}
                 </span>

@@ -22,10 +22,10 @@ export default function ProfileClient({ data }: { data: ProfileData }) {
   const achievements = [...ACHIEVEMENTS].sort((a, b) => Number(unlockedIds.has(b.id)) - Number(unlockedIds.has(a.id)))
 
   const stats: { label: string; value: string; mono: boolean }[] = [
-    { label: 'Topics Studied',  value: String(data.totalTopicsStudied),  mono: true },
-    { label: 'Recall Cards',    value: String(data.totalRecallCards),    mono: true },
-    { label: 'Tasks Completed', value: String(data.totalTasksCompleted), mono: true },
-    { label: 'Member Since',    value: memberSince,                      mono: false },
+    { label: 'Çalışılan konu',   value: String(data.totalTopicsStudied),  mono: true },
+    { label: 'Recall kartı',    value: String(data.totalRecallCards),    mono: true },
+    { label: 'Tamamlanan görev', value: String(data.totalTasksCompleted), mono: true },
+    { label: 'Üyelik tarihi',   value: memberSince,                      mono: false },
   ]
 
   return (
@@ -59,7 +59,7 @@ export default function ProfileClient({ data }: { data: ProfileData }) {
           href="/dashboard/settings"
           className="inline-flex items-center gap-1.5 shrink-0 text-sm font-medium text-text-secondary hover:text-accent transition-colors duration-[160ms]"
         >
-          <Settings className="size-3.5" /> <span className="hidden sm:inline">Settings</span>
+          <Settings className="size-3.5" /> <span className="hidden sm:inline">Ayarlar</span>
         </Link>
       </div>
 
@@ -69,7 +69,7 @@ export default function ProfileClient({ data }: { data: ProfileData }) {
         <div className="py-3.5 border-b border-border">
           <div className="flex items-baseline justify-between gap-3">
             <p className="text-base font-medium text-text">
-              Level <span className="tabular">{data.level}</span>
+              Seviye <span className="tabular">{data.level}</span>
               <span className="text-text-secondary font-normal"> — {data.levelTitle}</span>
             </p>
             <p className="tabular text-xs text-text-muted">{data.xpCurrent} / {data.xpRequired} XP</p>
@@ -84,22 +84,22 @@ export default function ProfileClient({ data }: { data: ProfileData }) {
           </div>
         </div>
         <div className="h-12 flex items-center justify-between border-b border-border">
-          <p className="text-base text-text">🔥 <span className="tabular">{data.currentStreak}</span> days streak</p>
+          <p className="text-base text-text">🔥 <span className="tabular">{data.currentStreak}</span> günlük seri</p>
           <p className="text-xs text-text-muted">Rekor: <span className="tabular">{data.longestStreak}</span> gün</p>
         </div>
         <div className="h-12 flex items-center justify-between border-b border-border">
-          <p className="text-base text-text">Total Focus</p>
+          <p className="text-base text-text">Toplam Focus</p>
           <p className="tabular-nums text-base text-text">{formatFocus(data.totalFocusMinutes)}</p>
         </div>
         <div className="h-12 flex items-center justify-between border-b border-border">
-          <p className="text-base text-text">Total XP</p>
+          <p className="text-base text-text">Toplam XP</p>
           <p className="tabular text-base text-text">{data.totalXp.toLocaleString('tr-TR')}</p>
         </div>
       </section>
 
       {/* ── Learning stats — 2-column grid ─────────────────── */}
       <section>
-        <SectionLabel className="pb-2 border-b border-border">LEARNING STATS</SectionLabel>
+        <SectionLabel className="pb-2 border-b border-border">ÖĞRENME İSTATİSTİKLERİ</SectionLabel>
         <dl className="grid grid-cols-1 sm:grid-cols-2 sm:gap-x-10">
           {stats.map(s => (
             <div key={s.label} className="h-12 flex items-center justify-between border-b border-border">
@@ -113,7 +113,7 @@ export default function ProfileClient({ data }: { data: ProfileData }) {
       {/* ── Achievements — compact badge grid ──────────────── */}
       <section>
         <div className="flex items-center justify-between pb-2 border-b border-border">
-          <SectionLabel>ACHIEVEMENTS</SectionLabel>
+          <SectionLabel>BAŞARIMLAR</SectionLabel>
           <span className="tabular text-sm text-text-secondary">{unlockedCount} / {ACHIEVEMENTS.length}</span>
         </div>
         <ul className="mt-4 grid grid-cols-7 sm:grid-cols-10 gap-2">
@@ -138,7 +138,7 @@ export default function ProfileClient({ data }: { data: ProfileData }) {
           href="/dashboard/journey"
           className="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-accent hover:text-accent-dark transition-colors duration-[160ms]"
         >
-          View all in Journey <ArrowRight className="size-3.5" />
+          Tümünü Journey’de gör <ArrowRight className="size-3.5" />
         </Link>
       </section>
     </div>

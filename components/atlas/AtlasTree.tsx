@@ -15,12 +15,12 @@ interface Props {
   initialExamName: string | null
 }
 
-/** 0 → "0h", 45 → "45m", 90 → "1.5h" */
+/** 0 → "0 sa", 45 → "45 dk", 90 → "1.5 sa" */
 function fmtFocus(minutes: number): string {
-  if (minutes <= 0) return '0h'
-  if (minutes < 60) return `${minutes}m`
+  if (minutes <= 0) return '0 sa'
+  if (minutes < 60) return `${minutes} dk`
   const h = minutes / 60
-  return `${Number.isInteger(h) ? h : h.toFixed(1)}h`
+  return `${Number.isInteger(h) ? h : h.toFixed(1)} sa`
 }
 
 function AddSubjectButton({ onClick }: { onClick: () => void }) {
@@ -29,7 +29,7 @@ function AddSubjectButton({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       className="inline-flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-accent transition-colors duration-[160ms]"
     >
-      <Plus className="size-3.5" /> Add subject
+      <Plus className="size-3.5" /> Ders ekle
     </button>
   )
 }
@@ -56,7 +56,7 @@ export default function AtlasTree({ initialSubjects, initialExamName }: Props) {
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-4 pb-3 border-b border-border">
         <p className="text-[11px] font-medium tracking-[0.08em] text-text-muted truncate">
-          {(examName || 'My Atlas').toLocaleUpperCase('tr-TR')}
+          {(examName || 'Atlas’ım').toLocaleUpperCase('tr-TR')}
         </p>
         <div className="flex items-center gap-4 shrink-0">
           {subjects.length > 0 && (
@@ -65,7 +65,7 @@ export default function AtlasTree({ initialSubjects, initialExamName }: Props) {
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search subjects…"
+                placeholder="Ders ara…"
                 aria-label="Ders ara"
                 className="w-44 h-8 rounded-md bg-surface border border-border pl-8 pr-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors duration-[160ms]"
               />
@@ -84,7 +84,7 @@ export default function AtlasTree({ initialSubjects, initialExamName }: Props) {
           <StateAction onClick={() => setShowCreate(true)}><Plus className="size-3.5" /> Ders ekle</StateAction>
         </EmptyState>
       ) : filtered.length === 0 ? (
-        <p className="py-10 text-sm text-text-muted">No subjects match “{search}”.</p>
+        <p className="py-10 text-sm text-text-muted">“{search}” ile eşleşen ders yok.</p>
       ) : (
         <div className="mt-6 space-y-8">
           {filtered.map(subject => {
@@ -109,7 +109,7 @@ export default function AtlasTree({ initialSubjects, initialExamName }: Props) {
                   >
                     <span className="mr-1.5">{subject.icon}</span>{subject.name}
                   </Link>
-                  <span className="shrink-0 tabular text-sm text-text-muted">{subject.subjectPct}%</span>
+                  <span className="shrink-0 tabular text-sm text-text-muted">%{subject.subjectPct}</span>
                 </div>
 
                 <div className="mt-2 h-1 rounded-full bg-border overflow-hidden">
@@ -133,7 +133,7 @@ export default function AtlasTree({ initialSubjects, initialExamName }: Props) {
                     >
                       <div className="ml-2 pl-4 border-l border-border mt-2">
                         {topics.length === 0 ? (
-                          <p className="h-10 flex items-center text-sm text-text-muted">No topics yet.</p>
+                          <p className="h-10 flex items-center text-sm text-text-muted">Henüz konu yok.</p>
                         ) : topics.map(topic => (
                           <Link
                             key={topic.id}
@@ -150,11 +150,11 @@ export default function AtlasTree({ initialSubjects, initialExamName }: Props) {
                             <span className="hidden sm:flex items-center gap-3 shrink-0 text-xs text-text-muted">
                               <span>Focus: <span className="tabular">{fmtFocus(topic.focus_minutes)}</span></span>
                               <span>Recall: <span className="tabular">{topic.recall_count}</span></span>
-                              <span>Notes: <span className="tabular">{topic.note_count}</span></span>
+                              <span>Not: <span className="tabular">{topic.note_count}</span></span>
                             </span>
                             <span
                               className="w-20 h-[3px] rounded-full bg-border overflow-hidden shrink-0"
-                              title={`${topic.progress_pct}%`}
+                              title={`%${topic.progress_pct}`}
                             >
                               <span
                                 className={cn('block h-full rounded-full', topic.progress_pct >= 100 ? 'bg-success' : 'bg-accent')}

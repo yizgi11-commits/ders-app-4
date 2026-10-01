@@ -61,8 +61,8 @@ function buildWentWell(
   if (breakdown.completion > 80) lines.push(`Görev tamamlama oranın bu hafta güçlüydü (%${breakdown.completion}).`)
   if (breakdown.recall > 75) lines.push(`Tekrar düzenin iyiydi (%${breakdown.recall}).`)
   if (breakdown.focus >= 90) lines.push(`Focus hedefine bu hafta ulaştın (%${breakdown.focus}).`)
-  if (breakdown.consistency >= 85) lines.push('Bu hafta neredeyse her gün aktifdin.')
-  if (scoreChange > 0) lines.push(`Learning Score geçen haftaya göre ${scoreChange} puan arttı.`)
+  if (breakdown.consistency >= 85) lines.push('Bu hafta neredeyse her gün aktiftin.')
+  if (scoreChange > 0) lines.push(`Öğrenme Puanın geçen haftaya göre ${scoreChange} puan arttı.`)
   if (lines.length === 0) lines.push('Bu hafta ölçülebilir bir öne çıkan yoktu — dengeli ama sakin bir hafta geçirdin.')
   return lines
 }
@@ -80,7 +80,7 @@ function buildNeedsAttention(
   if (weakestSubject && weakestSubject.overdueReviews > 5) {
     lines.push(`${weakestSubject.name} dersinde ${weakestSubject.overdueReviews} kart gecikmiş durumda.`)
   }
-  if (scoreChange < 0) lines.push(`Learning Score geçen haftaya göre ${Math.abs(scoreChange)} puan düştü.`)
+  if (scoreChange < 0) lines.push(`Öğrenme Puanın geçen haftaya göre ${Math.abs(scoreChange)} puan düştü.`)
   if (lines.length === 0) lines.push('Bu hafta dikkat çeken bir sorun yok — mevcut temponu koru.')
   return lines
 }

@@ -5,7 +5,6 @@ import FocusHistory from '@/components/focus/FocusHistory'
 function TimerSkeleton() {
   return (
     <div className="max-w-md mx-auto flex flex-col items-center gap-10 pt-2">
-      <div className="h-9 w-72 rounded-md skeleton-shimmer-dark" />
       <div className="size-[260px] rounded-full skeleton-shimmer-dark" />
       <div className="h-10 w-32 rounded-md skeleton-shimmer-dark" />
     </div>

@@ -62,7 +62,7 @@ export default function SessionCompleteOverlay({
         leave()
       }
     } catch {
-      setError('Could not save — please try again.')
+      setError('Kaydedilemedi — tekrar dene.')
       setSaving(false)
     }
   }
@@ -82,13 +82,13 @@ export default function SessionCompleteOverlay({
       >
         {/* Header */}
         <div className="text-center">
-          <p className="text-[13px] font-medium tracking-[0.12em] text-dark-text-muted">SESSION COMPLETE</p>
+          <p className="text-[13px] font-medium tracking-[0.12em] text-dark-text-muted">OTURUM TAMAMLANDI</p>
           <p className="mt-3 tabular text-[48px] leading-none font-light tracking-[-0.02em] text-white">
-            {minutes} min focused
+            {minutes} dk odaklandın
           </p>
           {(session.subjectName || session.topicName) && (
             <p className="mt-3 text-base text-dark-text-secondary truncate">
-              {session.subjectName ?? 'Free session'}
+              {session.subjectName ?? 'Serbest oturum'}
               {session.topicName && <span className="text-dark-text-muted"> — {session.topicName}</span>}
             </p>
           )}
@@ -98,18 +98,18 @@ export default function SessionCompleteOverlay({
 
         {/* Recall */}
         <label htmlFor="session-recall" className="block text-base text-dark-text-secondary mb-2">
-          What did you learn?
+          Ne öğrendin?
         </label>
         <textarea
           id="session-recall"
           value={recallText}
           onChange={e => setRecallText(e.target.value)}
-          placeholder="Write a quick summary of what you studied…"
+          placeholder="Çalıştığın konuyu kısaca özetle…"
           className="w-full min-h-[100px] resize-none rounded-lg bg-dark-secondary border border-dark-border p-3 text-base text-dark-text placeholder:text-dark-text-muted focus:outline-none focus:border-accent transition-colors duration-[160ms]"
         />
 
         {/* Rating */}
-        <p className="mt-6 mb-3 text-base text-dark-text-secondary" id="session-rating-label">How focused were you?</p>
+        <p className="mt-6 mb-3 text-base text-dark-text-secondary" id="session-rating-label">Ne kadar odaklandın?</p>
         <div className="flex items-center gap-3" role="radiogroup" aria-labelledby="session-rating-label">
           {RATINGS.map((r, i) => (
             <button
@@ -149,7 +149,7 @@ export default function SessionCompleteOverlay({
               : 'bg-dark-secondary text-dark-text-muted cursor-not-allowed',
           )}
         >
-          {saving ? <><Loader2 className="size-4 animate-spin" /> Saving…</> : 'Save & Continue'}
+          {saving ? <><Loader2 className="size-4 animate-spin" /> Kaydediliyor…</> : 'Kaydet ve devam et'}
         </button>
       </motion.div>
 

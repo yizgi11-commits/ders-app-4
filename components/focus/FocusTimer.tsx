@@ -3,11 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Play, Pause, Square, CloudRain, Volume2, Library, VolumeX } from 'lucide-react'
+import { Play, Pause, Square } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
-  FOCUS_DURATION_OPTIONS, FOCUS_MODE_LABELS, AMBIENT_SOUND_LABELS,
-  type FocusDuration, type FocusMode, type AmbientSound,
+  FOCUS_DURATION_OPTIONS, type FocusDuration,
   type TimerStatus, type CompleteSessionResponse, type PersistedFocusState,
 } from '@/lib/pomodoro/types'
 import type { DailyTaskWithTemplate } from '@/lib/tasks/types'
@@ -16,10 +15,6 @@ import { useGamification } from '@/components/gamification/GamificationProvider'
 import SessionCompleteOverlay, { type OverlaySession } from './SessionCompleteOverlay'
 
 const STORAGE_KEY = 'noetic_focus'
-
-const AMBIENT_ICONS: Record<AmbientSound, typeof CloudRain> = {
-  rain: CloudRain, white_noise: Volume2, library: Library, none: VolumeX,
-}
 
 function pad(n: number) { return String(n).padStart(2, '0') }
 function fmt(s: number) { return `${pad(Math.floor(s / 60))}:${pad(s % 60)}` }
@@ -57,8 +52,6 @@ export default function FocusTimer() {
   const [timerStatus, setTimerStatus] = useState<TimerStatus>('idle')
   const [duration, setDuration]       = useState<FocusDuration>(25)
   const [customMinutes, setCustomMinutes] = useState(30)
-  const [mode, setMode]               = useState<FocusMode>('focus')
-  const [ambient, setAmbient]         = useState<AmbientSound>('none')
   const [secondsLeft, setSecondsLeft] = useState(25 * 60)
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
 
@@ -93,11 +86,11 @@ export default function FocusTimer() {
       timerStatus, secondsLeft, totalSeconds: totalSecondsRef.current,
       // Read from the ref: the tick interval keeps the `persist` from the
       // render it started in, where activeSessionId state is still null.
-      activeSessionId: activeIdRef.current, mode, duration, customMinutes,
+      activeSessionId: activeIdRef.current, duration, customMinutes,
       subjectId, subjectName, topicId, topicName,
-      linkedTaskId, ambientSound: ambient, savedAt: Date.now(), ...overrides,
+      linkedTaskId, savedAt: Date.now(), ...overrides,
     } satisfies PersistedFocusState))
-  }, [timerStatus, secondsLeft, mode, duration, customMinutes, subjectId, subjectName, topicId, topicName, linkedTaskId, ambient])
+  }, [timerStatus, secondsLeft, duration, customMinutes, subjectId, subjectName, topicId, topicName, linkedTaskId])
 
   // ── Resolve subject/topic: task param → URL params → last selection ──
   useEffect(() => {
@@ -159,10 +152,8 @@ export default function FocusTimer() {
             return
           }
 
-          setMode(s.mode ?? 'focus')
           setDuration(s.duration ?? 25)
           setCustomMinutes(s.customMinutes ?? 30)
-          setAmbient(s.ambientSound ?? 'none')
           setSubjectId(s.subjectId)
           setSubjectName(s.subjectName)
           setTopicId(s.topicId)
@@ -312,17 +303,6 @@ export default function FocusTimer() {
     }
   }
 
-  function changeMode(m: FocusMode) {
-    if (timerStatus !== 'idle') return
-    setMode(m)
-    persist({ mode: m })
-  }
-
-  function changeAmbient(a: AmbientSound) {
-    setAmbient(a)
-    persist({ ambientSound: a })
-  }
-
   function changeSubject(id: string | null) {
     setSubjectId(id)
     setTopicId(null)
@@ -355,27 +335,8 @@ export default function FocusTimer() {
   return (
     <>
       <div className="max-w-md mx-auto flex flex-col items-center">
-        {/* ── Mode ───────────────────────────────────────────── */}
-        <div className="inline-flex gap-0.5 rounded-md bg-dark-secondary p-1" role="tablist" aria-label="Mod">
-          {(Object.keys(FOCUS_MODE_LABELS) as FocusMode[]).map(m => (
-            <button
-              key={m}
-              role="tab"
-              aria-selected={mode === m}
-              onClick={() => changeMode(m)}
-              disabled={locked}
-              className={cn(
-                'px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-[160ms] disabled:cursor-not-allowed',
-                mode === m ? 'bg-dark-border text-white' : 'text-dark-text-muted hover:text-dark-text-secondary',
-              )}
-            >
-              {FOCUS_MODE_LABELS[m]}
-            </button>
-          ))}
-        </div>
-
         {/* ── Timer ──────────────────────────────────────────── */}
-        <div className="relative mt-10">
+        <div className="relative">
           <Ring progress={progress} />
           <div className="absolute inset-0 flex items-center justify-center">
             <span
@@ -392,7 +353,7 @@ export default function FocusTimer() {
 
         <div className="mt-5 text-center min-h-[42px] max-w-full">
           <p className="text-[16px] leading-6 font-medium text-dark-text-secondary truncate">
-            {subjectName ?? 'No subject selected'}
+            {subjectName ?? 'Ders seçilmedi'}
           </p>
           {topicName && <p className="text-base text-dark-text-muted truncate">{topicName}</p>}
         </div>
@@ -414,7 +375,7 @@ export default function FocusTimer() {
                     : 'text-dark-text-muted hover:text-dark-text-secondary disabled:hover:text-dark-text-muted',
                 )}
               >
-                {opt.value === 'custom' ? 'Custom' : opt.value}
+                {opt.value === 'custom' ? 'Özel' : opt.value}
               </button>
             </span>
           ))}
@@ -428,7 +389,7 @@ export default function FocusTimer() {
                 onChange={e => changeCustomMinutes(Math.max(5, Math.min(180, Number(e.target.value) || 5)))}
                 className="w-16 h-8 rounded-md bg-dark-secondary border border-dark-border px-2 text-sm tabular text-dark-text focus:outline-none focus:border-accent disabled:opacity-50"
               />
-              <span className="text-sm text-dark-text-muted">min</span>
+              <span className="text-sm text-dark-text-muted">dk</span>
             </span>
           )}
         </div>
@@ -444,7 +405,7 @@ export default function FocusTimer() {
                 onClick={handleStart}
                 className={cn(ghostBtn, 'px-6 bg-accent hover:bg-accent-dark text-white')}
               >
-                <Play className="size-4 fill-current" /> Start
+                <Play className="size-4 fill-current" /> Başlat
               </motion.button>
             )}
             {(isRunning || isPaused) && (
@@ -456,15 +417,15 @@ export default function FocusTimer() {
               >
                 {isRunning ? (
                   <button onClick={handlePause} className={cn(ghostBtn, 'border border-dark-border text-dark-text hover:bg-white/[0.06]')}>
-                    <Pause className="size-4" /> Pause
+                    <Pause className="size-4" /> Duraklat
                   </button>
                 ) : (
                   <button onClick={handleResume} className={cn(ghostBtn, 'bg-accent hover:bg-accent-dark text-white')}>
-                    <Play className="size-4 fill-current" /> Resume
+                    <Play className="size-4 fill-current" /> Devam et
                   </button>
                 )}
                 <button onClick={handleFinish} className={cn(ghostBtn, 'text-dark-text-secondary hover:text-danger hover:bg-white/[0.04]')}>
-                  <Square className="size-3.5" /> Finish
+                  <Square className="size-3.5" /> Bitir
                 </button>
               </motion.div>
             )}
@@ -480,7 +441,7 @@ export default function FocusTimer() {
             aria-label="Ders"
             className={selectClass}
           >
-            <option value="">— Subject</option>
+            <option value="">— Ders</option>
             {subjects.map(s => (
               <option key={s.id} value={s.id}>{s.icon} {s.name}</option>
             ))}
@@ -492,7 +453,7 @@ export default function FocusTimer() {
             aria-label="Konu"
             className={selectClass}
           >
-            <option value="">— Topic</option>
+            <option value="">— Konu</option>
             {(currentSubject?.topics ?? []).map(t => (
               <option key={t.id} value={t.id}>{t.title}</option>
             ))}
@@ -505,7 +466,7 @@ export default function FocusTimer() {
               aria-label="Görev bağla (isteğe bağlı)"
               className={cn(selectClass, 'col-span-2')}
             >
-              <option value="">— Link a task (optional)</option>
+              <option value="">— Görev bağla (isteğe bağlı)</option>
               {tasks.map(t => (
                 <option key={t.id} value={t.id}>
                   {t.task_templates.subject} — {t.task_templates.title}
@@ -513,27 +474,6 @@ export default function FocusTimer() {
               ))}
             </select>
           )}
-        </div>
-
-        {/* ── Ambient sound ──────────────────────────────────── */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2" aria-label="Ortam sesi">
-          {(Object.keys(AMBIENT_SOUND_LABELS) as AmbientSound[]).map(a => {
-            const Icon = AMBIENT_ICONS[a]
-            return (
-              <button
-                key={a}
-                onClick={() => changeAmbient(a)}
-                aria-pressed={ambient === a}
-                className={cn(
-                  'flex items-center gap-1.5 text-xs font-medium transition-colors duration-[160ms]',
-                  ambient === a ? 'text-dark-text' : 'text-dark-text-muted hover:text-dark-text-secondary',
-                )}
-              >
-                <Icon className="size-3.5" />
-                {AMBIENT_SOUND_LABELS[a]}
-              </button>
-            )
-          })}
         </div>
       </div>
 

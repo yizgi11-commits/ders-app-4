@@ -67,7 +67,7 @@ export default function TaskForm({ onCreated }: Props) {
           aria-label="Ders"
           className={fieldClass}
         >
-          <option value="">— Select subject</option>
+          <option value="">— Ders seç</option>
           {subjects.map(s => (
             <option key={s.id} value={s.id}>{s.icon} {s.name}</option>
           ))}
@@ -77,7 +77,7 @@ export default function TaskForm({ onCreated }: Props) {
           <input
             value={topicText}
             onChange={e => setTopicText(e.target.value)}
-            placeholder="Topic name…"
+            placeholder="Konu adı…"
             aria-label="Konu"
             className={fieldClass}
           />
@@ -89,7 +89,7 @@ export default function TaskForm({ onCreated }: Props) {
             aria-label="Konu"
             className={fieldClass}
           >
-            <option value="">— No specific topic</option>
+            <option value="">— Belirli bir konu yok</option>
             {(currentSubject?.topics ?? []).map(t => (
               <option key={t.id} value={t.id}>{t.title}</option>
             ))}
@@ -107,7 +107,7 @@ export default function TaskForm({ onCreated }: Props) {
 
       <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
         <div className="flex items-center gap-2.5" role="group" aria-label="Süre">
-          <span className="text-xs text-text-muted">Duration</span>
+          <span className="text-xs text-text-muted">Süre</span>
           {DURATION_OPTIONS.map(d => (
             <button key={d} type="button" onClick={() => setDuration(d)} aria-pressed={duration === d}
               className={cn('tabular', optionClass(duration === d))}
@@ -115,11 +115,11 @@ export default function TaskForm({ onCreated }: Props) {
               {d}
             </button>
           ))}
-          <span className="text-xs text-text-muted">min</span>
+          <span className="text-xs text-text-muted">dk</span>
         </div>
 
         <div className="flex items-center gap-3" role="group" aria-label="Öncelik">
-          <span className="text-xs text-text-muted">Priority</span>
+          <span className="text-xs text-text-muted">Öncelik</span>
           {(Object.keys(TASK_PRIORITY_CONFIG) as TaskPriority[]).map(p => (
             <button key={p} type="button" onClick={() => setPriority(p)} aria-pressed={priority === p}
               className={cn('inline-flex items-center gap-1.5', optionClass(priority === p))}
@@ -135,12 +135,12 @@ export default function TaskForm({ onCreated }: Props) {
           onClick={() => setUseFreeText(v => !v)}
           className="text-xs text-text-muted hover:text-text-secondary transition-colors duration-[160ms]"
         >
-          {useFreeText ? 'Pick topic from list' : 'Type topic instead'}
+          {useFreeText ? 'Konuyu listeden seç' : 'Konuyu elle yaz'}
         </button>
 
         <button onClick={handleSubmit} disabled={!subjectId || saving} className={cn(primaryButtonClass, 'ml-auto h-8 px-3')}>
           {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
-          Add task
+          Görev ekle
         </button>
       </div>
     </div>

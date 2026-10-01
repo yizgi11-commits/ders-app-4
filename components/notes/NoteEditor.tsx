@@ -365,7 +365,7 @@ export default function NoteEditor({ note, onUpdate, onDelete, onBack }: Props) 
           )}
         >
           <Tag className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Meta</span>
+          <span className="hidden sm:inline">Bilgi</span>
         </button>
 
         {/* Delete */}

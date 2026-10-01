@@ -88,7 +88,7 @@ export default function RecallSession({ cards, onClose, onFinished }: Props) {
         <Lock className="size-5 text-text-muted mx-auto" />
         <h2 className="mt-4 text-xl font-semibold text-text">Bugünkü Recall limitine ulaştın</h2>
         <p className="mt-2 text-base text-text-secondary">
-          <span className="tabular">{reviewed}</span> kart tamamladın. Free planda günde 20 kart — Pro ile sınırsız.
+          <span className="tabular">{reviewed}</span> kart tamamladın. Ücretsiz planda günde 20 kart — Pro ile sınırsız.
         </p>
         <div className="mt-8 flex items-center justify-center gap-3">
           <button
@@ -101,7 +101,7 @@ export default function RecallSession({ cards, onClose, onFinished }: Props) {
             href="/dashboard/upgrade"
             className="inline-flex items-center h-10 px-5 rounded-md bg-accent hover:bg-accent-dark text-white text-base font-medium transition-colors duration-[160ms]"
           >
-            Upgrade
+            Yükselt
           </Link>
         </div>
       </div>
@@ -114,7 +114,7 @@ export default function RecallSession({ cards, onClose, onFinished }: Props) {
     const rate = total > 0 ? Math.round((remembered / total) * 100) : 0
     return (
       <div className="max-w-[560px] mx-auto pt-16 text-center">
-        <p className="text-[13px] font-medium tracking-[0.12em] text-text-muted">SESSION COMPLETE</p>
+        <p className="text-[13px] font-medium tracking-[0.12em] text-text-muted">OTURUM TAMAMLANDI</p>
         <h2 className="mt-2 text-2xl font-semibold text-text">
           <span className="tabular">{total}</span> kart · <span className="tabular">%{rate}</span> hatırlandı
         </h2>
@@ -202,7 +202,7 @@ export default function RecallSession({ cards, onClose, onFinished }: Props) {
               onClick={() => setRevealed(true)}
               className="h-10 px-6 rounded-md border border-border text-base font-medium text-text hover:bg-surface-subtle transition-colors duration-[160ms]"
             >
-              Show Answer
+              Cevabı göster
             </button>
             <p className="text-xs text-text-muted">Önce hatırlamayı dene — sonra cevabı aç.</p>
           </div>

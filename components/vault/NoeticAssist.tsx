@@ -98,7 +98,7 @@ export default function NoeticAssist({ source, id, title, onClose, onFlashcardsS
             <Lock className="w-4 h-4 text-text-muted" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-text">Özetle · Açıkla · Flashcard · Quiz</p>
+            <p className="text-xs font-bold text-text">Özetle · Açıkla · Kart · Test</p>
             <p className="text-[11px] text-accent font-semibold">Pro’da açılır — yükseltmek için dokun</p>
           </div>
         </Link>
@@ -150,7 +150,7 @@ export default function NoeticAssist({ source, id, title, onClose, onFlashcardsS
         )}
 
         {results.flashcards && (
-          <Section title="Flashcardlar">
+          <Section title="Kartlar">
             <p className="flex items-center gap-1.5 text-[11px] font-semibold text-success mb-2">
               <Check className="w-3 h-3" />
               {results.flashcards.saved} kart Vault&apos;a kaydedildi
@@ -167,7 +167,7 @@ export default function NoeticAssist({ source, id, title, onClose, onFlashcardsS
         )}
 
         {results.quiz && (
-          <Section title="Quiz">
+          <Section title="Test">
             <div className="space-y-4">
               {results.quiz.questions.map((q, i) => <QuizItem key={i} q={q} index={i} />)}
             </div>

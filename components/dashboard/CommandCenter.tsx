@@ -21,9 +21,9 @@ import {
 import type { LearningScoreResponse } from '@/lib/dashboard/learning-score'
 
 function greetingFor(hour: number) {
-  if (hour >= 6 && hour < 12) return 'Good morning'
-  if (hour >= 12 && hour < 18) return 'Good afternoon'
-  return 'Good evening'
+  if (hour >= 6 && hour < 12) return 'Günaydın'
+  if (hour >= 12 && hour < 18) return 'İyi günler'
+  return 'İyi akşamlar'
 }
 
 interface ReviewHint { topicTitle: string | null; estimatedMinutes: number }
@@ -61,12 +61,10 @@ const EMPTY_STREAK: UserStreak = {
 }
 
 // ── Presentation helpers ──────────────────
-const plural = (n: number, one: string, many: string) => (n === 1 ? one : many)
-
 function relativeDays(days: number): string {
-  if (days <= 0) return 'Today'
-  if (days === 1) return 'Tomorrow'
-  return `${days} days`
+  if (days <= 0) return 'Bugün'
+  if (days === 1) return 'Yarın'
+  return `${days} gün`
 }
 
 /**
@@ -86,23 +84,23 @@ function nextActionDisplay(
     case 'review': {
       const minutes = ctx.reviewHint?.estimatedMinutes ?? 10
       return {
-        title: ctx.reviewHint?.topicTitle ? `Review ${ctx.reviewHint.topicTitle}` : 'Review your cards',
-        meta:  `Recall · ${ctx.reviewsDue} ${plural(ctx.reviewsDue, 'card', 'cards')} · ~${minutes} min`,
+        title: ctx.reviewHint?.topicTitle ? `${ctx.reviewHint.topicTitle} tekrarı` : 'Kartlarını tekrar et',
+        meta:  `Recall · ${ctx.reviewsDue} kart · ~${minutes} dk`,
       }
     }
     case 'exam':
       return {
-        title: `Prepare for ${ctx.nearestExam?.name ?? 'your exam'}`,
-        meta:  `Exam · ${relativeDays(ctx.nearestExam?.daysAway ?? 0)}`,
+        title: `${ctx.nearestExam?.name ?? 'Sınavın'} için hazırlan`,
+        meta:  `Sınav · ${relativeDays(ctx.nearestExam?.daysAway ?? 0)}`,
       }
     case 'task':
       return ctx.task
-        ? { title: ctx.task.title, meta: `${ctx.task.subject} · ${ctx.task.minutes} min` }
+        ? { title: ctx.task.title, meta: `${ctx.task.subject} · ${ctx.task.minutes} dk` }
         : { title: action.text, meta: '' }
     case 'focus':
-      return { title: 'Start a focus session', meta: 'Nothing studied yet today' }
+      return { title: 'Bir Focus oturumu başlat', meta: 'Bugün henüz çalışmadın' }
     case 'plan':
-      return { title: 'Plan tomorrow', meta: 'Today’s work is done' }
+      return { title: 'Yarını planla', meta: 'Bugünün işleri tamam' }
   }
 }
 
@@ -261,7 +259,7 @@ export default function CommandCenter() {
   const total   = todayTasks.length
   const now     = new Date()
   const hour    = now.getHours()
-  const firstName = displayName.split(' ')[0] || 'Student'
+  const firstName = displayName.split(' ')[0] || 'Öğrenci'
   const today   = now.toISOString().split('T')[0]
 
   const plannedMinutes = todayTasks.reduce((sum, t) => sum + t.minutes, 0)
@@ -304,7 +302,7 @@ export default function CommandCenter() {
     .slice(0, 3)
   const hasUpcoming = exams.length > 0 || upcomingCards.length > 0
 
-  const dateLabel = `${now.toLocaleDateString('en-GB', { weekday: 'long' })}, ${now.getDate()} ${now.toLocaleDateString('en-GB', { month: 'long' })}`
+  const dateLabel = `${now.getDate()} ${now.toLocaleDateString('tr-TR', { month: 'long' })} ${now.toLocaleDateString('tr-TR', { weekday: 'long' })}`
 
   return (
     <motion.div {...fadeIn} className="max-w-3xl mx-auto">
@@ -314,14 +312,14 @@ export default function CommandCenter() {
           {greetingFor(hour)}, {firstName}.
         </h1>
         <p className="text-base text-text-secondary mt-1">
-          {dateLabel} · Here&apos;s what matters today.
+          {dateLabel} · Bugün önemli olanlar burada.
         </p>
       </div>
 
       {/* 2. NEXT ACTION */}
       <div className="flex items-center justify-between gap-4 rounded-lg bg-accent-soft border border-[rgba(49,92,255,0.15)] border-l-[3px] border-l-accent px-5 py-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium tracking-[0.08em] text-accent">NEXT ACTION</p>
+          <p className="text-[11px] font-medium tracking-[0.08em] text-accent">SIRADAKİ ADIM</p>
           <p className="text-[16px] leading-6 font-semibold text-text truncate mt-1">{action.title}</p>
           {action.meta && <p className="text-sm text-text-secondary truncate">{action.meta}</p>}
         </div>
@@ -329,20 +327,20 @@ export default function CommandCenter() {
           href={nextAction.href}
           className="shrink-0 inline-flex items-center gap-1.5 bg-accent hover:bg-accent-dark text-white rounded-md px-4 py-2 text-base font-medium transition-colors duration-[160ms]"
         >
-          Start <ArrowRight className="size-3.5" />
+          Başla <ArrowRight className="size-3.5" />
         </Link>
       </div>
 
       {/* 3. TODAY STATS — one line, no cards */}
       <p className="my-5 text-base text-text-secondary flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <span><span className="tabular text-text">{total}</span> {plural(total, 'task', 'tasks')}</span>
+        <span><span className="tabular text-text">{total}</span> görev</span>
         <span aria-hidden>·</span>
-        <span><span className="tabular text-text">{plannedMinutes}</span> min</span>
+        <span><span className="tabular text-text">{plannedMinutes}</span> dk</span>
         <span aria-hidden>·</span>
-        <span><span className="tabular text-text">{reviewsDueToday}</span> {plural(reviewsDueToday, 'review', 'reviews')}</span>
+        <span><span className="tabular text-text">{reviewsDueToday}</span> tekrar</span>
         <span aria-hidden>·</span>
         <span>
-          Learning Score: <span className="tabular text-text">{learningScore.score}</span>
+          Öğrenme Puanı: <span className="tabular text-text">{learningScore.score}</span>
           {learningScore.change !== 0 && (
             <span className={cn('tabular text-sm ml-1', learningScore.change > 0 ? 'text-success' : 'text-danger')}>
               {learningScore.change > 0 ? '+' : ''}{learningScore.change}
@@ -354,7 +352,7 @@ export default function CommandCenter() {
       {/* 4. TODAY'S PLAN — rows with dividers, no card wrapper */}
       <section className="mt-8">
         <div className="flex items-center justify-between pb-2 border-b border-border">
-          <SectionLabel>TODAY&apos;S PLAN</SectionLabel>
+          <SectionLabel>BUGÜNÜN PLANI</SectionLabel>
           <span className="tabular text-sm text-text-secondary">{done} / {total}</span>
         </div>
 
@@ -400,7 +398,7 @@ export default function CommandCenter() {
                       {task.subject}
                     </span>
                   )}
-                  <span className="tabular text-sm text-text-muted shrink-0">{task.minutes} min</span>
+                  <span className="tabular text-sm text-text-muted shrink-0">{task.minutes} dk</span>
                 </button>
               </li>
             )
@@ -409,7 +407,7 @@ export default function CommandCenter() {
 
         {todayTasks.length === 0 && (
           <p className="text-sm text-text-muted py-4 border-b border-border">
-            No tasks yet — they&apos;ll appear here automatically.
+            Henüz görev yok — burada otomatik olarak görünecek.
           </p>
         )}
 
@@ -417,7 +415,7 @@ export default function CommandCenter() {
           href="/dashboard/planner"
           className="inline-flex items-center gap-1.5 mt-3 text-sm font-medium text-text-secondary hover:text-accent transition-colors duration-[160ms]"
         >
-          <Plus className="size-3.5" /> Add task
+          <Plus className="size-3.5" /> Görev ekle
         </Link>
       </section>
 
@@ -425,7 +423,7 @@ export default function CommandCenter() {
       {continueLearning && (
         <section className="mt-8 flex items-center justify-between gap-4 py-4 border-y border-border">
           <div className="min-w-0">
-            <p className="text-sm text-text-secondary">Continue where you left off</p>
+            <p className="text-sm text-text-secondary">Kaldığın yerden devam et</p>
             <div className="flex items-center gap-3 mt-1 min-w-0">
               <p className="text-base font-medium text-text truncate">
                 {continueLearning.subjectIcon} {continueLearning.subjectName}
@@ -438,7 +436,7 @@ export default function CommandCenter() {
                   style={{ width: `${continueLearning.progressPct}%` }}
                 />
               </div>
-              <span className="tabular text-sm text-text-muted shrink-0">{continueLearning.progressPct}%</span>
+              <span className="tabular text-sm text-text-muted shrink-0">%{continueLearning.progressPct}</span>
             </div>
             <p className="text-sm text-text-muted mt-0.5">{continueLearning.lastStudiedLabel}</p>
           </div>
@@ -446,7 +444,7 @@ export default function CommandCenter() {
             href={`/dashboard/focus?subjectId=${continueLearning.subjectId}&topicId=${continueLearning.topicId}`}
             className="shrink-0 text-base font-medium text-accent hover:text-accent-dark transition-colors duration-[160ms]"
           >
-            Continue →
+            Devam et →
           </Link>
         </section>
       )}
@@ -454,12 +452,12 @@ export default function CommandCenter() {
       {/* 6. LEARNING STREAK */}
       <section className={cn('py-4 border-b border-border', !continueLearning && 'mt-8 border-t')}>
         <p className="text-base font-medium text-text">
-          🔥 <span className="tabular">{streak.current_streak}</span> {plural(streak.current_streak, 'day', 'days')} streak
+          🔥 <span className="tabular">{streak.current_streak}</span> günlük seri
         </p>
         <p className="text-sm text-text-secondary mt-0.5">
-          <span className="tabular">{monthH}</span>h <span className="tabular">{monthM}</span>m this month
-          {' · '}<span className="tabular">{monthly.topicsReviewed}</span> topics reviewed
-          {' · '}<span className="tabular">{monthly.reviewConsistencyPct}%</span> consistency
+          Bu ay <span className="tabular">{monthH}</span> sa <span className="tabular">{monthM}</span> dk
+          {' · '}<span className="tabular">{monthly.topicsReviewed}</span> konu tekrar edildi
+          {' · '}<span className="tabular">%{monthly.reviewConsistencyPct}</span> süreklilik
         </p>
       </section>
 
@@ -471,7 +469,7 @@ export default function CommandCenter() {
         >
           <span className="flex items-center gap-2 text-base font-medium text-text">
             <Sparkles className="size-4 text-accent" />
-            Your weekly review is ready
+            Haftalık değerlendirmen hazır
           </span>
           <ArrowRight className="size-4 text-text-muted group-hover:text-accent transition-colors duration-[160ms]" />
         </Link>
@@ -481,12 +479,12 @@ export default function CommandCenter() {
       {hasUpcoming && (
         <section className="mt-8">
           <div className="pb-2 border-b border-border">
-            <SectionLabel>UPCOMING</SectionLabel>
+            <SectionLabel>YAKLAŞANLAR</SectionLabel>
           </div>
           <ul>
             {exams.map(exam => {
               const days = daysUntil(exam.exam_date)
-              const date = new Date(exam.exam_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              const date = new Date(exam.exam_date + 'T00:00:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
               return (
                 <li key={exam.id} className="flex items-center justify-between gap-3 h-11 border-b border-border">
                   <span className="text-base text-text truncate">{exam.name}</span>
@@ -501,10 +499,10 @@ export default function CommandCenter() {
               return (
                 <li key={card.id} className="flex items-center justify-between gap-3 h-11 border-b border-border">
                   <span className="text-base text-text truncate">
-                    <span className="text-text-secondary">Review:</span> {card.front}
+                    <span className="text-text-secondary">Tekrar:</span> {card.front}
                   </span>
                   <span className={cn('tabular-nums text-sm shrink-0', due ? 'text-warning' : 'text-text-secondary')}>
-                    {due ? 'Due now' : relativeDays(daysUntil(card.next_review_date))}
+                    {due ? 'Şimdi' : relativeDays(daysUntil(card.next_review_date))}
                   </span>
                 </li>
               )

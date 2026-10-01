@@ -9,7 +9,7 @@ import { TASK_PRIORITY_CONFIG, type Exam, type PlannerTask } from '@/lib/planner
 import { PRIORITY_DOT, primaryButtonClass } from './ui'
 import { addDays, todayStr } from './week'
 
-const DAY_LABELS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+const DAY_LABELS = ['PZT', 'SAL', 'ÇAR', 'PER', 'CUM', 'CMT', 'PAZ']
 
 export default function WeeklyCalendar({ weekStart }: { weekStart: string }) {
   const today = todayStr()
@@ -89,7 +89,7 @@ export default function WeeklyCalendar({ weekStart }: { weekStart: string }) {
                         : 'border-l-accent bg-surface-subtle text-text hover:bg-accent-soft',
                     )}
                   >
-                    {task.topics?.title ?? task.topic_text ?? task.subjects?.name ?? 'Task'}
+                    {task.topics?.title ?? task.topic_text ?? task.subjects?.name ?? 'Görev'}
                   </button>
                 ))}
               </div>
@@ -127,19 +127,19 @@ export default function WeeklyCalendar({ weekStart }: { weekStart: string }) {
               </div>
 
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-secondary mb-4">
-                <span className="tabular">{selected.duration_minutes} min</span>
+                <span className="tabular">{selected.duration_minutes} dk</span>
                 {selected.priority && (
                   <span className="inline-flex items-center gap-1.5">
                     <span className={cn('size-1.5 rounded-full', PRIORITY_DOT[selected.priority])} />
                     {TASK_PRIORITY_CONFIG[selected.priority].label}
                   </span>
                 )}
-                <span>{new Date(selected.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                <span>{new Date(selected.date + 'T00:00:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', weekday: 'short' })}</span>
               </div>
 
               {!selected.completed && (
                 <Link href={`/dashboard/focus?task=${selected.id}`} className={cn(primaryButtonClass, 'w-full')}>
-                  <Timer className="size-4" /> Start Focus
+                  <Timer className="size-4" /> Focus’u başlat
                 </Link>
               )}
             </motion.div>

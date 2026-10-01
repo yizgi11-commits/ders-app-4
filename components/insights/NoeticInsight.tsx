@@ -51,7 +51,7 @@ export default function NoeticInsight({ tier }: { tier: SubscriptionTier }) {
       className="rounded-lg border border-border bg-surface-subtle p-6"
     >
       <div className="flex items-baseline gap-3 mb-4">
-        <SectionLabel>NOETIC INSIGHT</SectionLabel>
+        <SectionLabel>NOETIC YORUMU</SectionLabel>
         {data?.fallback && <span className="text-xs text-text-muted">otomatik özet</span>}
         {data?.rate_limited && <span className="text-xs text-warning">günlük limit doldu</span>}
       </div>

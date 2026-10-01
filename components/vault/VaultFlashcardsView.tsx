@@ -88,7 +88,7 @@ export default function VaultFlashcardsView({ search, savedOnly = false, refresh
       {filtered.length === 0 ? (
         <div className="flex items-center justify-between gap-4 py-4 border-y border-border">
           <p className="text-sm text-text-muted">
-            {q ? 'Eşleşen kart yok.' : savedOnly ? 'Kaydedilmiş kart yok.' : 'Henüz flashcard yok.'}
+            {q ? 'Eşleşen kart yok.' : savedOnly ? 'Kaydedilmiş kart yok.' : 'Henüz kart yok.'}
           </p>
           {!savedOnly && (
             <button onClick={() => { setEditCard(null); setShowCreate(true) }} className={textBtn}>

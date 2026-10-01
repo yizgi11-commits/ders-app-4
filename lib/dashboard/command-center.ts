@@ -42,7 +42,7 @@ export function mergeTodayTasks(
 
   const fromPlanner: TodayTask[] = plannerTasks.map(t => ({
     id:        t.id,
-    title:     t.topics?.title ?? t.topic_text ?? t.subjects?.name ?? 'Planned task',
+    title:     t.topics?.title ?? t.topic_text ?? t.subjects?.name ?? 'Planlı görev',
     subject:   t.subjects?.name ?? 'Görev',
     completed: t.completed,
     source:    'planner',
@@ -81,28 +81,28 @@ export function computeNextAction({
   reviewsDue, reviewHint, nearestExam, firstIncompleteTask, todayMinutes,
 }: NextActionInput): NextAction {
   if (reviewsDue > 0) {
-    const subject = reviewHint?.topicTitle ? `Review ${reviewHint.topicTitle}` : 'Review your cards'
+    const subject = reviewHint?.topicTitle ? `${reviewHint.topicTitle} tekrarı` : 'Kartlarını tekrar et'
     const minutes = reviewHint?.estimatedMinutes ?? 10
-    return { kind: 'review', text: `${subject} — ~${minutes} min`, href: '/dashboard/recall' }
+    return { kind: 'review', text: `${subject} — ~${minutes} dk`, href: '/dashboard/recall' }
   }
 
   if (nearestExam && nearestExam.daysAway >= 0 && nearestExam.daysAway < 3) {
-    return { kind: 'exam', text: `Prepare for ${nearestExam.name}`, href: '/dashboard/planner' }
+    return { kind: 'exam', text: `${nearestExam.name} için hazırlan`, href: '/dashboard/planner' }
   }
 
   if (firstIncompleteTask) {
     return {
       kind: 'task',
-      text: `Continue ${firstIncompleteTask.subject} — ${firstIncompleteTask.title}`,
+      text: `${firstIncompleteTask.subject} — ${firstIncompleteTask.title}`,
       href: `/dashboard/focus?task=${firstIncompleteTask.id}`,
     }
   }
 
   if (todayMinutes === 0) {
-    return { kind: 'focus', text: 'Start Focus Session', href: '/dashboard/focus' }
+    return { kind: 'focus', text: 'Focus oturumu başlat', href: '/dashboard/focus' }
   }
 
-  return { kind: 'plan', text: 'Plan Tomorrow', href: '/dashboard/planner' }
+  return { kind: 'plan', text: 'Yarını planla', href: '/dashboard/planner' }
 }
 
 /** Review > Focus — used by "Start Today's Session". */

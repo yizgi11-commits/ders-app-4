@@ -15,14 +15,14 @@ export default function JourneyClient({ data }: { data: JourneyResponse }) {
       <section>
         <div className="flex items-end justify-between gap-4">
           <div>
-            <SectionLabel>LEVEL</SectionLabel>
+            <SectionLabel>SEVİYE</SectionLabel>
             <p className="mt-1 text-2xl font-semibold text-text">
-              Level <span className="tabular">{data.xp.level}</span>
+              Seviye <span className="tabular">{data.xp.level}</span>
             </p>
           </div>
           <div className="text-right">
             <p className="text-base font-medium text-text">
-              🔥 <span className="tabular">{data.streak.current}</span> {data.streak.current === 1 ? 'day' : 'days'}
+              🔥 <span className="tabular">{data.streak.current}</span> gün
             </p>
             <p className="text-xs text-text-muted mt-0.5">
               Rekor: <span className="tabular">{data.streak.longest}</span> gün
@@ -45,17 +45,17 @@ export default function JourneyClient({ data }: { data: JourneyResponse }) {
       </section>
 
       <section>
-        <SectionLabel className="mb-3">CALENDAR</SectionLabel>
+        <SectionLabel className="mb-3">TAKVİM</SectionLabel>
         <JourneyCalendar days={data.days} />
       </section>
 
       <section>
-        <SectionLabel className="mb-4">TIMELINE</SectionLabel>
+        <SectionLabel className="mb-4">ZAMAN ÇİZELGESİ</SectionLabel>
         <JourneyTimeline days={data.days} unlocked={data.unlocked} />
       </section>
 
       <section>
-        <SectionLabel className="mb-3">MILESTONES</SectionLabel>
+        <SectionLabel className="mb-3">KİLOMETRE TAŞLARI</SectionLabel>
         <JourneyMilestones unlocked={data.unlocked} />
       </section>
     </div>

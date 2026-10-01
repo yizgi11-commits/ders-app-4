@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
   const { allowed, limit, tier } = await checkLimit(supabase, user.id, 'vaultNotes')
   if (!allowed) {
     return NextResponse.json(
-      { error: `Free planda en fazla ${limit} not oluşturabilirsin. Pro ile sınırsız olur.`, locked: true },
+      { error: `Ücretsiz planda en fazla ${limit} not oluşturabilirsin. Pro ile sınırsız olur.`, locked: true },
       { status: 403 },
     )
   }
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
   if (await isOverCapAfterInsert(supabase, user.id, tier, 'vaultNotes')) {
     await supabase.from('notes').delete().eq('id', data.id).eq('user_id', user.id)
     return NextResponse.json(
-      { error: `Free planda en fazla ${limit} not oluşturabilirsin. Pro ile sınırsız olur.`, locked: true },
+      { error: `Ücretsiz planda en fazla ${limit} not oluşturabilirsin. Pro ile sınırsız olur.`, locked: true },
       { status: 403 },
     )
   }

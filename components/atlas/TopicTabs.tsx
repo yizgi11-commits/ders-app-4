@@ -16,10 +16,10 @@ import { SESSION_RATING_LABELS } from '@/lib/pomodoro/types'
 type Tab = 'learn' | 'practice' | 'history' | 'notes'
 
 const TABS: { id: Tab; label: string; icon: typeof BookOpen }[] = [
-  { id: 'learn',    label: 'Learn',    icon: BookOpen },
-  { id: 'practice', label: 'Practice', icon: Brain },
-  { id: 'history',  label: 'History',  icon: HistoryIcon },
-  { id: 'notes',    label: 'Notes',    icon: StickyNote },
+  { id: 'learn',    label: 'Öğren',    icon: BookOpen },
+  { id: 'practice', label: 'Pratik',   icon: Brain },
+  { id: 'history',  label: 'Geçmiş',   icon: HistoryIcon },
+  { id: 'notes',    label: 'Notlar',   icon: StickyNote },
 ]
 
 const RATING_DOT: Record<SessionRating, string> = {
@@ -27,12 +27,12 @@ const RATING_DOT: Record<SessionRating, string> = {
 }
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return new Date(iso).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
 }
 
 function fmtDuration(seconds: number) {
   const mins = Math.max(1, Math.round(seconds / 60))
-  return `${mins} min`
+  return `${mins} dk`
 }
 
 interface Props {
@@ -112,8 +112,8 @@ function LearnTab({ notes }: { notes: Note[] }) {
     return (
       <div className="text-center py-14 bg-surface border border-dashed border-border rounded-2xl">
         <p className="text-3xl mb-3">📖</p>
-        <p className="text-sm text-muted-foreground">No Vault notes for this topic yet.</p>
-        <p className="text-xs text-muted-foreground/70 mt-1">Add one from the Notes tab.</p>
+        <p className="text-sm text-muted-foreground">Bu konu için henüz Vault notu yok.</p>
+        <p className="text-xs text-muted-foreground/70 mt-1">Notlar sekmesinden ekleyebilirsin.</p>
       </div>
     )
   }
@@ -128,12 +128,12 @@ function LearnTab({ notes }: { notes: Note[] }) {
               href="/dashboard/vault"
               className="flex items-center gap-1 text-[11px] font-medium text-accent hover:text-accent shrink-0"
             >
-              Open <ExternalLink className="w-3 h-3" />
+              Aç <ExternalLink className="w-3 h-3" />
             </Link>
           </div>
           <p className="text-xs text-muted-foreground mt-1.5 line-clamp-3 leading-relaxed">{note.content_preview}</p>
           <p className="text-[10px] text-muted-foreground/60 mt-2">
-            {new Date(note.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            {new Date(note.updated_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
           </p>
         </div>
       ))}
@@ -190,12 +190,12 @@ function PracticeTab({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">{flashcards.length} recall card{flashcards.length !== 1 ? 's' : ''}</p>
+        <p className="text-xs text-muted-foreground">{flashcards.length} Recall kartı</p>
         <button
           onClick={() => setShowAdd(v => !v)}
           className="flex items-center gap-1.5 text-xs font-semibold text-accent hover:text-accent transition-colors"
         >
-          <Plus className="w-3.5 h-3.5" /> Add Card
+          <Plus className="w-3.5 h-3.5" /> Kart ekle
         </button>
       </div>
 
@@ -205,12 +205,12 @@ function PracticeTab({
             <div className="bg-surface border border-border rounded-2xl p-4 shadow-sm space-y-2">
               <input
                 value={front} onChange={e => setFront(e.target.value)}
-                placeholder="Front (question)"
+                placeholder="Ön yüz (soru)"
                 className="w-full text-sm bg-surface-subtle/50 border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30"
               />
               <input
                 value={back} onChange={e => setBack(e.target.value)}
-                placeholder="Back (answer)"
+                placeholder="Arka yüz (cevap)"
                 className="w-full text-sm bg-surface-subtle/50 border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30"
               />
               <div className="flex gap-2">
@@ -220,10 +220,10 @@ function PracticeTab({
                   className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent-dark text-white text-xs font-semibold rounded-xl transition-colors disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                  Save
+                  Kaydet
                 </button>
                 <button onClick={() => setShowAdd(false)} className="px-3 py-2 bg-surface-subtle hover:bg-surface-subtle text-muted-foreground text-xs rounded-xl transition-colors">
-                  Cancel
+                  Vazgeç
                 </button>
               </div>
             </div>
@@ -234,7 +234,7 @@ function PracticeTab({
       {flashcards.length === 0 ? (
         <div className="text-center py-14 bg-surface border border-dashed border-border rounded-2xl">
           <p className="text-3xl mb-3">🧠</p>
-          <p className="text-sm text-muted-foreground">No Recall cards for this topic yet.</p>
+          <p className="text-sm text-muted-foreground">Bu konu için henüz Recall kartı yok.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -248,28 +248,28 @@ function PracticeTab({
                   className="text-left"
                 >
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    {flipped ? 'Back' : 'Front'}
+                    {flipped ? 'Cevap' : 'Soru'}
                   </p>
                   <p className="text-sm font-medium text-text min-h-[2.5rem]">
                     {flipped ? card.back : card.front}
                   </p>
                 </button>
                 <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/60">
-                  <span className="text-[10px] text-muted-foreground">{card.review_count} review{card.review_count !== 1 ? 's' : ''}</span>
+                  <span className="text-[10px] text-muted-foreground">{card.review_count} tekrar</span>
                   <div className="flex gap-1.5">
                     <button
                       onClick={() => handleReview(card.id, 'again')}
                       disabled={busy}
                       className="flex items-center gap-1 px-2.5 py-1.5 bg-danger-soft hover:bg-danger-soft text-danger text-[11px] font-semibold rounded-lg transition-colors disabled:opacity-50"
                     >
-                      <ThumbsDown className="w-3 h-3" /> Again
+                      <ThumbsDown className="w-3 h-3" /> Tekrar
                     </button>
                     <button
                       onClick={() => handleReview(card.id, 'know')}
                       disabled={busy}
                       className="flex items-center gap-1 px-2.5 py-1.5 bg-success-soft hover:bg-success-soft text-success text-[11px] font-semibold rounded-lg transition-colors disabled:opacity-50"
                     >
-                      <ThumbsUp className="w-3 h-3" /> Know
+                      <ThumbsUp className="w-3 h-3" /> Biliyorum
                     </button>
                   </div>
                 </div>
@@ -288,7 +288,7 @@ function HistoryTab({ sessions }: { sessions: PomodoroSession[] }) {
     return (
       <div className="text-center py-14 bg-surface border border-dashed border-border rounded-2xl">
         <Flame className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
-        <p className="text-sm text-muted-foreground">No Focus sessions for this topic yet.</p>
+        <p className="text-sm text-muted-foreground">Bu konu için henüz Focus oturumu yok.</p>
       </div>
     )
   }
@@ -299,10 +299,10 @@ function HistoryTab({ sessions }: { sessions: PomodoroSession[] }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              <th className="px-4 py-2.5">Date</th>
-              <th className="px-4 py-2.5">Duration</th>
-              <th className="px-4 py-2.5">Rating</th>
-              <th className="px-4 py-2.5">Reflection</th>
+              <th className="px-4 py-2.5">Tarih</th>
+              <th className="px-4 py-2.5">Süre</th>
+              <th className="px-4 py-2.5">Değerlendirme</th>
+              <th className="px-4 py-2.5">Özet</th>
             </tr>
           </thead>
           <tbody>
@@ -348,7 +348,7 @@ function NotesTab({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: title.trim() || 'Untitled Note',
+          title: title.trim() || 'Başlıksız Not',
           content: content.trim(),
           subject_id: subjectId,
           topic_id: topicId,
@@ -366,12 +366,12 @@ function NotesTab({
       <div className="bg-surface border border-border rounded-2xl p-4 shadow-sm space-y-2">
         <input
           value={title} onChange={e => setTitle(e.target.value)}
-          placeholder="Title (optional)"
+          placeholder="Başlık (isteğe bağlı)"
           className="w-full text-sm bg-surface-subtle/50 border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30"
         />
         <textarea
           value={content} onChange={e => setContent(e.target.value)}
-          placeholder="Quick note…"
+          placeholder="Hızlı not…"
           rows={4}
           className="w-full text-sm bg-surface-subtle/50 border border-border rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30"
         />
@@ -381,7 +381,7 @@ function NotesTab({
           className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent-dark text-white text-xs font-semibold rounded-xl transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-          Save Note
+          Notu kaydet
         </button>
       </div>
 

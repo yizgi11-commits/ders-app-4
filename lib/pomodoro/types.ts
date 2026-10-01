@@ -22,42 +22,24 @@ export const SESSION_LABELS: Record<SessionType, string> = {
 export const FOCUS_SESSION_XP = 25
 
 // ─────────────────────────────────────────
-// Focus page — duration / mode / ambient sound / rating
+// Focus page — duration / rating
 // ─────────────────────────────────────────
 export type FocusDuration = 25 | 45 | 60 | 'custom'
 
 export const FOCUS_DURATION_OPTIONS: { value: FocusDuration; label: string }[] = [
-  { value: 25,       label: '25 min' },
-  { value: 45,       label: '45 min' },
-  { value: 60,       label: '60 min' },
-  { value: 'custom', label: 'Custom' },
+  { value: 25,       label: '25 dk' },
+  { value: 45,       label: '45 dk' },
+  { value: 60,       label: '60 dk' },
+  { value: 'custom', label: 'Özel' },
 ]
-
-export type FocusMode = 'focus' | 'deep_focus' | 'study' | 'ambient'
-
-export const FOCUS_MODE_LABELS: Record<FocusMode, string> = {
-  focus:      'Focus',
-  deep_focus: 'Deep Focus',
-  study:      'Study',
-  ambient:    'Ambient',
-}
-
-export type AmbientSound = 'rain' | 'white_noise' | 'library' | 'none'
-
-export const AMBIENT_SOUND_LABELS: Record<AmbientSound, string> = {
-  rain:         'Rain',
-  white_noise:  'White Noise',
-  library:      'Library',
-  none:         'None',
-}
 
 export type SessionRating = 'poor' | 'okay' | 'good' | 'excellent'
 
 export const SESSION_RATING_LABELS: Record<SessionRating, string> = {
-  poor:      'Poor',
-  okay:      'Okay',
-  good:      'Good',
-  excellent: 'Excellent',
+  poor:      'Zayıf',
+  okay:      'Orta',
+  good:      'İyi',
+  excellent: 'Çok iyi',
 }
 
 // How far out the Recall Engine schedules the next review, per rating.
@@ -115,7 +97,6 @@ export interface PersistedFocusState {
   secondsLeft:     number
   totalSeconds:    number
   activeSessionId: string | null
-  mode:            FocusMode
   duration:        FocusDuration
   customMinutes:   number
   subjectId:       string | null
@@ -123,7 +104,6 @@ export interface PersistedFocusState {
   topicId:         string | null
   topicName:       string | null
   linkedTaskId:    string | null
-  ambientSound:    AmbientSound
   savedAt:         number          // Date.now() — to detect time passed while away
 }
 

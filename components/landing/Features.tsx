@@ -7,7 +7,7 @@ const features = [
   { icon: Map,             title: 'Atlas',          description: 'Derslerini ve konularını bir harita gibi gör; her konunun odak, tekrar ve not ilerlemesi tek bakışta.' },
   { icon: CalendarDays,    title: 'Planner',        description: 'Görevleri güne ve haftaya yay; sınavlarını ve hedeflerini aynı yerde takip et.' },
   { icon: Brain,           title: 'Recall',         description: 'Aralıklı tekrar: kartlar, unutmak üzereyken tekrar karşına çıkar.' },
-  { icon: BarChart2,       title: 'Insights',       description: 'Learning Score, verimli saatlerin ve ders dağılımın — sade, ölçülebilir grafikler.' },
+  { icon: BarChart2,       title: 'Insights',       description: 'Öğrenme Puanı, verimli saatlerin ve ders dağılımın — sade, ölçülebilir grafikler.' },
 ]
 
 export default function Features() {

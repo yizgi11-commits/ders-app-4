@@ -27,7 +27,7 @@ export default function FocusHeatmap({ data }: Props) {
   return (
     <div className="rounded-lg border border-border bg-surface p-5">
       <div className="flex items-center justify-between gap-3">
-        <SectionLabel>STUDY HEATMAP</SectionLabel>
+        <SectionLabel>ÇALIŞMA HARİTASI</SectionLabel>
         <HeatLegend />
       </div>
 

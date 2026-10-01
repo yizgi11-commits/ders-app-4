@@ -130,9 +130,9 @@ export default function VaultNotesView({ search, savedOnly = false, onAssist, re
       {locked && (
         <div className="flex items-center gap-3 rounded-md bg-warning-soft px-4 py-2.5 mb-4">
           <Lock className="size-4 text-warning shrink-0" />
-          <p className="flex-1 text-sm text-text">Free planda not limitine ulaştın (10 not).</p>
+          <p className="flex-1 text-sm text-text">Ücretsiz planda not limitine ulaştın (10 not).</p>
           <Link href="/dashboard/upgrade" className="shrink-0 text-sm font-medium text-accent hover:text-accent-dark">
-            Upgrade
+            Yükselt
           </Link>
         </div>
       )}
@@ -143,7 +143,7 @@ export default function VaultNotesView({ search, savedOnly = false, onAssist, re
             onClick={handleCreate}
             className="inline-flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-accent transition-colors duration-[160ms]"
           >
-            <Plus className="size-3.5" /> New note
+            <Plus className="size-3.5" /> Yeni not
           </button>
         </div>
       )}

@@ -149,7 +149,7 @@ export default function SettingsClient({ initial }: Props) {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-text">Settings</h1>
+        <h1 className="text-2xl font-semibold text-text">Ayarlar</h1>
         <p className="text-base text-text-secondary mt-1">Profil ve tercihlerini yönet.</p>
       </div>
 
@@ -242,7 +242,7 @@ export default function SettingsClient({ initial }: Props) {
               <LogOut className="size-3.5" /> Çıkış Yap
             </button>
           </Row>
-          <Row label="Versiyon"><p className="tabular text-sm text-text-secondary">1.0.0</p></Row>
+          <Row label="Sürüm"><p className="tabular text-sm text-text-secondary">1.0.0</p></Row>
           <Row label="Platform"><p className="text-sm text-text-secondary">Noetic OS Web</p></Row>
         </Section>
 

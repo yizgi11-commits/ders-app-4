@@ -58,8 +58,11 @@ export function isDarkRoute(pathname: string): boolean {
 }
 
 const EXTRA_TITLES: { href: string; label: string }[] = [
-  { href: '/dashboard/insights/weekly-review', label: 'Weekly Review' },
-  { href: '/dashboard/upgrade',                label: 'Upgrade' },
+  { href: '/dashboard/insights/weekly-review', label: 'Haftalık Değerlendirme' },
+  { href: '/dashboard/upgrade',                label: 'Yükselt' },
+  // The sidebar keeps its English names; the header shows these two in Turkish.
+  { href: '/dashboard/profile',                label: 'Profil' },
+  { href: '/dashboard/settings',               label: 'Ayarlar' },
 ]
 
 /** Current page name for the header — longest matching route wins. */

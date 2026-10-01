@@ -56,7 +56,7 @@ export default function MobileNav() {
             className={tabClass(moreActive || moreOpen)}
           >
             <MoreHorizontal className="size-5" />
-            More
+            Diğer
           </button>
         </div>
       </nav>
@@ -84,7 +84,7 @@ export default function MobileNav() {
               className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-surface rounded-t-2xl border-t border-border shadow-lg px-3 pt-3 pb-[calc(12px+env(safe-area-inset-bottom))]"
             >
               <div className="flex items-center justify-between px-3 pb-2">
-                <p className="text-[11px] font-medium tracking-[0.08em] text-text-muted">MORE</p>
+                <p className="text-[11px] font-medium tracking-[0.08em] text-text-muted">DİĞER</p>
                 <button
                   type="button"
                   onClick={() => setMoreOpen(false)}

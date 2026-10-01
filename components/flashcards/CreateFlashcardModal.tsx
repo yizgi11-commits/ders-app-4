@@ -103,7 +103,7 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
               <Brain className="w-4 h-4 text-accent" />
             </div>
             <h2 className="text-sm font-bold text-text">
-              {isEdit ? 'Kartı Düzenle' : 'Yeni Flash Kart'}
+              {isEdit ? 'Kartı Düzenle' : 'Yeni Kart'}
             </h2>
           </div>
           <button
@@ -175,7 +175,7 @@ export default function CreateFlashcardModal({ initial, onClose, onSaved, onUpda
             <p className="text-sm text-danger bg-danger-soft border border-danger/30 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
               <span>{error}</span>
               {locked && (
-                <Link href="/dashboard/upgrade" className="shrink-0 font-bold underline">Upgrade</Link>
+                <Link href="/dashboard/upgrade" className="shrink-0 font-bold underline">Yükselt</Link>
               )}
             </p>
           )}

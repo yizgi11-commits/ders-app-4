@@ -14,9 +14,9 @@ const enter = (delay: number, y = 0) => ({
 // A simplified, static rendering of the real Command Center — not a screenshot.
 function ProductMockup() {
   const rows = [
-    { done: true,  n: '01', t: 'Türev — soru çözümü',        s: 'Matematik', m: '45 min' },
-    { done: false, n: '02', t: 'Fonksiyonlar — tanım kümesi', s: 'Matematik', m: '30 min' },
-    { done: false, n: '03', t: 'Newton yasaları tekrarı',     s: 'Fizik',     m: '25 min' },
+    { done: true,  n: '01', t: 'Türev — soru çözümü',        s: 'Matematik', m: '45 dk' },
+    { done: false, n: '02', t: 'Fonksiyonlar — tanım kümesi', s: 'Matematik', m: '30 dk' },
+    { done: false, n: '03', t: 'Newton yasaları tekrarı',     s: 'Fizik',     m: '25 dk' },
   ]
   return (
     <div className="rounded-lg border border-dark-border overflow-hidden shadow-lg bg-background text-left">
@@ -42,23 +42,23 @@ function ProductMockup() {
         </div>
         {/* Content */}
         <div className="flex-1 min-w-0 p-5 sm:p-7">
-          <p className="text-[17px] font-semibold text-text">Good evening, Deniz.</p>
-          <p className="text-[11px] text-text-secondary mt-0.5">Thursday, 24 September · Here&apos;s what matters today.</p>
+          <p className="text-[17px] font-semibold text-text">İyi akşamlar, Deniz.</p>
+          <p className="text-[11px] text-text-secondary mt-0.5">24 Eylül Perşembe · Bugün önemli olanlar burada.</p>
 
           <div className="mt-4 flex items-center justify-between gap-3 rounded-md bg-accent-soft border border-[rgba(49,92,255,0.15)] border-l-[3px] border-l-accent px-3.5 py-2.5">
             <div className="min-w-0">
-              <p className="text-[9px] tracking-[0.08em] text-accent">NEXT ACTION</p>
+              <p className="text-[9px] tracking-[0.08em] text-accent">SIRADAKİ ADIM</p>
               <p className="text-[12px] font-semibold text-text truncate">Fonksiyonlar — tanım kümesi</p>
-              <p className="text-[10px] text-text-secondary">Matematik · 30 min</p>
+              <p className="text-[10px] text-text-secondary">Matematik · 30 dk</p>
             </div>
-            <span className="shrink-0 rounded bg-accent px-2.5 py-1 text-[10px] font-medium text-white">Start →</span>
+            <span className="shrink-0 rounded bg-accent px-2.5 py-1 text-[10px] font-medium text-white">Başla →</span>
           </div>
 
           <p className="mt-3 text-[11px] text-text-secondary">
-            <span className="tabular text-text">3</span> tasks · <span className="tabular text-text">100</span> min · <span className="tabular text-text">5</span> reviews · Learning Score: <span className="tabular text-text">72</span>
+            <span className="tabular text-text">3</span> görev · <span className="tabular text-text">100</span> dk · <span className="tabular text-text">5</span> tekrar · Öğrenme Puanı: <span className="tabular text-text">72</span>
           </p>
 
-          <p className="mt-4 pb-1.5 border-b border-border text-[9px] tracking-[0.08em] text-text-muted">TODAY&apos;S PLAN</p>
+          <p className="mt-4 pb-1.5 border-b border-border text-[9px] tracking-[0.08em] text-text-muted">BUGÜNÜN PLANI</p>
           {rows.map(r => (
             <div key={r.n} className="h-9 flex items-center gap-2.5 border-b border-border">
               <span className={`size-3 rounded-[3px] border ${r.done ? 'bg-accent border-accent' : 'border-border-strong bg-surface'}`} />

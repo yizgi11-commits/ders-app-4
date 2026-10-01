@@ -1,7 +1,6 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { Bell, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { pageTitle, initialsOf, isDarkRoute } from './nav'
 
@@ -24,37 +23,6 @@ export default function Header({ userName }: HeaderProps) {
       </p>
 
       <div className="flex-1" />
-
-      {/* Search */}
-      <button
-        type="button"
-        className={cn(
-          'hidden sm:flex items-center justify-between w-[140px] px-2.5 py-1 rounded-md border text-sm transition-colors duration-[160ms]',
-          dark
-            ? 'bg-dark-secondary border-dark-border text-dark-text-muted hover:border-dark-text-muted'
-            : 'bg-surface-subtle border-border text-text-muted hover:border-border-strong',
-        )}
-      >
-        <span className="flex items-center gap-1.5">
-          <Search className="size-3.5" />
-          Ara
-        </span>
-        <kbd className="font-sans text-xs">⌘K</kbd>
-      </button>
-
-      {/* Notifications — no badge until there's a real count */}
-      <button
-        type="button"
-        aria-label="Bildirimler"
-        className={cn(
-          'hit-area p-2 rounded-md transition-colors duration-[160ms]',
-          dark
-            ? 'text-dark-text-secondary hover:text-dark-text hover:bg-white/[0.06]'
-            : 'text-text-secondary hover:text-text hover:bg-surface-subtle',
-        )}
-      >
-        <Bell className="size-4" />
-      </button>
 
       {/* Avatar */}
       <div

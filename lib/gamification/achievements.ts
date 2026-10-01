@@ -13,7 +13,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ── Focus sessions ───────────────────────────────────────────
   {
     id:        'FIRST_POMODORO',
-    title:     'First Focus',
+    title:     'İlk Focus',
     desc:      'İlk Focus oturumunu tamamla',
     icon:      '🎯',
     xpReward:  50,
@@ -23,7 +23,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'POMODORO_10',
-    title:     '10 Focus Sessions',
+    title:     '10 Focus Oturumu',
     desc:      '10 Focus oturumu tamamla',
     icon:      '⚡',
     xpReward:  150,
@@ -33,7 +33,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'POMODORO_50',
-    title:     '50 Focus Sessions',
+    title:     '50 Focus Oturumu',
     desc:      '50 Focus oturumu tamamla',
     icon:      '🏆',
     xpReward:  400,
@@ -43,7 +43,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'POMODORO_200',
-    title:     '200 Focus Sessions',
+    title:     '200 Focus Oturumu',
     desc:      '200 Focus oturumu tamamla',
     icon:      '💎',
     xpReward:  1000,
@@ -53,7 +53,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'DEEP_FOCUS_60',
-    title:     '60 Min Single Session',
+    title:     'Tek Oturumda 60 Dakika',
     desc:      'Tek oturumda 60 dakika odaklan',
     icon:      '🧘',
     xpReward:  250,
@@ -65,7 +65,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ── Total focus time ─────────────────────────────────────────
   {
     id:        'FOCUS_1H',
-    title:     '1 Hour Focus',
+    title:     '1 Saat Focus',
     desc:      'Toplam 1 saat odak süresi',
     icon:      '⏱️',
     xpReward:  50,
@@ -75,7 +75,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'FOCUS_5H',
-    title:     '5 Hours Focus',
+    title:     '5 Saat Focus',
     desc:      'Toplam 5 saat odak süresi',
     icon:      '🧠',
     xpReward:  200,
@@ -85,7 +85,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'FOCUS_25H',
-    title:     '25 Hours Focus',
+    title:     '25 Saat Focus',
     desc:      'Toplam 25 saat odak süresi',
     icon:      '🎓',
     xpReward:  500,
@@ -95,7 +95,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'FOCUS_100H',
-    title:     '100 Hours Focus',
+    title:     '100 Saat Focus',
     desc:      'Toplam 100 saat odak süresi',
     icon:      '🚀',
     xpReward:  2000,
@@ -107,7 +107,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ── Streak ───────────────────────────────────────────────────
   {
     id:        'STREAK_3',
-    title:     '3 Day Streak',
+    title:     '3 Günlük Seri',
     desc:      '3 gün üst üste çalış',
     icon:      '🔥',
     xpReward:  75,
@@ -117,7 +117,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'STREAK_7',
-    title:     '7 Day Streak',
+    title:     '7 Günlük Seri',
     desc:      '7 gün üst üste çalış',
     icon:      '🌟',
     xpReward:  200,
@@ -127,7 +127,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'STREAK_30',
-    title:     '30 Day Streak',
+    title:     '30 Günlük Seri',
     desc:      '30 gün üst üste çalış',
     icon:      '👑',
     xpReward:  750,
@@ -137,7 +137,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'STREAK_100',
-    title:     '100 Day Streak',
+    title:     '100 Günlük Seri',
     desc:      '100 gün üst üste çalış',
     icon:      '⚜️',
     xpReward:  2000,
@@ -149,7 +149,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ── Recall ───────────────────────────────────────────────────
   {
     id:        'FIRST_RECALL',
-    title:     'First Recall',
+    title:     'İlk Recall',
     desc:      'İlk tekrar kartını değerlendir',
     icon:      '🔁',
     xpReward:  50,
@@ -159,7 +159,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'RECALL_10',
-    title:     '10 Recalls',
+    title:     '10 Recall',
     desc:      '10 tekrar kartı değerlendir',
     icon:      '🧩',
     xpReward:  150,
@@ -169,7 +169,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'RECALL_100',
-    title:     '100 Recalls',
+    title:     '100 Recall',
     desc:      '100 tekrar kartı değerlendir',
     icon:      '🎴',
     xpReward:  500,
@@ -181,7 +181,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ── Planner ──────────────────────────────────────────────────
   {
     id:        'PLANNER_5_DAYS',
-    title:     '5 Day Planner',
+    title:     '5 Gün Planner',
     desc:      '5 farklı günde Planner görevi oluştur',
     icon:      '🗓️',
     xpReward:  150,
@@ -193,7 +193,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ── Tasks ────────────────────────────────────────────────────
   {
     id:        'FIRST_TASK',
-    title:     'First Task',
+    title:     'İlk Görev',
     desc:      'İlk günlük görevini tamamla',
     icon:      '✅',
     xpReward:  25,
@@ -203,7 +203,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'TASK_10',
-    title:     '10 Tasks Completed',
+    title:     '10 Görev Tamamlandı',
     desc:      '10 görev tamamla',
     icon:      '🎖️',
     xpReward:  100,
@@ -213,7 +213,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'TASK_50',
-    title:     '50 Tasks Completed',
+    title:     '50 Görev Tamamlandı',
     desc:      '50 görev tamamla',
     icon:      '📚',
     xpReward:  300,
@@ -223,7 +223,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'TASK_200',
-    title:     '200 Tasks Completed',
+    title:     '200 Görev Tamamlandı',
     desc:      '200 görev tamamla',
     icon:      '🦾',
     xpReward:  1000,
@@ -245,7 +245,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'XP_2000',
-    title:     '2,000 XP',
+    title:     '2.000 XP',
     desc:      '2000 XP kazan',
     icon:      '🔋',
     xpReward:  150,
@@ -255,8 +255,8 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'XP_10000',
-    title:     '10,000 XP',
-    desc:      '10,000 XP kazan',
+    title:     '10.000 XP',
+    desc:      '10.000 XP kazan',
     icon:      '💫',
     xpReward:  500,
     rarity:    'rare',
@@ -265,7 +265,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'LEVEL_5',
-    title:     'Level 5',
+    title:     'Seviye 5',
     desc:      'Seviye 5\'e ulaş',
     icon:      '⭐',
     xpReward:  200,
@@ -275,7 +275,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'LEVEL_10',
-    title:     'Level 10',
+    title:     'Seviye 10',
     desc:      'Seviye 10\'a ulaş',
     icon:      '🌠',
     xpReward:  500,
@@ -287,7 +287,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ── Special ──────────────────────────────────────────────────
   {
     id:        'EARLY_BIRD',
-    title:     'Early Bird',
+    title:     'Erkenci Kuş',
     desc:      'Sabah 9:00\'dan önce bir Focus oturumu tamamla',
     icon:      '🌅',
     xpReward:  100,
@@ -297,7 +297,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id:        'NIGHT_OWL',
-    title:     'Night Owl',
+    title:     'Gece Kuşu',
     desc:      'Gece 22:00\'dan sonra bir Focus oturumu tamamla',
     icon:      '🦉',
     xpReward:  100,

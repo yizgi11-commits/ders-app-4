@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
   const { allowed } = await checkLimit(supabase, user.id, 'vaultAssist')
   if (!allowed) {
     return NextResponse.json(
-      { error: 'Noetic Assist (özetle/açıkla/flashcard/quiz) Pro özelliğidir.', locked: true },
+      { error: 'Noetic Assist (özetle/açıkla/kart/test) Pro özelliğidir.', locked: true },
       { status: 403 },
     )
   }

@@ -11,12 +11,12 @@ type Filter = 'all' | AchievementCategory
 const FILTERS: { id: Filter; label: string }[] = [
   { id: 'all',     label: 'Tümü' },
   { id: 'focus',   label: 'Focus' },
-  { id: 'streak',  label: 'Streak' },
+  { id: 'streak',  label: 'Seri' },
   { id: 'recall',  label: 'Recall' },
   { id: 'planner', label: 'Planner' },
-  { id: 'task',    label: 'Tasks' },
+  { id: 'task',    label: 'Görevler' },
   { id: 'xp',      label: 'XP' },
-  { id: 'special', label: 'Special' },
+  { id: 'special', label: 'Özel' },
 ]
 
 interface Props {

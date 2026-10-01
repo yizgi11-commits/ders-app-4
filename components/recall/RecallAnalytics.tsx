@@ -30,9 +30,9 @@ export default function RecallAnalytics({ stats }: { stats: RecallStats | null }
 
   const headline: { value: string; label: string; hint?: string }[] = [
     { value: String(stats.totalReviews), label: 'Toplam tekrar' },
-    { value: `%${stats.successRate}`, label: 'Başarı oranı', hint: 'Good + Easy' },
+    { value: `%${stats.successRate}`, label: 'Başarı oranı', hint: 'İyi + Kolay' },
     { value: `%${stats.weeklyCompletion}`, label: 'Bu hafta tamamlama', hint: `${stats.weeklyReviewed} yapıldı · ${stats.weeklyOverdue} geciken` },
-    { value: String(stats.gradeBreakdown.again + stats.gradeBreakdown.hard), label: 'Zorlanılan cevap', hint: 'Again + Hard' },
+    { value: String(stats.gradeBreakdown.again + stats.gradeBreakdown.hard), label: 'Zorlanılan cevap', hint: 'Tekrar + Zor' },
   ]
 
   return (

@@ -17,9 +17,9 @@ interface Props {
 }
 
 const KIND_META: Record<VaultItemKind, { icon: typeof StickyNote; label: string }> = {
-  note:      { icon: StickyNote, label: 'Note' },
-  flashcard: { icon: Brain,      label: 'Flashcard' },
-  document:  { icon: FileText,   label: 'Document' },
+  note:      { icon: StickyNote, label: 'Not' },
+  flashcard: { icon: Brain,      label: 'Kart' },
+  document:  { icon: FileText,   label: 'Belge' },
 }
 
 export default function VaultAllView({ search, refreshKey = 0, onOpenTab }: Props) {

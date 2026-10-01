@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   const { allowed, limit, tier } = await checkLimit(supabase, user.id, 'vaultPdfs')
   if (!allowed) {
     return NextResponse.json(
-      { error: `Free planda en fazla ${limit} PDF yükleyebilirsin. Pro ile sınırsız olur.`, locked: true },
+      { error: `Ücretsiz planda en fazla ${limit} PDF yükleyebilirsin. Pro ile sınırsız olur.`, locked: true },
       { status: 403 },
     )
   }
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     await supabase.from('documents').delete().eq('id', doc.id).eq('user_id', user.id)
     if (!uploadError) await supabase.storage.from('pdfs').remove([path])
     return NextResponse.json(
-      { error: `Free planda en fazla ${limit} PDF yükleyebilirsin. Pro ile sınırsız olur.`, locked: true },
+      { error: `Ücretsiz planda en fazla ${limit} PDF yükleyebilirsin. Pro ile sınırsız olur.`, locked: true },
       { status: 403 },
     )
   }

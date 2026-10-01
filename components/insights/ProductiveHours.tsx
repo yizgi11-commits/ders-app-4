@@ -13,7 +13,7 @@ function fmtMinutes(mins: number): string {
   if (mins < 60) return `${mins}dk`
   const h = Math.floor(mins / 60)
   const m = mins % 60
-  return m === 0 ? `${h}s` : `${h}s ${m}dk`
+  return m === 0 ? `${h} sa` : `${h} sa ${m} dk`
 }
 
 const pad = (h: number) => String(h).padStart(2, '0')
@@ -29,7 +29,7 @@ export default function ProductiveHours({ hourly }: Props) {
   return (
     <div className="rounded-lg border border-border bg-surface p-5">
       <div className="flex items-baseline justify-between gap-3">
-        <SectionLabel>PRODUCTIVE HOURS</SectionLabel>
+        <SectionLabel>VERİMLİ SAATLER</SectionLabel>
         {hasData && (
           <p className="text-xs text-text-muted">
             Son 30 gün · Zirve <span className="tabular text-text">{pad(peak.hour)}:00</span>

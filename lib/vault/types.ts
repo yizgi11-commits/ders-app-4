@@ -5,11 +5,11 @@
 export type VaultTab = 'all' | 'notes' | 'flashcards' | 'documents' | 'saved'
 
 export const VAULT_TABS: { id: VaultTab; label: string }[] = [
-  { id: 'all',        label: 'All' },
-  { id: 'notes',      label: 'Notes' },
-  { id: 'flashcards', label: 'Flashcards' },
-  { id: 'documents',  label: 'Documents' },
-  { id: 'saved',      label: 'Saved' },
+  { id: 'all',        label: 'Tümü' },
+  { id: 'notes',      label: 'Notlar' },
+  { id: 'flashcards', label: 'Kartlar' },
+  { id: 'documents',  label: 'Belgeler' },
+  { id: 'saved',      label: 'Kaydedilenler' },
 ]
 
 export interface VaultDocument {
@@ -33,9 +33,9 @@ export type AssistSource = 'note' | 'document'
 
 export const ASSIST_ACTIONS: { id: AssistAction; label: string; emoji: string }[] = [
   { id: 'summarize',  label: 'Özetle',            emoji: '📝' },
-  { id: 'flashcards', label: 'Flashcard Oluştur', emoji: '🃏' },
+  { id: 'flashcards', label: 'Kart Oluştur',      emoji: '🃏' },
   { id: 'explain',    label: 'Açıkla',            emoji: '💡' },
-  { id: 'quiz',       label: 'Quiz Oluştur',      emoji: '❓' },
+  { id: 'quiz',       label: 'Test Oluştur',      emoji: '❓' },
 ]
 
 export interface AssistQuizQuestion {
@@ -78,16 +78,16 @@ export function relativeTime(dateStr: string): string {
   const mins  = Math.floor(diff / 60000)
   const hours = Math.floor(mins / 60)
   const days  = Math.floor(hours / 24)
-  if (mins < 1)   return 'just now'
-  if (mins < 60)  return `${mins} minute${mins === 1 ? '' : 's'} ago`
-  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`
-  if (days < 30)  return `${days} day${days === 1 ? '' : 's'} ago`
-  return new Date(dateStr).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+  if (mins < 1)   return 'az önce'
+  if (mins < 60)  return `${mins} dakika önce`
+  if (hours < 24) return `${hours} saat önce`
+  if (days < 30)  return `${days} gün önce`
+  return new Date(dateStr).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 /** "Sep 23" — compact date for list rows (relativeTime goes in the tooltip). */
 export function shortDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return new Date(dateStr).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
 }
 
 export function formatBytes(bytes: number): string {

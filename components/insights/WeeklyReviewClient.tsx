@@ -13,8 +13,8 @@ import ProLock from '@/components/subscription/ProLock'
 function fmtFocus(mins: number): string {
   const h = Math.floor(mins / 60)
   const m = mins % 60
-  if (h === 0) return `${m}m`
-  return `${h}h ${m}m`
+  if (h === 0) return `${m} dk`
+  return `${h} sa ${m} dk`
 }
 
 function scoreTone(score: number) {
@@ -48,7 +48,7 @@ export default function WeeklyReviewClient({ data, tier }: { data: WeeklyReview;
         className="bg-success-soft/60 border border-success/30 rounded-2xl p-5"
       >
         <p className="text-[11px] font-bold text-success uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5" /> What went well
+          <Sparkles className="w-3.5 h-3.5" /> İyi gidenler
         </p>
         <ul className="space-y-1.5">
           {wentWell.map((line, i) => (
@@ -67,7 +67,7 @@ export default function WeeklyReviewClient({ data, tier }: { data: WeeklyReview;
         className="bg-warning-soft/60 border border-warning/30 rounded-2xl p-5"
       >
         <p className="text-[11px] font-bold text-warning uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-          <AlertTriangle className="w-3.5 h-3.5" /> What needs attention
+          <AlertTriangle className="w-3.5 h-3.5" /> Dikkat gerektirenler
         </p>
         <ul className="space-y-1.5">
           {needsAttention.map((line, i) => (
@@ -81,7 +81,7 @@ export default function WeeklyReviewClient({ data, tier }: { data: WeeklyReview;
       {/* ── Next week focus ──────────────────────────────────── */}
       <div className="bg-surface rounded-2xl border border-border p-5 shadow-sm">
         <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-          <Brain className="w-3.5 h-3.5 text-accent" /> Next Week Focus
+          <Brain className="w-3.5 h-3.5 text-accent" /> Gelecek haftanın odağı
         </p>
         {nextWeekFocus.length > 0 ? (
           <ul className="flex flex-col gap-2">
@@ -111,7 +111,7 @@ export default function WeeklyReviewClient({ data, tier }: { data: WeeklyReview;
   // itself a Link, so this can't be an interactive <Link> too.
   const ctaPreview = (
     <div className="w-full flex items-center justify-center gap-2 bg-accent text-white font-bold text-sm py-3 rounded-xl shadow-lg">
-      Build Next Week
+      Gelecek haftayı planla
       <ArrowRight className="w-4 h-4" />
     </div>
   )
@@ -121,23 +121,23 @@ export default function WeeklyReviewClient({ data, tier }: { data: WeeklyReview;
       {/* ── Stat row ─────────────────────────────────────────── */}
       <div className="bg-surface rounded-2xl border border-border p-5 shadow-sm">
         <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.14em] mb-3">
-          Your Week
+          Haftan
         </p>
         <div className="flex items-center gap-4 flex-wrap">
           <Stat value={fmtFocus(totals.focusMinutes)} label="Focus" />
           <Divider />
-          <Stat value={String(totals.tasksCompleted)} label={totals.tasksCompleted === 1 ? 'task' : 'tasks'} />
+          <Stat value={String(totals.tasksCompleted)} label="görev" />
           <Divider />
-          <Stat value={String(totals.reviewsDone)} label={totals.reviewsDone === 1 ? 'review' : 'reviews'} />
+          <Stat value={String(totals.reviewsDone)} label="tekrar" />
           <Divider />
-          <Stat value={String(totals.topicsStudied)} label={totals.topicsStudied === 1 ? 'topic' : 'topics'} />
+          <Stat value={String(totals.topicsStudied)} label="konu" />
         </div>
       </div>
 
       {/* ── Learning Score before → after ────────────────────── */}
       <div className="bg-surface rounded-2xl border border-border p-5 shadow-sm">
         <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.14em] mb-3">
-          Learning Score
+          Öğrenme Puanı
         </p>
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-xl font-semibold text-text-muted tabular-nums">{learningScore.previous}</span>
@@ -164,13 +164,13 @@ export default function WeeklyReviewClient({ data, tier }: { data: WeeklyReview;
               whileTap={{ scale: 0.98 }}
               className="w-full flex items-center justify-center gap-2 bg-accent text-white font-bold text-sm py-3 rounded-xl shadow-lg"
             >
-              Build Next Week
+              Gelecek haftayı planla
               <ArrowRight className="w-4 h-4" />
             </motion.div>
           </Link>
         </>
       ) : (
-        <ProLock label="Detaylı rapor + Next Week Builder — Pro’da açılır">
+        <ProLock label="Detaylı rapor ve gelecek hafta planı — Pro’da açılır">
           <div className="space-y-5">{detail}{ctaPreview}</div>
         </ProLock>
       )}

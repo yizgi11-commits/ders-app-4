@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
   const { allowed, limit, tier } = await checkLimit(supabase, user.id, 'vaultFlashcards')
   if (!allowed) {
     return NextResponse.json(
-      { error: `Free planda en fazla ${limit} flashcard oluşturabilirsin. Pro ile sınırsız olur.`, locked: true },
+      { error: `Ücretsiz planda en fazla ${limit} kart oluşturabilirsin. Pro ile sınırsız olur.`, locked: true },
       { status: 403 },
     )
   }
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
   if (await isOverCapAfterInsert(supabase, user.id, tier, 'vaultFlashcards')) {
     await supabase.from('flashcards').delete().eq('id', data.id).eq('user_id', user.id)
     return NextResponse.json(
-      { error: `Free planda en fazla ${limit} flashcard oluşturabilirsin. Pro ile sınırsız olur.`, locked: true },
+      { error: `Ücretsiz planda en fazla ${limit} kart oluşturabilirsin. Pro ile sınırsız olur.`, locked: true },
       { status: 403 },
     )
   }

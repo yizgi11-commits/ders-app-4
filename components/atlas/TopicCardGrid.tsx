@@ -55,12 +55,12 @@ export default function TopicCardGrid({ subjectId, initialTopics }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold text-text">Topics</h2>
+        <h2 className="text-sm font-bold text-text">Konular</h2>
         <button
           onClick={() => setShowAdd(v => !v)}
           className="flex items-center gap-1.5 text-xs font-semibold text-accent hover:text-accent transition-colors"
         >
-          <Plus className="w-3.5 h-3.5" /> Add Topic
+          <Plus className="w-3.5 h-3.5" /> Konu ekle
         </button>
       </div>
 
@@ -77,7 +77,7 @@ export default function TopicCardGrid({ subjectId, initialTopics }: Props) {
                 value={newTitle}
                 onChange={e => setNewTitle(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleAdd()}
-                placeholder="Topic title…"
+                placeholder="Konu başlığı…"
                 autoFocus
                 className="flex-1 text-sm bg-surface-subtle/50 border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30"
               />
@@ -87,13 +87,13 @@ export default function TopicCardGrid({ subjectId, initialTopics }: Props) {
                 className="px-4 py-2 bg-accent hover:bg-accent-dark text-white text-xs font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center gap-1.5"
               >
                 {adding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                Add
+                Ekle
               </button>
               <button
                 onClick={() => { setShowAdd(false); setNewTitle('') }}
                 className="px-3 py-2 bg-surface-subtle hover:bg-surface-subtle text-muted-foreground text-xs rounded-xl transition-colors"
               >
-                Cancel
+                Vazgeç
               </button>
             </div>
           </motion.div>
@@ -103,7 +103,7 @@ export default function TopicCardGrid({ subjectId, initialTopics }: Props) {
       {topics.length === 0 ? (
         <div className="text-center py-16 bg-surface border border-dashed border-border rounded-2xl">
           <p className="text-3xl mb-3">📝</p>
-          <p className="text-sm text-muted-foreground">No topics yet — add one to start mapping this subject.</p>
+          <p className="text-sm text-muted-foreground">Henüz konu yok — bu dersin haritasını çıkarmak için bir konu ekle.</p>
         </div>
       ) : (
         <motion.div variants={stagger(0.04)} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -134,7 +134,7 @@ export default function TopicCardGrid({ subjectId, initialTopics }: Props) {
                       style={{ width: `${topic.progress_pct}%` }}
                     />
                   </div>
-                  <span className="text-xs font-bold text-text-secondary tabular-nums w-9 text-right">{topic.progress_pct}%</span>
+                  <span className="text-xs font-bold text-text-secondary tabular-nums w-9 text-right">%{topic.progress_pct}</span>
                 </div>
 
                 <p className="text-[11px] text-muted-foreground mb-3">{formatLastStudied(topic.last_studied_at)}</p>
@@ -143,7 +143,7 @@ export default function TopicCardGrid({ subjectId, initialTopics }: Props) {
                   href={`/dashboard/atlas/${subjectId}/${topic.id}`}
                   className="flex items-center justify-center gap-1.5 w-full text-xs font-semibold text-accent bg-accent-soft hover:bg-accent-soft rounded-xl py-2 transition-colors"
                 >
-                  Open <ArrowRight className="w-3 h-3" />
+                  Aç <ArrowRight className="w-3 h-3" />
                 </Link>
               </motion.div>
             )

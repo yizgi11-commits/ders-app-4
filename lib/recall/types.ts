@@ -16,19 +16,19 @@ export const GRADE_CONFIG: Record<RecallGrade, {
   hover:   string
 }> = {
   again: {
-    label: 'Again', days: 1,  hint: 'yarın',
+    label: 'Tekrar', days: 1,  hint: 'yarın',
     color: 'text-red-600',     bg: 'bg-red-50',     border: 'border-red-200',     hover: 'hover:bg-red-100',
   },
   hard: {
-    label: 'Hard',  days: 3,  hint: '3 gün',
+    label: 'Zor',  days: 3,  hint: '3 gün',
     color: 'text-amber-600',   bg: 'bg-amber-50',   border: 'border-amber-200',   hover: 'hover:bg-amber-100',
   },
   good: {
-    label: 'Good',  days: 7,  hint: '7 gün',
+    label: 'İyi',  days: 7,  hint: '7 gün',
     color: 'text-indigo-600',  bg: 'bg-indigo-50',  border: 'border-indigo-200',  hover: 'hover:bg-indigo-100',
   },
   easy: {
-    label: 'Easy',  days: 14, hint: '14+ gün',
+    label: 'Kolay',  days: 14, hint: '14+ gün',
     color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', hover: 'hover:bg-emerald-100',
   },
 }

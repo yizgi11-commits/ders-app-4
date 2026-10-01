@@ -11,12 +11,12 @@ interface HistoryRow {
 }
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function fmtDuration(seconds: number) {
   const mins = Math.max(1, Math.round(seconds / 60))
-  return `${mins} min`
+  return `${mins} dk`
 }
 
 function one<T>(v: T | T[] | null): T | null {
@@ -45,21 +45,21 @@ export default async function FocusHistory() {
   return (
     <section className="max-w-2xl mx-auto">
       <p className="pb-2 border-b border-dark-border text-[11px] font-medium tracking-[0.08em] text-dark-text-muted">
-        FOCUS HISTORY
+        FOCUS GEÇMİŞİ
       </p>
 
       {rows.length === 0 ? (
-        <p className="text-sm text-dark-text-muted py-6">No focus sessions yet.</p>
+        <p className="text-sm text-dark-text-muted py-6">Henüz Focus oturumu yok.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-dark-text-muted">
-                <th className="font-medium py-2.5 pr-4">Date</th>
-                <th className="font-medium py-2.5 pr-4">Subject</th>
-                <th className="font-medium py-2.5 pr-4">Topic</th>
-                <th className="font-medium py-2.5 pr-4">Duration</th>
-                <th className="font-medium py-2.5">Rating</th>
+                <th className="font-medium py-2.5 pr-4">Tarih</th>
+                <th className="font-medium py-2.5 pr-4">Ders</th>
+                <th className="font-medium py-2.5 pr-4">Konu</th>
+                <th className="font-medium py-2.5 pr-4">Süre</th>
+                <th className="font-medium py-2.5">Değerlendirme</th>
               </tr>
             </thead>
             <tbody>

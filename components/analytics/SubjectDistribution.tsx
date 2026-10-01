@@ -13,7 +13,7 @@ export default function SubjectDistribution({ subjects }: Props) {
 
   return (
     <div className="rounded-lg border border-border bg-surface p-5">
-      <SectionLabel>SUBJECT ANALYSIS</SectionLabel>
+      <SectionLabel>DERS ANALİZİ</SectionLabel>
 
       {subjects.length === 0 ? (
         <p className="text-sm text-text-muted py-8">Henüz yeterli veri yok</p>
@@ -33,7 +33,7 @@ export default function SubjectDistribution({ subjects }: Props) {
                       transition={{ duration: 0.6, delay: i * 0.05, ease: EASE_CURVE }}
                     />
                   </div>
-                  <span className="w-10 shrink-0 text-right tabular text-sm text-text">{share}%</span>
+                  <span className="w-10 shrink-0 text-right tabular text-sm text-text">%{share}</span>
                 </div>
               )
             })}

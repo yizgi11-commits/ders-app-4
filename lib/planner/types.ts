@@ -145,9 +145,9 @@ export interface WeekDay {
 export type TaskPriority = 'high' | 'medium' | 'low'
 
 export const TASK_PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string; bg: string; border: string }> = {
-  high:   { label: 'High',   color: 'text-red-700',    bg: 'bg-red-50',    border: 'border-red-200' },
-  medium: { label: 'Medium', color: 'text-amber-700',  bg: 'bg-amber-50',  border: 'border-amber-200' },
-  low:    { label: 'Low',    color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+  high:   { label: 'Yüksek', color: 'text-red-700',    bg: 'bg-red-50',    border: 'border-red-200' },
+  medium: { label: 'Orta',   color: 'text-amber-700',  bg: 'bg-amber-50',  border: 'border-amber-200' },
+  low:    { label: 'Düşük',  color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
 }
 
 export const DURATION_OPTIONS = [15, 30, 45, 60, 90] as const

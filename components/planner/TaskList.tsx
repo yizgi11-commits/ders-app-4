@@ -16,9 +16,9 @@ interface Props {
 function fmtDateGroup(dateStr: string): string {
   const today = new Date().toISOString().split('T')[0]
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
-  if (dateStr === today) return 'Today'
-  if (dateStr === tomorrow) return 'Tomorrow'
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+  if (dateStr === today) return 'Bugün'
+  if (dateStr === tomorrow) return 'Yarın'
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', weekday: 'long' })
 }
 
 export default function TaskList({ tasks, onChange }: Props) {
@@ -73,20 +73,20 @@ export default function TaskList({ tasks, onChange }: Props) {
         return (
           <section key={date}>
             <div className="flex items-center justify-between pb-2 border-b border-border">
-              <SectionLabel>{fmtDateGroup(date).toLocaleUpperCase('en-US')}</SectionLabel>
+              <SectionLabel>{fmtDateGroup(date).toLocaleUpperCase('tr-TR')}</SectionLabel>
               <span className="tabular text-sm text-text-secondary">{done.length} / {dayTasks.length}</span>
             </div>
             <ul>
               {[...pending, ...done].map(task => {
                 const busy = busyId === task.id
                 const topicLabel = task.topics?.title ?? task.topic_text
-                const title = topicLabel ?? task.subjects?.name ?? 'Task'
+                const title = topicLabel ?? task.subjects?.name ?? 'Görev'
                 return (
                   <li key={task.id} className="group h-12 flex items-center gap-3 border-b border-border">
                     {task.priority ? (
                       <span
                         className={cn('size-1.5 rounded-full shrink-0', PRIORITY_DOT[task.priority])}
-                        title={`${TASK_PRIORITY_CONFIG[task.priority].label} priority`}
+                        title={`${TASK_PRIORITY_CONFIG[task.priority].label} öncelik`}
                       />
                     ) : <span className="size-1.5 shrink-0" />}
 
@@ -119,7 +119,7 @@ export default function TaskList({ tasks, onChange }: Props) {
                       </span>
                     )}
 
-                    <span className="tabular text-sm text-text-muted shrink-0">{task.duration_minutes} min</span>
+                    <span className="tabular text-sm text-text-muted shrink-0">{task.duration_minutes} dk</span>
 
                     {!task.completed && (
                       <Link

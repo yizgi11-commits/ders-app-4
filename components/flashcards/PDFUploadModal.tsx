@@ -237,7 +237,7 @@ export default function PDFUploadModal({ onClose, onGenerated }: Props) {
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     <span className="flex-1">{error}</span>
                     {locked && (
-                      <Link href="/dashboard/upgrade" className="shrink-0 font-bold underline">Upgrade</Link>
+                      <Link href="/dashboard/upgrade" className="shrink-0 font-bold underline">Yükselt</Link>
                     )}
                   </div>
                 )}
@@ -300,7 +300,7 @@ export default function PDFUploadModal({ onClose, onGenerated }: Props) {
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     <span className="flex-1">{error}</span>
                     {locked && (
-                      <Link href="/dashboard/upgrade" className="shrink-0 font-bold underline">Upgrade</Link>
+                      <Link href="/dashboard/upgrade" className="shrink-0 font-bold underline">Yükselt</Link>
                     )}
                   </div>
                 )}

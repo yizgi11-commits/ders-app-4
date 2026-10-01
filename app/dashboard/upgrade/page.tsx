@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getUserTier } from '@/lib/subscription'
 import UpgradeView from '@/components/subscription/UpgradeView'
 
-export const metadata = { title: 'Upgrade' }
+export const metadata = { title: 'Yükselt' }
 
 export default async function UpgradePage() {
   const supabase = await createClient()

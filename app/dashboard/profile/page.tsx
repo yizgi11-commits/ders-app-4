@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getProfileData } from '@/lib/profile/queries'
 import ProfileClient from '@/components/profile/ProfileClient'
 
-export const metadata = { title: 'Profile' }
+export const metadata = { title: 'Profil' }
 
 export default async function ProfilePage() {
   const supabase = await createClient()

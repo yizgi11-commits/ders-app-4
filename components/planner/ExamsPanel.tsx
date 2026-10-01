@@ -9,9 +9,9 @@ import type { SubjectWithTopics } from '@/lib/subjects/types'
 import { fieldClass, primaryButtonClass, textButtonClass, SectionLabel, daysFromToday, shortDate } from './ui'
 
 function daysLabel(days: number): string {
-  if (days < 0) return 'past'
-  if (days === 0) return 'today'
-  return `${days} day${days !== 1 ? 's' : ''} away`
+  if (days < 0) return 'geçti'
+  if (days === 0) return 'bugün'
+  return `${days} gün kaldı`
 }
 
 export default function ExamsPanel() {
@@ -68,9 +68,9 @@ export default function ExamsPanel() {
   return (
     <div>
       <div className="flex items-center justify-between pb-2 border-b border-border">
-        <SectionLabel>EXAMS</SectionLabel>
+        <SectionLabel>SINAVLAR</SectionLabel>
         <button onClick={() => setShowForm(v => !v)} className={textButtonClass}>
-          <Plus className="size-3.5" /> Add exam
+          <Plus className="size-3.5" /> Sınav ekle
         </button>
       </div>
 
@@ -80,7 +80,7 @@ export default function ExamsPanel() {
             <div className="mt-4 rounded-lg border border-border bg-surface p-3 space-y-2">
               <input
                 value={name} onChange={e => setName(e.target.value)}
-                placeholder="Exam name — e.g. Physics Exam"
+                placeholder="Sınav adı — örn. Fizik Sınavı"
                 aria-label="Sınav adı"
                 className={fieldClass}
               />
@@ -91,11 +91,11 @@ export default function ExamsPanel() {
                   className={cn(fieldClass, 'tabular-nums')}
                 />
                 <select value={subjectId} onChange={e => setSubjectId(e.target.value)} aria-label="Ders" className={fieldClass}>
-                  <option value="">— Subject (optional)</option>
+                  <option value="">— Ders (isteğe bağlı)</option>
                   {subjects.map(s => <option key={s.id} value={s.id}>{s.icon} {s.name}</option>)}
                 </select>
                 <button onClick={handleCreate} disabled={!name.trim() || !examDate || saving} className={primaryButtonClass}>
-                  {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />} Add exam
+                  {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />} Sınav ekle
                 </button>
               </div>
             </div>
@@ -104,7 +104,7 @@ export default function ExamsPanel() {
       </AnimatePresence>
 
       {exams.length === 0 ? (
-        <p className="text-sm text-text-muted py-4 border-b border-border">No exams added yet.</p>
+        <p className="text-sm text-text-muted py-4 border-b border-border">Henüz sınav eklenmedi.</p>
       ) : (
         <ul>
           {exams.map(exam => {

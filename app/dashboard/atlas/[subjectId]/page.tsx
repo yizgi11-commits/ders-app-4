@@ -39,7 +39,7 @@ export default async function SubjectPage({ params }: Props) {
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-bold text-text truncate">{subject.name}</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Progress: %{subjectPct} — {completedTopics}/{totalTopics} topics completed
+              İlerleme: %{subjectPct} — {completedTopics}/{totalTopics} konu tamamlandı
             </p>
           </div>
           <div className="relative w-14 h-14 shrink-0 hidden sm:block">
@@ -53,7 +53,7 @@ export default async function SubjectPage({ params }: Props) {
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xs font-bold text-text">{subjectPct}%</span>
+              <span className="text-xs font-bold text-text">%{subjectPct}</span>
             </div>
           </div>
         </div>

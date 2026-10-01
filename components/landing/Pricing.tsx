@@ -4,7 +4,7 @@ import { Check } from 'lucide-react'
 // Mirrors the real Free / Pro limits (see /dashboard/upgrade).
 const plans = [
   {
-    name: 'Free',
+    name: 'Ücretsiz',
     price: '₺0',
     period: '',
     description: 'Öğrenme döngüsünün tamamı, günlük limitlerle.',
@@ -13,21 +13,21 @@ const plans = [
       'Recall — günde 20 kart',
       'Vault — 10 not, 20 kart, 1 PDF',
       'Noetic Assist — günde 5 istek',
-      'Learning Score ve temel Insights',
+      'Öğrenme Puanı ve temel Insights',
     ],
     cta: 'Ücretsiz Başla',
     pro: false,
   },
   {
     name: 'Pro',
-    price: '₺79',
+    price: '₺149',
     period: '/ay',
     description: 'Sınırsız tekrar, tam analiz ve AI desteği.',
     features: [
-      'Free’deki her şey',
+      'Ücretsiz plandaki her şey',
       'Sınırsız Recall ve Vault',
       'Noetic Assist — günde 30 istek, serbest soru',
-      'PDF’ten kart, quiz ve özet',
+      'PDF’ten kart, test ve özet',
       'Tam analiz ve haftalık AI yorumu',
     ],
     cta: 'Pro ile Başla',

@@ -78,7 +78,7 @@ export default function VaultDocumentsView({ search, savedOnly = false, onAssist
             onClick={() => setShowUpload(true)}
             className="inline-flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-accent transition-colors duration-[160ms]"
           >
-            <Upload className="size-3.5" /> Upload PDF
+            <Upload className="size-3.5" /> PDF yükle
           </button>
         </div>
       )}
@@ -103,7 +103,7 @@ export default function VaultDocumentsView({ search, savedOnly = false, onAssist
                   <p className="text-base font-medium text-text truncate">{doc.name}</p>
                   <p className="text-xs text-text-muted truncate mt-0.5">
                     {atlas && <>{atlas} · </>}
-                    <span className="tabular-nums" title={`Uploaded ${relativeTime(doc.created_at)}`}>{shortDate(doc.created_at)}</span>
+                    <span className="tabular-nums" title={`Yüklendi: ${relativeTime(doc.created_at)}`}>{shortDate(doc.created_at)}</span>
                     {' · '}<span className="tabular-nums">{formatBytes(doc.size_bytes)}</span>
                   </p>
                 </div>
@@ -123,7 +123,7 @@ export default function VaultDocumentsView({ search, savedOnly = false, onAssist
                     className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border bg-surface text-sm font-medium text-text hover:border-border-strong transition-colors duration-[160ms] disabled:opacity-40"
                   >
                     {busy ? <Loader2 className="size-3 animate-spin" /> : <ExternalLink className="size-3" />}
-                    Open
+                    Aç
                   </button>
                   <button
                     onClick={() => onAssist(doc)}

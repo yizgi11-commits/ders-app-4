@@ -44,7 +44,7 @@ export default function VaultClient() {
     <div className="flex flex-col md:flex-row gap-6 md:gap-10">
       {/* Collections — a plain list on the left (a scrollable row on small screens) */}
       <nav aria-label="Vault koleksiyonları" className="md:w-[200px] md:shrink-0">
-        <SectionLabel className="hidden md:block mb-2 px-3">COLLECTIONS</SectionLabel>
+        <SectionLabel className="hidden md:block mb-2 px-3">KOLEKSİYONLAR</SectionLabel>
         <ul className="flex md:flex-col gap-1 md:gap-0.5 overflow-x-auto -mx-1 px-1 md:mx-0 md:px-0">
           {VAULT_TABS.map(({ id, label }) => {
             const active = tab === id
@@ -74,7 +74,7 @@ export default function VaultClient() {
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search Vault…"
+            placeholder="Vault’ta ara…"
             aria-label="Vault içinde ara"
             className="w-full h-10 rounded-md bg-surface border border-border pl-9 pr-3 text-base text-text placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors duration-[160ms]"
           />
@@ -106,13 +106,13 @@ export default function VaultClient() {
 
           {tab === 'saved' && (
             <div className="space-y-10">
-              <SavedSection title="NOTES">
+              <SavedSection title="NOTLAR">
                 <VaultNotesView search={search} savedOnly refreshKey={refreshKey} onAssist={assistNote} />
               </SavedSection>
-              <SavedSection title="FLASHCARDS">
+              <SavedSection title="KARTLAR">
                 <VaultFlashcardsView search={search} savedOnly refreshKey={refreshKey} />
               </SavedSection>
-              <SavedSection title="DOCUMENTS">
+              <SavedSection title="BELGELER">
                 <VaultDocumentsView search={search} savedOnly refreshKey={refreshKey} onAssist={assistDocument} />
               </SavedSection>
             </div>

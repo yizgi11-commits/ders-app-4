@@ -42,7 +42,7 @@ export default async function TopicPage({ params }: Props) {
 
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-xl font-bold text-text">{topic.title}</h1>
-          <span className="text-sm font-bold text-text-secondary tabular-nums shrink-0">{topic.progress_pct}%</span>
+          <span className="text-sm font-bold text-text-secondary tabular-nums shrink-0">%{topic.progress_pct}</span>
         </div>
 
         <div className="mt-3 h-2 bg-surface-subtle rounded-full overflow-hidden">
